@@ -151,7 +151,10 @@ namespace RavenBOT.ELO.Modules.Modules
                 });
             }
 
-            await PagedReplyAsync(new ReactivePager(pages).ToCallBack().WithDefaultPagerCallbacks());
+            await PagedReplyAsync(new ReactivePager(pages)
+            {
+                Color = Color.Blue
+            }.ToCallBack().WithDefaultPagerCallbacks());
         }
 
         [Command("GameList", RunMode = RunMode.Async)]
@@ -197,7 +200,10 @@ namespace RavenBOT.ELO.Modules.Modules
                 });
             }
 
-            await PagedReplyAsync(new ReactivePager(pages).ToCallBack().WithDefaultPagerCallbacks());
+            await PagedReplyAsync(new ReactivePager(pages)
+            {
+                Color = Color.Blue
+            }.ToCallBack().WithDefaultPagerCallbacks());
         }
     }
 }
