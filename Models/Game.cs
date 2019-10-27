@@ -116,7 +116,7 @@ namespace RavenBOT.ELO.Modules.Models
             public ulong Captain { get; set; } = 0;
             public HashSet<ulong> Players { get; set; } = new HashSet<ulong>();
 
-            public string GetTeamInfo(SocketGuild guild)
+            public string GetTeamInfo()
             {
                 var resStr = "";
                 //Only show captain info if a captain has been set.
@@ -162,12 +162,12 @@ namespace RavenBOT.ELO.Modules.Models
             return Queue.Where(x => Team1.Captain != x && !Team1.Players.Contains(x) && Team2.Captain != x && !Team2.Players.Contains(x));
         }
 
-        public string GetQueueRemainingPlayersString(SocketGuild guild)
+        public string GetQueueRemainingPlayersString()
         {
             return string.Join("\n", Extensions.GetUserMentionList(GetQueueRemainingPlayers()));
         }
 
-        public string GetQueueMentionList(SocketGuild guild)
+        public string GetQueueMentionList()
         {
             return string.Join("\n", Extensions.GetUserMentionList(Queue));
         }

@@ -40,15 +40,13 @@ namespace RavenBOT.ELO.Modules.Modules
 
         public async Task DisplayGameAsync(ManualGameResult game)
         {
-            var embed = Service.GetGameEmbed(Context, game);
-
+            var embed = Service.GetGameEmbed(game);
             await ReplyAsync(embed);
         }
 
         public async Task DisplayGameAsync(GameResult game)
         {
             var embed = Service.GetGameEmbed(Context, game);
-
             await ReplyAsync(embed);
         }
 
