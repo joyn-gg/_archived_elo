@@ -169,18 +169,22 @@ namespace RavenBOT.ELO.Modules.Methods
         public EmbedBuilder GetGameEmbed(SocketCommandContext context, GameResult game)
         {
             var embed = new EmbedBuilder();
-            var gameStateInfo = "";
 
-            //This is needed to ensure that all members can be gotten in larger servers.
-            //TODO: Assess if this is necessary
-            //await context.Guild.DownloadUsersAsync();
+            embed.AddField("Info",
+                $"**GameId:** {game.GameId}\n" +
+                $"**Lobby:** {MentionUtils.MentionChannel(game.LobbyId)}\n" +
+                $"**Creation Time:** {game.CreationTime.ToString("dd MMM yyyy")} {game.CreationTime.ToShortTimeString()}\n" +
+                $"**Pick Mode:** {game.GamePickMode}\n" +
+                $"{(game.MapName == null ? "" : $"**Map:** {game.MapName}\n")}" +
+                $"{(game.Comment == null ? "" : $"**Comment:** {game.Comment}\n")}");
 
             if (game.GameState == GameResult.State.Picking)
             {
-                gameStateInfo = $"State: Picking Teams\n" +
+                embed.AddField("Picking Teams", 
                                 $"Team 1:\n{game.Team1.GetTeamInfo()}\n" +
                                 $"Team 2:\n{game.Team2.GetTeamInfo()}\n" +
-                                $"Remaining Players:\n{game.GetQueueRemainingPlayersString()}\n";
+                                $"Remaining Players:\n{game.GetQueueRemainingPlayersString()}");
+                embed.Color = Color.Magenta;
             }
             else if (game.GameState == GameResult.State.Canceled)
             {
@@ -190,44 +194,48 @@ namespace RavenBOT.ELO.Modules.Methods
 
                     if (remainingPlayers.Any())
                     {
-                        gameStateInfo = $"State: Cancelled\n" +
+                        embed.AddField("Canceled", 
                             $"Team 1:\n{game.Team1.GetTeamInfo()}\n" +
                             $"Team 2:\n{game.Team2.GetTeamInfo()}\n" +
-                            $"Remaining Players:\n{string.Join("\n", Extensions.GetUserMentionList(remainingPlayers))}\n";
+                            $"Remaining Players:\n{string.Join("\n", Extensions.GetUserMentionList(remainingPlayers))}");
                     }
                     else
                     {
                         //TODO: Address repeat response below
-                        gameStateInfo = $"State: Canceled\n" +
+                        embed.AddField("Canceled", 
                             $"Team 1:\n{game.Team1.GetTeamInfo()}\n" +
-                            $"Team 2:\n{game.Team2.GetTeamInfo()}";
+                            $"Team 2:\n{game.Team2.GetTeamInfo()}");
                     }
                 }
                 else
                 {
-                    gameStateInfo = $"State: Canceled\n" +
+                    embed.AddField("Canceled", 
                         $"Team 1:\n{game.Team1.GetTeamInfo()}\n" +
-                        $"Team 2:\n{game.Team2.GetTeamInfo()}";
+                        $"Team 2:\n{game.Team2.GetTeamInfo()}");
                 }
+
+                embed.Color = Color.DarkOrange;
             }
             else if (game.GameState == GameResult.State.Draw)
             {
-                gameStateInfo = $"Result: Draw\n" +
+               embed.AddField("Draw",
                     $"Team 1:\n{game.Team1.GetTeamInfo()}\n" +
-                    $"Team 2:\n{game.Team2.GetTeamInfo()}";
+                    $"Team 2:\n{game.Team2.GetTeamInfo()}");
+                embed.Color = Color.Gold;
             }
             else if (game.GameState == GameResult.State.Undecided)
             {
-                gameStateInfo = $"State: Undecided\n" +
+                embed.AddField("Undecided",
                     $"Team 1:\n{game.Team1.GetTeamInfo()}\n" +
-                    $"Team 2:\n{game.Team2.GetTeamInfo()}";
+                    $"Team 2:\n{game.Team2.GetTeamInfo()}");
+                embed.Color = Color.Blue;
             }
             else if (game.GameState == GameResult.State.Decided)
             {
                 //TODO: Null check getwinning/losing team methods
                 var pointsAwarded = new List<string>();
                 var winners = game.GetWinningTeam();
-                pointsAwarded.Add($"Team {winners.Item1}");
+                pointsAwarded.Add($"**Team {winners.Item1}**");
 
                 foreach (var player in winners.Item2.Players)
                 {
@@ -239,7 +247,7 @@ namespace RavenBOT.ELO.Modules.Methods
                 }
 
                 var losers = game.GetLosingTeam();
-                pointsAwarded.Add($"Team {losers.Item1}");
+                pointsAwarded.Add($"**Team {losers.Item1}**");
                 foreach (var player in losers.Item2.Players)
                 {
                     var eUser = GetPlayer(context.Guild.Id, player);
@@ -248,21 +256,12 @@ namespace RavenBOT.ELO.Modules.Methods
                     var pointUpdate = game.ScoreUpdates.FirstOrDefault(x => x.Key == player);
                     pointsAwarded.Add($"{eUser.GetDisplayNameSafe()} - {pointUpdate.Value}");
                 }
-                gameStateInfo = $"Result: Team {game.WinningTeam} Won\n" +
-                    $"Team 1:\n{game.Team1.GetTeamInfo()}\n" +
-                    $"Team 2:\n{game.Team2.GetTeamInfo()}\n" +
-                    //TODO: Paginate this and add to second page if message is too long.
-                    $"Points Awarded:\n{string.Join("\n", pointsAwarded)}";
+                embed.AddField($"Winning Team, Team {game.WinningTeam}", game.GetWinningTeam().Item2.GetTeamInfo());
+                embed.AddField($"Losing Team", game.GetLosingTeam().Item2.GetTeamInfo());
+                embed.AddField("Score Updates", string.Join("\n", pointsAwarded).FixLength(1023));
+                embed.Color = Color.Green;
             }
 
-
-            embed.Description = $"GameId: {game.GameId}\n" +
-                                $"Lobby: {MentionUtils.MentionChannel(game.LobbyId)}\n" +
-                                $"Creation Time: {game.CreationTime.ToString("dd MMM yyyy")} {game.CreationTime.ToShortTimeString()}\n" +
-                                $"Pick Mode: {game.GamePickMode}\n" +
-                                $"{(game.MapName == null ? "" : $"Map: {game.MapName}\n")}" +
-                                $"{(game.Comment == null ? "" : $"Comment: {game.Comment}\n")}" +
-                                gameStateInfo.FixLength(2047);
 
             return embed;
         }
