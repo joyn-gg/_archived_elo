@@ -114,7 +114,10 @@ namespace RavenBOT.ELO.Modules.Modules
                     return;
                 }
                 var mentionList = GetMentionList(GetUserList(Context.Guild, CurrentLobby.Queue));
-                var embed = new EmbedBuilder();
+                var embed = new EmbedBuilder
+                {
+                    Color = Color.Blue
+                };
                 embed.Title = $"{Context.Channel.Name} [{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]";
                 embed.Description = $"Game: #{CurrentLobby.CurrentGameCount + 1}\n" +
                     string.Join("\n", mentionList);
