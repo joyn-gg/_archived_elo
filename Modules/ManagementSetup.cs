@@ -49,7 +49,7 @@ namespace RavenBOT.ELO.Modules.Modules
             }
             else
             {
-                await ReplyAsync("Admin role is no longer set, only users with a role that has `Administrator` permissions can act as an admin now.", Color.DarkBlue);
+                await SimpleEmbedAsync("Admin role is no longer set, only users with a role that has `Administrator` permissions can act as an admin now.", Color.DarkBlue);
             }
         }
     }
