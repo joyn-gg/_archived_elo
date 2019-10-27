@@ -170,18 +170,18 @@ namespace RavenBOT.ELO.Modules.Modules
 
             if (Context.User.Id != team.Captain)
             {
-                await ReplyAsync("It is currently the other captains turn to pick.");
+                await SimpleEmbedAndDeleteAsync($"{Context.User.Mention} - It is currently the other captains turn to pick.", Color.Red);
                 return null;
             }
 
             if (uc == 0)
             {
-                await ReplyAsync("You must specify a player to pick.");
+                await SimpleEmbedAndDeleteAsync($"{Context.User.Mention} - You must specify a player to pick.", Color.Red);
                 return null;
             }
             else if (uc != 1)
             {
-                await ReplyAsync("You can only specify one player for this pick.");
+                await SimpleEmbedAndDeleteAsync($"{Context.User.Mention} - You can only specify one player for this pick.", Color.Red);
                 return null;
             }
 
@@ -207,18 +207,18 @@ namespace RavenBOT.ELO.Modules.Modules
                 //captain 1 turn to pick.
                 if (Context.User.Id != team.Captain)
                 {
-                    await ReplyAsync("It is currently the team 1 captains turn to pick.");
+                    await SimpleEmbedAndDeleteAsync("It is currently the team 1 captains turn to pick.", Color.Red);
                     return null;
                 }
 
                 if (uc == 0)
                 {
-                    await ReplyAsync("You must specify a player to pick.");
+                    await SimpleEmbedAndDeleteAsync("You must specify a player to pick.", Color.Red);
                     return null;
                 }
                 else if (uc != 1)
                 {
-                    await ReplyAsync("You can only specify one player for the initial pick.");
+                    await SimpleEmbedAndDeleteAsync("You can only specify one player for the initial pick.", Color.Red);
                     return null;
                 }
 
@@ -233,13 +233,13 @@ namespace RavenBOT.ELO.Modules.Modules
                 //cap 2 turn to pick. they get to pick 2 people.
                 if (Context.User.Id != team.Captain)
                 {
-                    await ReplyAsync("It is currently the other captains turn to pick.");
+                    await SimpleEmbedAndDeleteAsync("It is currently the other captains turn to pick.", Color.Red);
                     return null;
                 }
 
                 if (uc != 2)
                 {
-                    await ReplyAsync("You must specify 2 players for this pick.");
+                    await SimpleEmbedAndDeleteAsync("You must specify 2 players for this pick.", Color.Red);
                     return null;
                 }
 
@@ -253,18 +253,18 @@ namespace RavenBOT.ELO.Modules.Modules
             {
                 if (Context.User.Id != team.Captain)
                 {
-                    await ReplyAsync("It is currently the other captains turn to pick.");
+                    await SimpleEmbedAndDeleteAsync("It is currently the other captains turn to pick.", Color.Red);
                     return null;
                 }
 
                 if (uc == 0)
                 {
-                    await ReplyAsync("You must specify a player to pick.");
+                    await SimpleEmbedAndDeleteAsync("You must specify a player to pick.", Color.Red);
                     return null;
                 }
                 else if (uc != 1)
                 {
-                    await ReplyAsync("You can only specify one player for this pick.");
+                    await SimpleEmbedAndDeleteAsync("You can only specify one player for this pick.", Color.Red);
                     return null;
                 }
 

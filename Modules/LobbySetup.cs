@@ -28,7 +28,7 @@ namespace RavenBOT.ELO.Modules.Modules
         {
             if (Service.GetLobby(Context.Guild.Id, Context.Channel.Id) != null)
             {
-                await ReplyAsync("This channel is already a lobby. Remove the lobby before trying top create a new one here.");
+                await SimpleEmbedAndDeleteAsync("This channel is already a lobby. Remove the lobby before trying top create a new one here.", Color.Red);
                 return;
             }
 

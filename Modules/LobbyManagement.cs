@@ -83,7 +83,7 @@ namespace RavenBOT.ELO.Modules.Modules
             }
             CurrentLobby.Queue.Clear();
             Service.SaveLobby(CurrentLobby);
-            await ReplyAsync("Queue Cleared.");
+            await SimpleEmbedAsync("Queue Cleared.", Color.Green);
         }
 
         [Command("ForceJoin", RunMode = RunMode.Sync)]

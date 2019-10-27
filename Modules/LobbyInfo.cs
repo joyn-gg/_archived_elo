@@ -106,7 +106,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 if (CurrentLobby.HideQueue)
                 {
                     await Context.Message.DeleteAsync();
-                    await ReplyAsync($"**[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**");
+                    await SimpleEmbedAsync($"**[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**", Color.Blue);
                     return;
                 }
                 var mentionList = GetMentionList(GetUserList(Context.Guild, CurrentLobby.Queue));
@@ -118,7 +118,7 @@ namespace RavenBOT.ELO.Modules.Modules
             }
             else
             {
-                await ReplyAsync("The queue is empty.");
+                await SimpleEmbedAsync("The queue is empty.", Color.Blue);
             }
         }
 
