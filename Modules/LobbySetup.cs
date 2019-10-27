@@ -36,9 +36,9 @@ namespace RavenBOT.ELO.Modules.Modules
             lobby.PlayersPerTeam = playersPerTeam;
             lobby.TeamPickMode = pickMode;
             Service.SaveLobby(lobby);
-            await ReplyAsync("New Lobby has been created\n" +
+            await SimpleEmbedAsync("New Lobby has been created\n" +
                 $"Players per team: {playersPerTeam}\n" +
-                $"Pick Mode: {pickMode}");
+                $"Pick Mode: {pickMode}", Color.Green);
         }
 
         [Command("SetPlayerCount", RunMode = RunMode.Sync)]
@@ -49,13 +49,13 @@ namespace RavenBOT.ELO.Modules.Modules
             var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
             if (lobby == null)
             {
-                await ReplyAsync("Channel is not a lobby.");
+                await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                 return;
             }
 
             lobby.PlayersPerTeam = playersPerTeam;
             Service.SaveLobby(lobby);
-            await ReplyAsync($"There can now be up to {playersPerTeam} in each team.");
+            await SimpleEmbedAsync($"There can now be up to {playersPerTeam} in each team.", Color.Green);
         }
 
         [Command("SetPickMode", RunMode = RunMode.Sync)]
@@ -66,13 +66,13 @@ namespace RavenBOT.ELO.Modules.Modules
             var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
             if (lobby == null)
             {
-                await ReplyAsync("Channel is not a lobby.");
+                await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                 return;
             }
 
             lobby.TeamPickMode = pickMode;
             Service.SaveLobby(lobby);
-            await ReplyAsync($"Pick mode set.");
+            await SimpleEmbedAsync($"Pick mode set.", Color.Green);
         }
 
 
@@ -83,13 +83,13 @@ namespace RavenBOT.ELO.Modules.Modules
             var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
             if (lobby == null)
             {
-                await ReplyAsync("Channel is not a lobby.");
+                await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                 return;
             }
 
             lobby.ReactOnJoinLeave = react;
             Service.SaveLobby(lobby);
-            await ReplyAsync($"React on join/leave set.");
+            await SimpleEmbedAsync($"React on join/leave set.", Color.Green);
         }
 
         [Command("PickModes", RunMode = RunMode.Async)]
@@ -97,7 +97,7 @@ namespace RavenBOT.ELO.Modules.Modules
         //[Alias("Pick Modes")] ignore this as it can potentially conflict with the lobby Pick command.
         public async Task DisplayPickModesAsync()
         {
-            await ReplyAsync(string.Join("\n", Extensions.EnumNames<Lobby.PickMode>()));
+            await SimpleEmbedAsync(string.Join("\n", Extensions.EnumNames<Lobby.PickMode>()), Color.Blue);
         }
 
         [Command("SetPickOrder", RunMode = RunMode.Sync)]
@@ -108,13 +108,13 @@ namespace RavenBOT.ELO.Modules.Modules
             var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
             if (lobby == null)
             {
-                await ReplyAsync("Channel is not a lobby.");
+                await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                 return;
             }
 
             lobby.CaptainPickOrder = orderMode;
             Service.SaveLobby(lobby);
-            await ReplyAsync($"Captain pick order set.");
+            await SimpleEmbedAsync($"Captain pick order set.", Color.Green);
         }
 
 
@@ -126,7 +126,7 @@ namespace RavenBOT.ELO.Modules.Modules
                     "`PickTwo` - 1-2-2-1-1... Pick order. Captain 1 gets first pick, then Captain 2 picks 2 players,\n" +
                     "then Captain 1 picks 2 players and then alternate picking 1 player until teams are filled\n" +
                     "This is often used to reduce any advantage given for picking the first player.";
-            await ReplyAsync(res);
+            await SimpleEmbedAsync(res, Color.Blue);
         }
 
         [Command("SetGameReadyAnnouncementChannel", RunMode = RunMode.Sync)]
@@ -136,26 +136,26 @@ namespace RavenBOT.ELO.Modules.Modules
         {
             if (destinationChannel == null)
             {
-                await ReplyAsync("You need to specify a channel for the announcements to be sent to.");
+                await SimpleEmbedAsync("You need to specify a channel for the announcements to be sent to.", Color.DarkBlue);
                 return;
             }
 
             if (destinationChannel.Id == Context.Channel.Id)
             {
-                await ReplyAsync("You cannot send announcements to the current channel.");
+                await SimpleEmbedAsync("You cannot send announcements to the current channel.", Color.Red);
                 return;
             }
 
             var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
             if (lobby == null)
             {
-                await ReplyAsync("Current channel is not a lobby.");
+                await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
                 return;
             }
 
             lobby.GameReadyAnnouncementChannel = destinationChannel.Id;
             Service.SaveLobby(lobby);
-            await ReplyAsync($"Game ready announcements for the current lobby will be sent to {destinationChannel.Mention}");
+            await SimpleEmbedAsync($"Game ready announcements for the current lobby will be sent to {destinationChannel.Mention}", Color.Green);
         }
 
         [Command("SetGameResultAnnouncementChannel", RunMode = RunMode.Sync)]
@@ -165,26 +165,26 @@ namespace RavenBOT.ELO.Modules.Modules
         {
             if (destinationChannel == null)
             {
-                await ReplyAsync("You need to specify a channel for the announcements to be sent to.");
+                await SimpleEmbedAsync("You need to specify a channel for the announcements to be sent to.", Color.DarkBlue);
                 return;
             }
 
             if (destinationChannel.Id == Context.Channel.Id)
             {
-                await ReplyAsync("You cannot send announcements to the current channel.");
+                await SimpleEmbedAsync("You cannot send announcements to the current channel.", Color.Red);
                 return;
             }
 
             var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
             if (lobby == null)
             {
-                await ReplyAsync("Current channel is not a lobby.");
+                await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
                 return;
             }
 
             lobby.GameResultAnnouncementChannel = destinationChannel.Id;
             Service.SaveLobby(lobby);
-            await ReplyAsync($"Game results for the current lobby will be sent to {destinationChannel.Mention}");
+            await SimpleEmbedAsync($"Game results for the current lobby will be sent to {destinationChannel.Mention}", Color.Green);
         }
 
         [Command("SetMinimumPoints", RunMode = RunMode.Sync)]
@@ -194,14 +194,14 @@ namespace RavenBOT.ELO.Modules.Modules
             var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
             if (lobby == null)
             {
-                await ReplyAsync("Current channel is not a lobby.");
+                await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
                 return;
             }
 
             lobby.MinimumPoints = points;
 
             Service.SaveLobby(lobby);
-            await ReplyAsync($"Minimum points is now set to {points}.");
+            await SimpleEmbedAsync($"Minimum points required to join this lobby is now set to {points}.", Color.Green);
         }
 
         [Command("ResetMinimumPoints", RunMode = RunMode.Sync)]
@@ -211,14 +211,14 @@ namespace RavenBOT.ELO.Modules.Modules
             var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
             if (lobby == null)
             {
-                await ReplyAsync("Current channel is not a lobby.");
+                await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
                 return;
             }
 
             lobby.MinimumPoints = null;
 
             Service.SaveLobby(lobby);
-            await ReplyAsync($"Minimum points is now disabled for this lobby.");
+            await SimpleEmbedAsync($"Minimum points is now disabled for this lobby.", Color.Green);
         }
 
         [Command("MapMode", RunMode = RunMode.Sync)]
@@ -227,7 +227,7 @@ namespace RavenBOT.ELO.Modules.Modules
         {
             if (mode == MapSelector.MapMode.Vote)
             {
-                await ReplyAsync("That mode is not available currently.");
+                await SimpleEmbedAsync("That mode is not available currently.", Color.DarkBlue);
                 return;
 
                 //Three options:
@@ -239,7 +239,7 @@ namespace RavenBOT.ELO.Modules.Modules
             var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
             if (lobby == null)
             {
-                await ReplyAsync("Current channel is not a lobby.");
+                await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
                 return;
             }
 
@@ -252,7 +252,7 @@ namespace RavenBOT.ELO.Modules.Modules
 
             lobby.MapSelector.Mode = mode;
             Service.SaveLobby(lobby);
-            await ReplyAsync("Mode set.");
+            await SimpleEmbedAsync("Mode set.", Color.Green);
         }
 
         [Command("MapMode", RunMode = RunMode.Async)]
@@ -262,7 +262,7 @@ namespace RavenBOT.ELO.Modules.Modules
             var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
             if (lobby == null)
             {
-                await ReplyAsync("Current channel is not a lobby.");
+                await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
                 return;
             }
 
@@ -271,7 +271,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 lobby.MapSelector = new MapSelector();
             }
 
-            await ReplyAsync($"Current Map Mode: {lobby.MapSelector?.Mode}");
+            await SimpleEmbedAsync($"Current Map Mode: {lobby.MapSelector?.Mode}", Color.Blue);
             return;
         }
 
@@ -279,7 +279,7 @@ namespace RavenBOT.ELO.Modules.Modules
         [Summary("Shows all available map selection modes.")]
         public async Task MapModes()
         {
-            await ReplyAsync(string.Join(", ", Extensions.EnumNames<MapSelector.MapMode>()));
+            await SimpleEmbedAsync(string.Join(", ", Extensions.EnumNames<MapSelector.MapMode>()), Color.Blue);
         }
 
         [Command("ClearMaps", RunMode = RunMode.Sync)]
@@ -289,19 +289,19 @@ namespace RavenBOT.ELO.Modules.Modules
             var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
             if (lobby == null)
             {
-                await ReplyAsync("Current channel is not a lobby.");
+                await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
                 return;
             }
 
             if (lobby.MapSelector == null)
             {
-                await ReplyAsync("There are no maps to clear.");
+                await SimpleEmbedAsync("There are no maps to clear.", Color.DarkBlue);
                 return;
             }
 
             lobby.MapSelector.Maps.Clear();
             Service.SaveLobby(lobby);
-            await ReplyAsync("Map added.");
+            await SimpleEmbedAsync("Map added.", Color.Green);
         }
 
         [Command("AddMap", RunMode = RunMode.Sync)]
@@ -312,7 +312,7 @@ namespace RavenBOT.ELO.Modules.Modules
             var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
             if (lobby == null)
             {
-                await ReplyAsync("Current channel is not a lobby.");
+                await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
                 return;
             }
 
@@ -323,7 +323,7 @@ namespace RavenBOT.ELO.Modules.Modules
 
             lobby.MapSelector.Maps.Add(mapName);
             Service.SaveLobby(lobby);
-            await ReplyAsync("Map added.");
+            await SimpleEmbedAsync("Map added.", Color.Green);
         }
 
         [Command("AddMaps", RunMode = RunMode.Sync)]
@@ -338,7 +338,7 @@ namespace RavenBOT.ELO.Modules.Modules
             var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
             if (lobby == null)
             {
-                await ReplyAsync("Current channel is not a lobby.");
+                await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
                 return;
             }
 
@@ -352,7 +352,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 lobby.MapSelector.Maps.Add(map);
             }
             Service.SaveLobby(lobby);
-            await ReplyAsync("Map(s) added.");
+            await SimpleEmbedAsync("Map(s) added.", Color.Green);
         }
 
         [Command("DelMap", RunMode = RunMode.Sync)]
@@ -362,24 +362,24 @@ namespace RavenBOT.ELO.Modules.Modules
             var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
             if (lobby == null)
             {
-                await ReplyAsync("Current channel is not a lobby.");
+                await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
                 return;
             }
 
             if (lobby.MapSelector == null)
             {
-                await ReplyAsync("There are no maps to remove.");
+                await SimpleEmbedAsync("There are no maps to remove.", Color.DarkBlue);
                 return;
             }
 
             if (lobby.MapSelector.Maps.Remove(mapName))
             {
                 Service.SaveLobby(lobby);
-                await ReplyAsync("Map removed.");
+                await SimpleEmbedAsync("Map removed.", Color.Green);
             }
             else
             {
-                await ReplyAsync("There was no map matching that name found.");
+                await SimpleEmbedAsync("There was no map matching that name found.", Color.DarkBlue);
             }
         }
 
@@ -391,7 +391,7 @@ namespace RavenBOT.ELO.Modules.Modules
 
             lobby.DmUsersOnGameReady = !lobby.DmUsersOnGameReady;
             Service.SaveLobby(lobby);
-            await ReplyAsync($"DM when games are ready: {lobby.DmUsersOnGameReady}");
+            await SimpleEmbedAsync($"DM when games are ready: {lobby.DmUsersOnGameReady}", Color.Blue);
         }
 
         [Command("SetDescription", RunMode = RunMode.Sync)]
@@ -402,7 +402,7 @@ namespace RavenBOT.ELO.Modules.Modules
 
             lobby.Description = description;
             Service.SaveLobby(lobby);
-            await ReplyAsync("Lobby description set.");
+            await SimpleEmbedAsync("Lobby description set.", Color.Blue);
         }
 
         [Command("DeleteLobby", RunMode = RunMode.Sync)]
@@ -412,11 +412,11 @@ namespace RavenBOT.ELO.Modules.Modules
             if (Context.Channel.IsLobby(Service, out var lobby))
             {
                 Service.DeleteLobby(Context.Guild.Id, Context.Channel.Id);
-                await ReplyAsync("Lobby and all games played in it have been removed.");
+                await SimpleEmbedAsync("Lobby and all games played in it have been removed.", Color.Green);
             }
             else
             {
-                await ReplyAsync("Channel is not a lobby.");
+                await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
             }
         }
 
@@ -429,16 +429,16 @@ namespace RavenBOT.ELO.Modules.Modules
             {
                 if (hideQueue == null)
                 {
-                    await ReplyAsync($"Current Hide Queue Setting: {lobby.HideQueue}");
+                    await SimpleEmbedAsync($"Current Hide Queue Setting: {lobby.HideQueue}", Color.Blue);
                     return;
                 }
                 lobby.HideQueue = hideQueue.Value;
                 Service.SaveLobby(lobby);
-                await ReplyAsync($"Hide Queue: {hideQueue.Value}");
+                await SimpleEmbedAsync($"Hide Queue: {hideQueue.Value}", Color.Green);
             }
             else
             {
-                await ReplyAsync("Channel is not a lobby.");
+                await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
             }
         }
 
@@ -451,16 +451,16 @@ namespace RavenBOT.ELO.Modules.Modules
             {
                 if (mentionUsers == null)
                 {
-                    await ReplyAsync($"Current Mention Users Setting: {lobby.MentionUsersInReadyAnnouncement}");
+                    await SimpleEmbedAsync($"Current Mention Users Setting: {lobby.MentionUsersInReadyAnnouncement}", Color.Blue);
                     return;
                 }
                 lobby.MentionUsersInReadyAnnouncement = mentionUsers.Value;
                 Service.SaveLobby(lobby);
-                await ReplyAsync($"Mention Users: {mentionUsers.Value}");
+                await SimpleEmbedAsync($"Mention Users: {mentionUsers.Value}", Color.Green);
             }
             else
             {
-                await ReplyAsync("Channel is not a lobby.");
+                await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
             }
         }
     }
