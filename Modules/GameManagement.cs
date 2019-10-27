@@ -209,8 +209,8 @@ namespace RavenBOT.ELO.Modules.Modules
                 return;
             }
 
-            await UpdateScores(lobby, game, competition);
-            //TODO: Announce the undone game
+            await UndoScoreUpdatesAsync(game, competition);
+            await SimpleEmbedAsync($"Game #{gameNumber} in {lobbyChannel.Mention} Undone.");
         }
 
         public async Task AnnounceResultAsync(Lobby lobby, EmbedBuilder builder)
@@ -241,7 +241,7 @@ namespace RavenBOT.ELO.Modules.Modules
         }
 
 
-        public async Task UpdateScores(Lobby lobby, GameResult game, CompetitionConfig competition)
+        public async Task UndoScoreUpdatesAsync(GameResult game, CompetitionConfig competition)
         {
             foreach (var score in game.ScoreUpdates)
             {
@@ -270,6 +270,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 //Save the player profile after updating scores.
                 Service.SavePlayer(player);
 
+
                 var guildUser = Context.Guild.GetUser(player.UserId);
                 if (guildUser == null)
                 {
@@ -277,73 +278,10 @@ namespace RavenBOT.ELO.Modules.Modules
                     continue;
                 }
 
-                var displayName = competition.GetNickname(player);
-                bool nicknameChange = false;
-                if (guildUser.Nickname != null && competition.UpdateNames)
-                {
-                    if (!guildUser.Nickname.Equals(displayName))
-                    {
-                        nicknameChange = true;
-                    }
-                }
-
-                //TODO: Rank updates
-                bool rankChange = false;
-                var newRank = competition.MaxRank(player.Points);
-                var currentRoles = guildUser.Roles.Select(x => x.Id).ToList();
-                if (currentRank == null)
-                {
-                    if (newRank != null)
-                    {
-                        //Add the new rank.
-                        currentRoles.Add(newRank.RoleId);
-                        rankChange = true;
-                    }
-                }
-                else if (newRank != null)
-                {
-                    //Current rank and new rank are both not null
-                    if (currentRank.RoleId != newRank.RoleId)
-                    {
-                        currentRoles.Remove(currentRank.RoleId);
-                        currentRoles.Add(newRank.RoleId);
-                        rankChange = true;
-                    }
-                }
-                else
-                {
-                    //Current rank exists but new rank is null
-                    //Remove the current rank.
-                    currentRoles.Remove(currentRank.RoleId);
-                    rankChange = true;
-                }
-
-                if (rankChange || nicknameChange)
-                {
-                    try
-                    {
-                        await guildUser.ModifyAsync(x =>
-                        {
-                            if (nicknameChange)
-                            {
-                                x.Nickname = displayName;
-                            }
-
-                            if (rankChange)
-                            {
-                                //Set the user's roles to the modified list which removes and lost ranks and adds any gained ranks
-                                x.RoleIds = currentRoles.Where(r => r != Context.Guild.EveryoneRole.Id).ToArray();
-                            }
-                        });
-                    }
-                    catch
-                    {
-                        //TODO: Add to list of name change errors.
-                    }
-                }
+                await Service.UpdateUserAsync(competition, player, guildUser);
             }
 
-            game.GameState = GameResult.State.Undecided;
+            game.GameState = State.Undecided;
             game.ScoreUpdates = new Dictionary<ulong, int>();
             Service.SaveGame(game);
         }
