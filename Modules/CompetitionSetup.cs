@@ -177,6 +177,34 @@ namespace RavenBOT.ELO.Modules.Modules
             await SimpleEmbedAsync($"Register Message set.\nExample:\n{exampleRegisterMessage}", Color.Green);
         }
 
+        [Command("RegisterMessage", RunMode = RunMode.Async)]
+        [Summary("Displays the current register message for the server")]
+        public async Task ShowRegisterMessageAsync()
+        {
+            var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
+            var testProfile = new Player(0, 0, "Player");
+            testProfile.Wins = 5;
+            testProfile.Losses = 2;
+            testProfile.Draws = 1;
+            testProfile.Points = 600;
+
+            Service.SaveCompetition(competition);
+            var response = new EmbedBuilder
+            {
+                Color = Color.Blue
+            };
+
+            if (!string.IsNullOrWhiteSpace(competition.RegisterMessageTemplate))
+            {
+                response.AddField("Unformatted Message", competition.RegisterMessageTemplate);
+                response.AddField("Example Message", competition.FormatRegisterMessage(testProfile));
+                await ReplyAsync(response);
+                return;
+            }
+
+            await SimpleEmbedAsync($"This server does not have a register message set.", Color.DarkBlue);
+        }
+
         [Command("RegisterMessageFormats", RunMode = RunMode.Async)]
         [Alias("RegisterFormats")]
         [Summary("Shows replacements that can be used in the register message")]
