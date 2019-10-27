@@ -1,3 +1,4 @@
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using RavenBOT.Common;
@@ -35,7 +36,7 @@ namespace RavenBOT.ELO.Modules.Modules
             {
                 if (!competition.AllowReRegister)
                 {
-                    await ReplyAsync("You are not allowed to re-register.");
+                    await SimpleEmbedAndDeleteAsync("You are not allowed to re-register.", Color.Red);
                     return;
                 }
             }
@@ -45,7 +46,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 if (limit < competition.RegistrationCount)
                 {
                     var config = Premium.GetConfig();
-                    await ReplyAsync($"This server has exceeded the maximum registration count of {limit}, it must be upgraded to premium to allow additional registrations, you can get premium by subscribing at {config.PageUrl} for support and to claim premium, a patreon must join the ELO server: {config.ServerInvite}");
+                    await SimpleEmbedAsync($"This server has exceeded the maximum registration count of {limit}, it must be upgraded to premium to allow additional registrations, you can get premium by subscribing at {config.PageUrl} for support and to claim premium, a patreon must join the ELO server: {config.ServerInvite}", Color.DarkBlue);
                     return;
                 }
                 player = Service.CreatePlayer(Context.Guild.Id, Context.User.Id, name);
@@ -57,10 +58,10 @@ namespace RavenBOT.ELO.Modules.Modules
 
             var responses = await Service.UpdateUserAsync(competition, player, Context.User as SocketGuildUser);
 
-            await ReplyAsync(competition.FormatRegisterMessage(player));
+            await SimpleEmbedAsync(competition.FormatRegisterMessage(player), Color.Blue);
             if (responses.Count > 0)
             {
-                await SimpleEmbedAsync(string.Join("\n", responses));
+                await SimpleEmbedAsync(string.Join("\n", responses), Color.Red);
             }
         }
 
@@ -72,20 +73,20 @@ namespace RavenBOT.ELO.Modules.Modules
 
             if (!Context.User.IsRegistered(Service, out var player))
             {
-                await ReplyAsync("You are not registered yet.");
+                await SimpleEmbedAsync("You are not registered yet.", Color.DarkBlue);
                 return;
             }
 
             var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
             if (!competition.AllowSelfRename)
             {
-                await ReplyAsync("You are not allowed to rename yourself");
+                await SimpleEmbedAndDeleteAsync("You are not allowed to rename yourself.", Color.Red);
                 return;
             }
 
             if (name == null)
             {
-                await ReplyAsync("You must specify a new name in order to be renamed.");
+                await SimpleEmbedAndDeleteAsync("You must specify a new name in order to be renamed.", Color.Red);
                 return;
             }
 
@@ -105,17 +106,17 @@ namespace RavenBOT.ELO.Modules.Modules
                     }
                     else
                     {
-                        await ReplyAsync("The bot does not have the `ManageNicknames` permission and therefore cannot update your nickname.");
+                        await SimpleEmbedAsync("The bot does not have the `ManageNicknames` permission and therefore cannot update your nickname.", Color.Red);
                     }
                 }
                 else
                 {
-                    await ReplyAsync("You have a higher permission level than the bot and therefore it cannot update your nickname.");
+                    await SimpleEmbedAsync("You have a higher permission level than the bot and therefore it cannot update your nickname.", Color.Red);
                 }
             }
 
             Service.SavePlayer(player);
-            await ReplyAsync($"Your profile has been renamed from {Discord.Format.Sanitize(originalDisplayName)} to {player.GetDisplayNameSafe()}");
+            await SimpleEmbedAsync($"Your profile has been renamed from {Discord.Format.Sanitize(originalDisplayName)} to {player.GetDisplayNameSafe()}", Color.Green);
         }
     }
 }
