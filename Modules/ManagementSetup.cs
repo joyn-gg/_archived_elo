@@ -1,5 +1,6 @@
 using Discord.Commands;
 using Discord.WebSocket;
+using Discord;
 using RavenBOT.Common;
 using RavenBOT.ELO.Modules.Methods;
 using System.Threading.Tasks;
@@ -27,11 +28,11 @@ namespace RavenBOT.ELO.Modules.Modules
             Service.SaveCompetition(competition);
             if (modRole != null)
             {
-                await ReplyAsync("Moderator role set.");
+                await SimpleEmbedAsync("Moderator role set.", Color.Green);
             }
             else
             {
-                await ReplyAsync("Mod role is no longer set, only ELO Admins and users with a role that has `Administrator` permissions can run moderator commands now.");
+                await SimpleEmbedAsync("Mod role is no longer set, only ELO Admins and users with a role that has `Administrator` permissions can run moderator commands now.", Color.DarkBlue);
             }
         }
 
@@ -44,11 +45,11 @@ namespace RavenBOT.ELO.Modules.Modules
             Service.SaveCompetition(competition);
             if (adminRole != null)
             {
-                await ReplyAsync("Admin role set.");
+                await SimpleEmbedAsync("Admin role set.", Color.Green);
             }
             else
             {
-                await ReplyAsync("Admin role is no longer set, only users with a role that has `Administrator` permissions can act as an admin now.");
+                await ReplyAsync("Admin role is no longer set, only users with a role that has `Administrator` permissions can act as an admin now.", Color.DarkBlue);
             }
         }
     }
