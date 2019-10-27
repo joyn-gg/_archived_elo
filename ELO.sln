@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29324.140
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ELO", "ELO.csproj", "{E62FABCA-D57C-4C7D-9515-AF248AE74CB8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ELO", "ELO.csproj", "{E62FABCA-D57C-4C7D-9515-AF248AE74CB8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RavenBOT.Database.LiteDatabase", "..\..\RavenBOT-Libraries\RavenBOT.Database.LiteDatabase\RavenBOT.Database.LiteDatabase.csproj", "{24EC2D0B-08F7-4D53-B5B8-61FD83805170}"
 EndProject
@@ -12,6 +12,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RavenBOT.Core", "..\..\RavenBOT-Libraries\RavenBOT.Core\RavenBOT.Core.csproj", "{DF449017-F4D8-4B25-96B6-6F87F97D01E4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RavenBOT.Common", "..\..\RavenBOT-Libraries\RavenBOT.Common\RavenBOT.Common.csproj", "{4F3E32B5-77A4-41F0-931B-72F7201BB508}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ELO Dev", "ELO Dev.csproj", "{A995A62F-56FD-4AC6-8E1C-1DB95A436ABD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{4F3E32B5-77A4-41F0-931B-72F7201BB508}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4F3E32B5-77A4-41F0-931B-72F7201BB508}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4F3E32B5-77A4-41F0-931B-72F7201BB508}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A995A62F-56FD-4AC6-8E1C-1DB95A436ABD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A995A62F-56FD-4AC6-8E1C-1DB95A436ABD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A995A62F-56FD-4AC6-8E1C-1DB95A436ABD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A995A62F-56FD-4AC6-8E1C-1DB95A436ABD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\RavenBOT-Libraries\RavenBOT.Core\RavenBOT.Core.csproj" />
+    <ProjectReference Include="..\..\RavenBOT-Libraries\RavenBOT.Database.LiteDatabase\RavenBOT.Database.LiteDatabase.csproj" />
+    <ProjectReference Include="..\..\RavenBOT-Libraries\RavenBOT.Database.RavenDatabase\RavenBOT.Database.RavenDatabase.csproj" />
+  </ItemGroup>
+
+</Project>
