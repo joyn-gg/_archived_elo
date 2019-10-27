@@ -161,7 +161,7 @@ namespace RavenBOT.ELO.Modules.Methods
                                 $"**Creation Time:** {game.CreationTime.ToString("dd MMM yyyy")} {game.CreationTime.ToShortTimeString()}\n" +
                                 $"**Comment:** {game.Comment ?? "N/A"}\n" +
                                 $"**Submitted By:** {MentionUtils.MentionUser(game.Submitter)}\n" +
-                                string.Join("\n", game.ScoreUpdates.Select(x => $"{MentionUtils.MentionUser(x.Key)} {(x.Value >= 0 ? $"+{x.Value}" : x.Value.ToString())}")).FixLength(1024);
+                                string.Join("\n", game.ScoreUpdates.Select(x => $"{MentionUtils.MentionUser(x.Key)} {(x.Value >= 0 ? $"`+{x.Value}`" : $"`{x.Value}`")}")).FixLength(1024);
 
             return embed;
         }
@@ -243,7 +243,7 @@ namespace RavenBOT.ELO.Modules.Methods
                     if (eUser == null) continue;
 
                     var pointUpdate = game.ScoreUpdates.FirstOrDefault(x => x.Key == player);
-                    pointsAwarded.Add($"{eUser.GetDisplayNameSafe()} - +{pointUpdate.Value}");
+                    pointsAwarded.Add($"{eUser.GetDisplayNameSafe()} - `+{pointUpdate.Value}`");
                 }
 
                 var losers = game.GetLosingTeam();
@@ -254,7 +254,7 @@ namespace RavenBOT.ELO.Modules.Methods
                     if (eUser == null) continue;
 
                     var pointUpdate = game.ScoreUpdates.FirstOrDefault(x => x.Key == player);
-                    pointsAwarded.Add($"{eUser.GetDisplayNameSafe()} - {pointUpdate.Value}");
+                    pointsAwarded.Add($"{eUser.GetDisplayNameSafe()} - `{pointUpdate.Value}`");
                 }
                 embed.AddField($"Winning Team, Team {game.WinningTeam}", game.GetWinningTeam().Item2.GetTeamInfo());
                 embed.AddField($"Losing Team", game.GetLosingTeam().Item2.GetTeamInfo());

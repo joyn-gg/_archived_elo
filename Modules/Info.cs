@@ -139,7 +139,7 @@ namespace RavenBOT.ELO.Modules.Modules
             //Iterate through the players and add their summary line to the list.
             foreach (var player in players)
             {
-                sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - {player.Points}");
+                sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - `{player.Points}`");
                 startValue++;
             }
 

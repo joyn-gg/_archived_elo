@@ -235,7 +235,7 @@ namespace RavenBOT.ELO.Modules.Modules
             //Iterate through the players and add their summary line to the list.
             foreach (var player in players)
             {
-                sb.AppendLine($"{startValue}: {MentionUtils.MentionUser(player.Item1)} - {player.Item2}");
+                sb.AppendLine($"{startValue}: {MentionUtils.MentionUser(player.Item1)} - `{player.Item2}`");
                 startValue++;
             }
 
