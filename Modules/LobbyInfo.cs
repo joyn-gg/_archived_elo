@@ -49,24 +49,28 @@ namespace RavenBOT.ELO.Modules.Modules
                 Color = Color.Blue
             };
 
+            embed.AddField("Settings",
+                $"**Players Per Team:** {CurrentLobby.PlayersPerTeam}\n" +
+                $"**Pick Mode:** {CurrentLobby.TeamPickMode}\n" +
+                $"{(CurrentLobby.MinimumPoints != null ? $"**Minimum Points to Queue:** {CurrentLobby.MinimumPoints}\n" : "")}");
+
             string maps;
             if (CurrentLobby.MapSelector != null)
             {
+                var history = CurrentLobby.MapSelector.GetHistory();
                 maps = $"\n**Map Mode:** {CurrentLobby.MapSelector.Mode}\n" +
-                        $"**Maps:** {string.Join(", ", CurrentLobby.MapSelector.Maps)}\n" +
-                        $"**Recent Maps:** {string.Join(", ", CurrentLobby.MapSelector.GetHistory())}";
+                        $"**Maps:** {(CurrentLobby.MapSelector.Maps.Count == 0 ? "N/A" : string.Join(", ", CurrentLobby.MapSelector.Maps))}\n" +
+                        $"**Recent Maps:** {(history.Count == 0 ? "N/A" : string.Join(", ", history))}";
             }
             else
             {
                 maps = "N/A";
             }
 
-            embed.Description = $"**Pick Mode:** {CurrentLobby.TeamPickMode}\n" +
-                $"{(CurrentLobby.MinimumPoints != null ? $"**Minimum Points to Queue:** {CurrentLobby.MinimumPoints}\n" : "")}" +
-                $"**Games Played:** {CurrentLobby.CurrentGameCount}\n" +
-                $"**Players Per Team:** {CurrentLobby.PlayersPerTeam}\n" +
-                $"**Map Info:** {maps}\n" +
-                "For Players in Queue use the `Queue` or `Q` Command.";
+            embed.AddField("Map Info", maps);
+
+            embed.AddField("Info", $"**Games Played:** {CurrentLobby.CurrentGameCount}\n" +
+                "For Players in Queue use the `Queue` or `Q` Command.");
             await ReplyAsync(embed);
         }
 
