@@ -27,21 +27,21 @@ namespace RavenBOT.ELO.Modules.Modules
         {
             if (!user.IsRegistered(Service, out var player))
             {
-                await ReplyAsync("Player is not registered.");
+                await SimpleEmbedAndDeleteAsync("Player is not registered.", Color.Red);
                 return;
             }
 
             if (player.NameLog.Any())
             {
-                await SimpleEmbedAsync($"Current: {player.GetDisplayNameSafe()}\n" + string.Join("\n", player.NameLog.Select(x =>
+                await SimpleEmbedAndDeleteAsync($"Current: {player.GetDisplayNameSafe()}\n" + string.Join("\n", player.NameLog.Select(x =>
                 {
                     var time = new DateTime(x.Key);
                     return $"{time.ToString("dd MMM yyyy")} {time.ToShortTimeString()} - {x.Value}";
-                })));
+                })), Color.Blue);
             }
             else
             {
-                await ReplyAsync("There are no name changes in history for this user.");
+                await SimpleEmbedAsync("There are no name changes in history for this user.", Color.DarkBlue);
             }
         }
 
@@ -53,7 +53,7 @@ namespace RavenBOT.ELO.Modules.Modules
             var players = Service.GetPlayers(x => x.GuildId == Context.Guild.Id && x.IsBanned);
             if (players.Length == 0)
             {
-                await ReplyAsync("There aren't any banned players.");
+                await SimpleEmbedAsync("There aren't any banned players.", Color.Blue);
                 return;
             }
             var pages = players.OrderBy(x => x.CurrentBan.RemainingTime).SplitList(20).Select(x =>
@@ -72,13 +72,13 @@ namespace RavenBOT.ELO.Modules.Modules
         {
             if (!user.IsRegistered(Service, out var player))
             {
-                await ReplyAsync("Player is not registered.");
+                await SimpleEmbedAndDeleteAsync("Player is not registered.", Color.Red);
                 return;
             }
 
             player.CurrentBan.ManuallyDisabled = true;
             Service.SavePlayer(player);
-            await ReplyAsync("Unbanned player.");
+            await SimpleEmbedAsync("Unbanned player.", Color.Green);
         }
 
         [Command("BanUser", RunMode = RunMode.Sync)]
@@ -89,13 +89,13 @@ namespace RavenBOT.ELO.Modules.Modules
             var player = Service.GetPlayer(Context.Guild.Id, user.Id);
             if (player == null)
             {
-                await ReplyAsync("User is not registered.");
+                await SimpleEmbedAndDeleteAsync("User is not registered.", Color.Red);
                 return;
             }
 
             player.BanHistory.Add(new Player.Ban(time, Context.User.Id, reason));
             Service.SavePlayer(player);
-            await ReplyAsync($"Player banned from joining games until: {player.CurrentBan.ExpiryTime.ToString("dd MMM yyyy")} {player.CurrentBan.ExpiryTime.ToShortTimeString()} in {player.CurrentBan.RemainingTime.GetReadableLength()}");
+            await SimpleEmbedAsync($"{user.Mention} banned from joining games until: {player.CurrentBan.ExpiryTime.ToString("dd MMM yyyy")} {player.CurrentBan.ExpiryTime.ToShortTimeString()} in {player.CurrentBan.RemainingTime.GetReadableLength()}", Color.DarkRed);
         }
 
         [Command("RenameUser", RunMode = RunMode.Sync)]
@@ -105,7 +105,7 @@ namespace RavenBOT.ELO.Modules.Modules
         {
             if (!user.IsRegistered(Service, out var player))
             {
-                await ReplyAsync("User isn't registered.");
+                await SimpleEmbedAndDeleteAsync("User isn't registered.", Color.Red);
                 return;
             }
 
@@ -120,7 +120,7 @@ namespace RavenBOT.ELO.Modules.Modules
             }
             else
             {
-                await SimpleEmbedAsync("User's profile has been renamed successfully.");
+                await SimpleEmbedAsync("User's profile has been renamed successfully.", Color.Green);
             }
         }
 
@@ -132,7 +132,7 @@ namespace RavenBOT.ELO.Modules.Modules
             var player = Service.GetPlayer(Context.Guild.Id, user.Id);
             if (player == null)
             {
-                await ReplyAsync("User isn't registered.");
+                await SimpleEmbedAndDeleteAsync("User isn't registered.", Color.Red);
                 return;
             }
 
@@ -140,7 +140,7 @@ namespace RavenBOT.ELO.Modules.Modules
 
             //Remove user ranks, register role and nickname
             Service.RemovePlayer(player);
-            await ReplyAsync("User profile deleted.");
+            await SimpleEmbedAsync("User profile deleted.", Color.Green);
             competition.RegistrationCount--;
             Service.SaveCompetition(competition);
 
@@ -177,7 +177,7 @@ namespace RavenBOT.ELO.Modules.Modules
             }
             else
             {
-                await ReplyAsync("The user being deleted has a higher permission level than the bot and cannot have their ranks or nickname modified.");
+                await SimpleEmbedAsync("The user being deleted has a higher permission level than the bot and cannot have their ranks or nickname modified.", Color.Red);
             }
         }
 
