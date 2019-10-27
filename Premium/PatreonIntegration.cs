@@ -180,7 +180,7 @@ namespace RavenBOT.ELO.Modules.Premium
             public ulong GuildId { get; set; }
             public int DefaultRegistrationLimit { get; set; } = 20;
             public bool Enabled { get; set; } = true;
-            public string ServerInvite { get; set; }
+            public string ServerInvite { get; set; } = "https://discord.me/elo";
             public string PageUrl { get; set; }
         }
 

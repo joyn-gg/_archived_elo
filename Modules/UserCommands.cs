@@ -44,7 +44,8 @@ namespace RavenBOT.ELO.Modules.Modules
                 var limit = Premium.GetRegistrationLimit(Context);
                 if (limit < competition.RegistrationCount)
                 {
-                    await ReplyAsync($"This server has exceeded the maximum registration count of {limit}, it must be upgraded to premium to allow additional registrations");
+                    var config = Premium.GetConfig();
+                    await ReplyAsync($"This server has exceeded the maximum registration count of {limit}, it must be upgraded to premium to allow additional registrations, you can get premium by subscribing at {config.PageUrl} for support and to claim premium, a patreon must join the ELO server: {config.ServerInvite}");
                     return;
                 }
                 player = Service.CreatePlayer(Context.Guild.Id, Context.User.Id, name);
