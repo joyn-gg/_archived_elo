@@ -137,7 +137,7 @@ namespace RavenBOT.ELO.Modules.Modules
             game.ScoreUpdates = updates.ToDictionary(x => x.Item1.UserId, x => x.Item2);
             embed.Description = sb.ToString();
             Service.SaveManualGame(game);
-            await ReplyAsync("", false, embed.Build());
+            await ReplyAsync(embed);
         }
     }
 }
