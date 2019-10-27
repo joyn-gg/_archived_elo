@@ -157,11 +157,11 @@ namespace RavenBOT.ELO.Modules.Methods
             }
 
 
-            embed.Description = $"GameId: {game.GameId}\n" +
-                                $"Creation Time: {game.CreationTime.ToString("dd MMM yyyy")} {game.CreationTime.ToShortTimeString()}\n" +
-                                $"Comment: {game.Comment ?? "N/A"}\n" +
-                                $"Submitted By: {MentionUtils.MentionUser(game.Submitter)}\n" +
-                                string.Join("\n", game.ScoreUpdates.Select(x => $"{MentionUtils.MentionUser(x.Key)} {x.Value}")).FixLength(1024);
+            embed.Description = $"**GameId:** {game.GameId}\n" +
+                                $"**Creation Time:** {game.CreationTime.ToString("dd MMM yyyy")} {game.CreationTime.ToShortTimeString()}\n" +
+                                $"**Comment:** {game.Comment ?? "N/A"}\n" +
+                                $"**Submitted By:** {MentionUtils.MentionUser(game.Submitter)}\n" +
+                                string.Join("\n", game.ScoreUpdates.Select(x => $"{MentionUtils.MentionUser(x.Key)} {(x.Value >= 0 ? $"+{x.Value}" : x.Value.ToString())}")).FixLength(1024);
 
             return embed;
         }
