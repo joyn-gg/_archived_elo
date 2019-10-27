@@ -7,12 +7,9 @@
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.6.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\RavenBOT-Libraries\RavenBOT.Core\RavenBOT.Core.csproj" />
-    <ProjectReference Include="..\..\RavenBOT-Libraries\RavenBOT.Database.LiteDatabase\RavenBOT.Database.LiteDatabase.csproj" />
-    <ProjectReference Include="..\..\RavenBOT-Libraries\RavenBOT.Database.RavenDatabase\RavenBOT.Database.RavenDatabase.csproj" />
+    <PackageReference Include="RavenBOT.Core" Version="1.0.0" />
+    <PackageReference Include="RavenBOT.Database.LiteDatabase" Version="1.0.0" />
+    <PackageReference Include="RavenBOT.Database.RavenDatabase" Version="1.0.0" />
   </ItemGroup>
 
 </Project>
