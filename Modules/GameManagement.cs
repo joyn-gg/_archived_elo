@@ -29,7 +29,7 @@ namespace RavenBOT.ELO.Modules.Modules
         [Summary("Shows possible vote options for the Result command")]
         public async Task ShowResultsAsync()
         {
-            await ReplyAsync(string.Join("\n", Extensions.EnumNames<GameResult.Vote.VoteState>()));
+            await SimpleEmbedAsync(string.Join("\n", Extensions.EnumNames<GameResult.Vote.VoteState>()), Color.Blue);
         }
 
 
@@ -52,47 +52,48 @@ namespace RavenBOT.ELO.Modules.Modules
             //Do vote conversion to ensure that the state is a string and not an int (to avoid confusion with team number from old elo version)
             if (int.TryParse(voteState, out var voteNumber))
             {
-                await ReplyAsync("Please supply a result relevant to you rather than the team number. Use the `Results` command to see a list of these.");
+                await SimpleEmbedAsync("Please supply a result relevant to you rather than the team number. Use the `Results` command to see a list of these.", Color.DarkBlue);
                 return;
             }
+
             if (!Enum.TryParse(voteState, true, out GameResult.Vote.VoteState vote))
             {
-                await ReplyAsync("Your vote was invalid. Please choose a result relevant to you. ie. Win (if you won the game) or Lose (if you lost the game)\nYou can view all possible results using the `Results` command.");
+                await SimpleEmbedAsync("Your vote was invalid. Please choose a result relevant to you. ie. Win (if you won the game) or Lose (if you lost the game)\nYou can view all possible results using the `Results` command.", Color.Red);
                 return;
             }
 
             var game = Service.GetGame(Context.Guild.Id, lobbyChannel.Id, gameNumber);
             if (game == null)
             {
-                await ReplyAsync("GameID is invalid.");
+                await SimpleEmbedAsync("Game not found.", Color.Red);
                 return;
             }
 
             if (game.GameState != GameResult.State.Undecided)
             {
-                await ReplyAsync("You can only vote on the result of undecided games.");
+                await SimpleEmbedAsync("You can only vote on the result of undecided games.", Color.Red);
                 return;
             }
             else if (game.VoteComplete)
             {
                 //Result is undecided but vote has taken place, therefore it wasn't unanimous
-                await ReplyAsync("Vote has already been taken on this game but wasn't unanimous, ask an admin to submit the result");
+                await SimpleEmbedAsync("Vote has already been taken on this game but wasn't unanimous, ask an admin to submit the result.", Color.DarkBlue);
                 return;
             }
 
             if (!game.Team1.Players.Contains(Context.User.Id) && !game.Team2.Players.Contains(Context.User.Id))
             {
-                await ReplyAsync("You are not a player in this game and cannot vote on it's result.");
+                await SimpleEmbedAsync("You are not a player in this game and cannot vote on it's result.", Color.Red);
                 return;
             }
 
             if (game.Votes.ContainsKey(Context.User.Id))
             {
-                await ReplyAsync("You already submitted your vote for this game.");
+                await SimpleEmbedAsync("You already submitted your vote for this game.", Color.DarkBlue);
                 return;
             }
 
-            var userVote = new GameResult.Vote()
+            var userVote = new Vote()
             {
                 UserId = Context.User.Id,
                 UserVote = vote
@@ -103,28 +104,28 @@ namespace RavenBOT.ELO.Modules.Modules
             //Ensure votes is greater than half the amount of players.
             if (game.Votes.Count * 2 > game.Team1.Players.Count + game.Team2.Players.Count)
             {
-                var drawCount = game.Votes.Count(x => x.Value.UserVote == GameResult.Vote.VoteState.Draw);
-                var cancelCount = game.Votes.Count(x => x.Value.UserVote == GameResult.Vote.VoteState.Cancel);
+                var drawCount = game.Votes.Count(x => x.Value.UserVote == Vote.VoteState.Draw);
+                var cancelCount = game.Votes.Count(x => x.Value.UserVote == Vote.VoteState.Cancel);
 
                 var team1WinCount = game.Votes
                                         //Get players in team 1 and count wins
                                         .Where(x => game.Team1.Players.Contains(x.Key))
-                                        .Count(x => x.Value.UserVote == GameResult.Vote.VoteState.Win)
+                                        .Count(x => x.Value.UserVote == Vote.VoteState.Win)
                                     +
                                     game.Votes
                                         //Get players in team 2 and count losses
                                         .Where(x => game.Team2.Players.Contains(x.Key))
-                                        .Count(x => x.Value.UserVote == GameResult.Vote.VoteState.Lose);
+                                        .Count(x => x.Value.UserVote == Vote.VoteState.Lose);
 
                 var team2WinCount = game.Votes
                                         //Get players in team 2 and count wins
                                         .Where(x => game.Team2.Players.Contains(x.Key))
-                                        .Count(x => x.Value.UserVote == GameResult.Vote.VoteState.Win)
+                                        .Count(x => x.Value.UserVote == Vote.VoteState.Win)
                                     +
                                     game.Votes
                                         //Get players in team 1 and count losses
                                         .Where(x => game.Team1.Players.Contains(x.Key))
-                                        .Count(x => x.Value.UserVote == GameResult.Vote.VoteState.Lose);
+                                        .Count(x => x.Value.UserVote == Vote.VoteState.Lose);
 
                 if (team1WinCount == game.Votes.Count)
                 {
@@ -154,7 +155,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 {
                     //Lock game votes and require admin to decide.
                     //TODO: Show votes by whoever
-                    await ReplyAsync("Vote was not unanimous, game result must be decided by a moderator.");
+                    await SimpleEmbedAsync("Vote was not unanimous, game result must be decided by a moderator.", Color.DarkBlue);
                     game.VoteComplete = true;
                     Service.SaveGame(game);
                     return;
@@ -163,7 +164,7 @@ namespace RavenBOT.ELO.Modules.Modules
             else
             {
                 Service.SaveGame(game);
-                await ReplyAsync($"Vote counted as: {vote.ToString()}");
+                await SimpleEmbedAsync($"Vote counted as: {vote.ToString()}", Color.Green);
             }
         }
 
@@ -188,29 +189,23 @@ namespace RavenBOT.ELO.Modules.Modules
             }
 
             var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
-            if (competition == null)
-            {
-                await ReplyAsync("Not a competition.");
-                return;
-            }
-
             var lobby = Service.GetLobby(Context.Guild.Id, lobbyChannel.Id);
             if (lobby == null)
             {
-                await ReplyAsync("Channel is not a lobby.");
+                await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                 return;
             }
 
             var game = Service.GetGame(Context.Guild.Id, lobby.ChannelId, gameNumber);
             if (game == null)
             {
-                await ReplyAsync($"GameID is invalid. Most recent game is {lobby.CurrentGameCount}");
+                await SimpleEmbedAsync($"Game not found. Most recent game is {lobby.CurrentGameCount}", Color.DarkBlue);
                 return;
             }
 
             if (game.GameState != GameResult.State.Decided)
             {
-                await ReplyAsync("Game result is not decided. NOTE: Draw results cannot currently be undone.");
+                await SimpleEmbedAsync("Game result is not decided and therefore cannot be undone.", Color.Red);
                 return;
             }
 
@@ -422,7 +417,7 @@ namespace RavenBOT.ELO.Modules.Modules
             if (lobby == null)
             {
                 //Reply error not a lobby.
-                await ReplyAsync("Channel is not a lobby.");
+                await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                 return;
             }
 
@@ -430,11 +425,11 @@ namespace RavenBOT.ELO.Modules.Modules
             if (game == null)
             {
                 //Reply not valid game number.
-                await ReplyAsync($"GameID is invalid. Most recent game is {lobby.CurrentGameCount}");
+                await SimpleEmbedAsync($"Game not found. Most recent game is {lobby.CurrentGameCount}", Color.DarkBlue);
                 return;
             }
 
-            game.GameState = GameResult.State.Canceled;
+            game.GameState = State.Canceled;
             game.Submitter = Context.User.Id;
             game.Comment = comment;
             game.ScoreUpdates = new Dictionary<ulong, int>();
@@ -467,7 +462,7 @@ namespace RavenBOT.ELO.Modules.Modules
             if (lobby == null)
             {
                 //Reply error not a lobby.
-                await ReplyAsync("Channel is not a lobby.");
+                await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                 return;
             }
 
@@ -475,11 +470,11 @@ namespace RavenBOT.ELO.Modules.Modules
             if (game == null)
             {
                 //Reply not valid game number.
-                await ReplyAsync($"GameID is invalid. Most recent game is {lobby.CurrentGameCount}");
+                await SimpleEmbedAsync($"Game not found. Most recent game is {lobby.CurrentGameCount}", Color.DarkBlue);
                 return;
             }
 
-            game.GameState = GameResult.State.Draw;
+            game.GameState = State.Draw;
             game.Submitter = Context.User.Id;
             game.Comment = comment;
             game.ScoreUpdates = new Dictionary<ulong, int>();
@@ -487,7 +482,7 @@ namespace RavenBOT.ELO.Modules.Modules
 
             await DrawPlayersAsync(game.Team1.Players);
             await DrawPlayersAsync(game.Team2.Players);
-            await ReplyAsync($"Called draw on game #{game.GameId}, player's game and draw counts have been updated.");
+            await SimpleEmbedAsync($"Called draw on game #{game.GameId}, player's game and draw counts have been updated.", Color.Green);
             await AnnounceResultAsync(lobby, game);
         }
 
@@ -517,7 +512,7 @@ namespace RavenBOT.ELO.Modules.Modules
             if (lobby == null)
             {
                 //Reply error not a lobby.
-                await ReplyAsync("Channel is not a lobby.");
+                await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                 return;
             }
 
@@ -525,13 +520,13 @@ namespace RavenBOT.ELO.Modules.Modules
             if (game == null)
             {
                 //Reply not valid game number.
-                await ReplyAsync($"GameID is invalid. Most recent game is {lobby.CurrentGameCount}");
+                await SimpleEmbedAsync($"Game not found. Most recent game is {lobby.CurrentGameCount}", Color.DarkBlue);
                 return;
             }
 
-            if (game.GameState == GameResult.State.Decided || game.GameState == GameResult.State.Draw)
+            if (game.GameState == State.Decided || game.GameState == State.Draw)
             {
-                await ReplyAsync("Game results cannot currently be overwritten without first running the `undogame` command.");
+                await SimpleEmbedAsync("Game results cannot currently be overwritten without first running the `undogame` command.", Color.Red);
                 return;
             }
 
@@ -622,7 +617,7 @@ namespace RavenBOT.ELO.Modules.Modules
             if (lobby == null)
             {
                 //Reply error not a lobby.
-                await ReplyAsync("Channel is not a lobby.");
+                await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                 return;
             }
 
@@ -630,13 +625,13 @@ namespace RavenBOT.ELO.Modules.Modules
             if (game == null)
             {
                 //Reply not valid game number.
-                await ReplyAsync($"GameID is invalid. Most recent game is {lobby.CurrentGameCount}");
+                await SimpleEmbedAsync($"Game not found. Most recent game is {lobby.CurrentGameCount}", Color.DarkBlue);
                 return;
             }
 
             if (game.GameState == GameResult.State.Decided || game.GameState == GameResult.State.Draw)
             {
-                await ReplyAsync("Game results cannot currently be overwritten without first running the `undogame` command.");
+                await SimpleEmbedAsync("Game results cannot currently be overwritten without first running the `undogame` command.", Color.Red);
                 return;
             }
 
