@@ -108,7 +108,7 @@ namespace RavenBOT.ELO.Modules.Modules
             embed.AddField("Stats", 
                         $"**Registered User Count:** {comp.RegistrationCount}\n" +
                         $"**Manual Game Count:** {comp.ManualGameCounter}");
-            embed.AddField("Formating", $"**Nickname Format:** {comp.NameFormat}\n" +
+            embed.AddField("Formatting", $"**Nickname Format:** {comp.NameFormat}\n" +
                         $"**Registration Message:** {comp.RegisterMessageTemplate}");
             embed.AddField("Rank Info",
             $"**Default Loss Amount:** -{comp.DefaultLossModifier}\n" +
