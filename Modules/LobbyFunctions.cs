@@ -12,7 +12,7 @@ namespace RavenBOT.ELO.Modules.Modules
     {
         public async Task LobbyFullAsync()
         {
-            await ReplyAsync("Queue is full. Picking teams...");
+            await SimpleEmbedAsync("Queue is full. Picking teams...", Color.Blue);
             //Increment the game counter as there is now a new game.
             CurrentLobby.CurrentGameCount++;
             var game = new GameResult(CurrentLobby.CurrentGameCount, Context.Channel.Id, Context.Guild.Id, CurrentLobby.TeamPickMode);
@@ -50,7 +50,7 @@ namespace RavenBOT.ELO.Modules.Modules
                     CurrentLobby.TeamPickMode == Lobby.PickMode.Captains_RandomHighestRanked))
             {
                 //Ensure that there isnt a captain pick mode if the teams only consist of one player
-                await ReplyAsync("Lobby sort mode was set to random, you cannot have a captain lobby for solo queues.");
+                await SimpleEmbedAsync("Lobby sort mode was set to random, you cannot have a captain lobby for solo queues.", Color.DarkBlue);
                 CurrentLobby.TeamPickMode = Lobby.PickMode.Random;
             }
 
