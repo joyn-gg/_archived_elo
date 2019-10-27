@@ -32,7 +32,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 return true;
             }
 
-            await ReplyAsync("Current channel is not a lobby.");
+            await SimpleEmbedAndDeleteAsync("Current channel is not a lobby.", Color.Red);
             return false;
         }
 
@@ -47,7 +47,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 return true;
             }
 
-            await ReplyAsync("You are not registered");
+            await SimpleEmbedAndDeleteAsync("You are not registered.", Color.Red);
             return false;
         }
 
@@ -77,7 +77,7 @@ namespace RavenBOT.ELO.Modules.Modules
             {
                 if (game.GameState == GameResult.State.Picking)
                 {
-                    await ReplyAsync("Current game is being picked, cannot clear queue.");
+                    await SimpleEmbedAndDeleteAsync("Current game is being picked, cannot clear queue.", Color.Red);
                     return;
                 }
             }
@@ -96,17 +96,16 @@ namespace RavenBOT.ELO.Modules.Modules
                 return;
             }
 
-            var response = Service.GetPlayer(Context.Guild.Id, user.Id);
-            if (response == null)
+            if (!user.IsRegistered(Service, out var response))
             {
-                await ReplyAsync("User is not registered.");
+                await SimpleEmbedAndDeleteAsync("User is not registered.", Color.Red);
                 return;
             }
 
             if (CurrentLobby.Queue.Count >= CurrentLobby.PlayersPerTeam * 2)
             {
                 //Queue will be reset after teams are completely picked.
-                await ReplyAsync("Queue is full, wait for teams to be chosen before joining.");
+                await SimpleEmbedAndDeleteAsync("Queue is full, wait for teams to be chosen before joining.", Color.DarkBlue);
                 return;
             }
 
@@ -117,7 +116,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 if (lobbyMatches.Any())
                 {
                     var guildChannels = lobbyMatches.Select(x => MentionUtils.MentionChannel(x.ChannelId));
-                    await ReplyAsync($"MultiQueuing is not enabled in this server.\nUser must leave: {string.Join("\n", guildChannels)}");
+                    await SimpleEmbedAndDeleteAsync($"MultiQueuing is not enabled in this server.\nUser must leave: {string.Join("\n", guildChannels)}", Color.Red);
                     return;
                 }
             }
@@ -125,16 +124,16 @@ namespace RavenBOT.ELO.Modules.Modules
             var currentGame = Service.GetCurrentGame(CurrentLobby);
             if (currentGame != null)
             {
-                if (currentGame.GameState == Models.GameResult.State.Picking)
+                if (currentGame.GameState == GameResult.State.Picking)
                 {
-                    await ReplyAsync("Current game is picking teams, wait until this is completed.");
+                    await SimpleEmbedAndDeleteAsync("Current game is picking teams, wait until this is completed.", Color.Red);
                     return;
                 }
             }
 
             if (CurrentLobby.Queue.Contains(user.Id))
             {
-                await ReplyAsync("User is already queued.");
+                await SimpleEmbedAndDeleteAsync("User is already queued.", Color.DarkBlue);
                 return;
             }
 
@@ -151,7 +150,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 }
                 else
                 {
-                    await ReplyAsync("Added to queue.");
+                    await SimpleEmbedAsync("Added to queue.", Color.Green);
                 }
             }
 
@@ -173,7 +172,7 @@ namespace RavenBOT.ELO.Modules.Modules
             {
                 if (game.GameState == GameResult.State.Picking)
                 {
-                    await ReplyAsync("You cannot remove a player from a game that is still being picked, try cancelling the game instead.");
+                    await SimpleEmbedAndDeleteAsync("You cannot remove a player from a game that is still being picked, try cancelling the game instead.", Color.DarkBlue);
                     return;
                 }
             }
@@ -181,12 +180,12 @@ namespace RavenBOT.ELO.Modules.Modules
             if (CurrentLobby.Queue.Contains(user.Id))
             {
                 CurrentLobby.Queue.Remove(user.Id);
-                await ReplyAsync("Player was removed from queue.");
+                await SimpleEmbedAsync("Player was removed from queue.", Color.DarkBlue);
                 Service.SaveLobby(CurrentLobby);
             }
             else
             {
-                await ReplyAsync("Player is not in queue and cannot be removed.");
+                await SimpleEmbedAsync("Player is not in queue and cannot be removed.", Color.DarkBlue);
                 return;
             }
         }
@@ -204,24 +203,30 @@ namespace RavenBOT.ELO.Modules.Modules
             var game = Service.GetCurrentGame(CurrentLobby);
             if (game.GameState != GameResult.State.Picking)
             {
-                await ReplyAsync("Lobby is currently not picking teams.");
+                await SimpleEmbedAndDeleteAsync("Lobby is currently not picking teams.", Color.DarkBlue);
                 return;
             }
 
             //Ensure the player is eligible to join a team
             if (users.Any(user => !game.Queue.Contains(user.Id)))
             {
-                await ReplyAsync("A selected player is not queued for this game.");
+                if (users.Length == 2)
+                    await SimpleEmbedAndDeleteAsync("A selected player is not queued for this game.", Color.Red);
+                else
+                    await SimpleEmbedAndDeleteAsync("Player is not queued for this game.", Color.Red);
                 return;
             }
             else if (users.Any(u => game.Team1.Players.Contains(u.Id) || game.Team2.Players.Contains(u.Id)))
             {
-                await ReplyAsync("A selected player is already picked for a team.");
+                if (users.Length == 2)
+                    await SimpleEmbedAndDeleteAsync("A selected player is already picked for a team.", Color.Red);
+                else
+                    await SimpleEmbedAndDeleteAsync("Player is already picked for a team.", Color.Red);
                 return;
             }
             else if (users.Any(u => u.Id == game.Team1.Captain || u.Id == game.Team2.Captain))
             {
-                await ReplyAsync("You cannot select a captain for picking.");
+                await SimpleEmbedAndDeleteAsync("You cannot select a captain for picking.", Color.Red);
                 return;
             }
 
@@ -235,7 +240,7 @@ namespace RavenBOT.ELO.Modules.Modules
             }
             else
             {
-                await ReplyAsync("There was an error picking your game.");
+                await SimpleEmbedAsync("There was an error picking your game.", Color.DarkRed);
                 return;
             }
 
