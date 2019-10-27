@@ -156,7 +156,7 @@ namespace RavenBOT.ELO.Modules.Modules
         }
 
         [Command("SetRegisterMessage", RunMode = RunMode.Sync)]
-        [Alias("Set RegisterMessage", "RegisterMessage")]
+        [Alias("Set RegisterMessage")]
         [Summary("Sets the message shown to users when they register")]
         public async Task SetRegisterMessageAsync([Remainder] string message = null)
         {
@@ -171,10 +171,10 @@ namespace RavenBOT.ELO.Modules.Modules
             testProfile.Losses = 2;
             testProfile.Draws = 1;
             testProfile.Points = 600;
-            var exampleNick = competition.GetNickname(testProfile);
+            var exampleRegisterMessage = competition.FormatRegisterMessage(testProfile);
 
             Service.SaveCompetition(competition);
-            await SimpleEmbedAsync($"Register Message set.\nExample:\n{exampleNick}", Color.Green);
+            await SimpleEmbedAsync($"Register Message set.\nExample:\n{exampleRegisterMessage}", Color.Green);
         }
 
         [Command("RegisterMessageFormats", RunMode = RunMode.Async)]
