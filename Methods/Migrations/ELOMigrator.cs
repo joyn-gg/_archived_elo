@@ -83,7 +83,6 @@ namespace RavenBOT.ELO.Modules.Methods.Migrations
 
             try
             {
-
                 var tokenModel = oldDatabase.Load<TokenModel>("tokens");
                 if (tokenModel != null)
                 {
