@@ -67,7 +67,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 $"**Players Per Team:** {CurrentLobby.PlayersPerTeam}\n" +
                 $"**Map Info:** {maps}\n" +
                 "For Players in Queue use the `Queue` or `Q` Command.";
-            await ReplyAsync("", false, embed.Build());
+            await ReplyAsync(embed);
         }
 
         [Command("Queue", RunMode = RunMode.Async)]
@@ -96,7 +96,7 @@ namespace RavenBOT.ELO.Modules.Modules
                     gameEmbed.AddField("Team 1", $"Captain: {MentionUtils.MentionUser(game.Team1.Captain)}\n{string.Join("\n", t1Users)}");
                     gameEmbed.AddField("Team 2", $"Captain: {MentionUtils.MentionUser(game.Team2.Captain)}\n{string.Join("\n", t2Users)}");
                     gameEmbed.AddField("Remaining Players", string.Join("\n", remainingPlayers));
-                    await ReplyAsync("", false, gameEmbed.Build());
+                    await ReplyAsync(gameEmbed);
                     return;
                 }
             }
@@ -114,11 +114,11 @@ namespace RavenBOT.ELO.Modules.Modules
                 embed.Title = $"{Context.Channel.Name} [{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]";
                 embed.Description = $"Game: #{CurrentLobby.CurrentGameCount + 1}\n" +
                     string.Join("\n", mentionList);
-                await ReplyAsync("", false, embed.Build());
+                await ReplyAsync(embed);
             }
             else
             {
-                await ReplyAsync("", false, "The queue is empty.".QuickEmbed());
+                await ReplyAsync("The queue is empty.");
             }
         }
 
@@ -134,14 +134,14 @@ namespace RavenBOT.ELO.Modules.Modules
             var lobby = Service.GetLobby(Context.Guild.Id, channel.Id);
             if (lobby == null)
             {
-                await ReplyAsync("Channel is not a lobby.");
+                await SimpleEmbedAndDeleteAsync("Channel is not a lobby.", Color.Red);
                 return;
             }
 
             var lobbyGames = Service.GetGames(Context.Guild.Id, channel.Id);
             if (lobbyGames.Count() == 0)
             {
-                await ReplyAsync("There have been no games played in the given lobby.");
+                await SimpleEmbedAsync("There have been no games played in the given lobby.", Color.Blue);
                 return;
             }
 
