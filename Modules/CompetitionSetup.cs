@@ -280,6 +280,34 @@ namespace RavenBOT.ELO.Modules.Modules
 
         [Command("AddRank", RunMode = RunMode.Sync)]
         [Alias("Add Rank", "UpdateRank")]
+        [Summary("Adds a new rank with the specified amount of points and win/loss modifiers")]
+        public async Task AddRank(IRole role, int points, int win, int lose)
+        {
+            var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
+            competition.Ranks = competition.Ranks.Where(x => x.RoleId != role.Id).ToList();
+            var newRank = new Rank
+            {
+                RoleId = role.Id,
+                Points = points,
+                WinModifier = win,
+                LossModifier = lose
+            };
+            competition.Ranks.Add(newRank);
+            Service.SaveCompetition(competition);
+            await SimpleEmbedAsync($"Rank added.\n**Required Points:** {newRank.Points}\n**Win Modifier:** +{newRank.WinModifier}\n**LossModifier:** -{newRank.LossModifier}", Color.Green);
+        }
+
+
+        [Command("AddRank", RunMode = RunMode.Sync)]
+        [Alias("Add Rank", "UpdateRank")]
+        [Summary("Adds a new rank with the specified amount of points and win/loss modifiers")]
+        public async Task AddRank(int points, IRole role, int win, int lose)
+        {
+            await AddRank(role, points, win, lose);
+        }
+
+        [Command("AddRank", RunMode = RunMode.Sync)]
+        [Alias("Add Rank", "UpdateRank")]
         [Summary("Adds a new rank with the specified amount of points")]
         public async Task AddRank(int points, IRole role)
         {
