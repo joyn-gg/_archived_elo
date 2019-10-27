@@ -24,14 +24,14 @@ namespace RavenBOT.ELO.Modules.Modules
             var lobby = Service.GetLobby(Context.Guild.Id, lobbyChannel.Id);
             if (lobby == null)
             {
-                await ReplyAsync("Specified channel is not a lobby.");
+                await SimpleEmbedAsync("Specified channel is not a lobby.", Color.Red);
                 return;
             }
 
             var game = Service.GetCurrentGame(lobby);
             if (game == null)
             {
-                await ReplyAsync("Latest game is not available");
+                await SimpleEmbedAsync("Latest game is not available.", Color.Red);
                 return;
             }
 
@@ -42,14 +42,14 @@ namespace RavenBOT.ELO.Modules.Modules
         {
             var embed = Service.GetGameEmbed(Context, game);
 
-            await ReplyAsync("", false, embed.Build());
+            await ReplyAsync(embed);
         }
 
         public async Task DisplayGameAsync(GameResult game)
         {
             var embed = Service.GetGameEmbed(Context, game);
 
-            await ReplyAsync("", false, embed.Build());
+            await ReplyAsync(embed);
         }
 
         [Command("GameInfo", RunMode = RunMode.Async)]
@@ -65,14 +65,14 @@ namespace RavenBOT.ELO.Modules.Modules
             var lobby = Service.GetLobby(Context.Guild.Id, lobbyChannel.Id);
             if (lobby == null)
             {
-                await ReplyAsync("Specified channel is not a lobby.");
+                await SimpleEmbedAsync("Specified channel is not a lobby.", Color.Red);
                 return;
             }
 
             var game = Service.GetGame(Context.Guild.Id, lobbyChannel.Id, gameNumber);
             if (game == null)
             {
-                await ReplyAsync("Invalid Game Id");
+                await SimpleEmbedAsync("Invalid Game Id.", Color.Red);
                 return;
             }
 
@@ -87,7 +87,7 @@ namespace RavenBOT.ELO.Modules.Modules
             var game = Service.GetManualGame(Context.Guild.Id, gameNumber);
             if (game == null)
             {
-                await ReplyAsync("Specified game number is invalid.");
+                await SimpleEmbedAsync("Specified game number is invalid.", Color.Red);
                 return;
             }
 
@@ -103,7 +103,7 @@ namespace RavenBOT.ELO.Modules.Modules
 
             if (games.Count() == 0)
             {
-                await ReplyAsync("There aren't any manual games in history.");
+                await SimpleEmbedAsync("There aren't any manual games in history.", Color.Blue);
                 return;
             }
 
@@ -170,14 +170,14 @@ namespace RavenBOT.ELO.Modules.Modules
             var lobby = Service.GetLobby(Context.Guild.Id, lobbyChannel.Id);
             if (lobby == null)
             {
-                await ReplyAsync("Specified channel is not a lobby.");
+                await SimpleEmbedAsync("Specified channel is not a lobby.", Color.Red);
                 return;
             }
 
             var games = Service.GetGames(Context.Guild.Id, lobbyChannel.Id).OrderByDescending(x => x.GameId).Take(100);
             if (games.Count() == 0)
             {
-                await ReplyAsync("There aren't any games in history for the specified lobby.");
+                await SimpleEmbedAsync("There aren't any games in history for the specified lobby.", Color.Blue);
                 return;
             }
 
