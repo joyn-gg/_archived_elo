@@ -5,6 +5,7 @@ using RavenBOT.ELO.Modules.Methods;
 using RavenBOT.ELO.Modules.Models;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord;
 
 namespace RavenBOT.ELO.Modules.Modules
 {
@@ -24,7 +25,7 @@ namespace RavenBOT.ELO.Modules.Modules
         [Summary("Shows modifier values for score management commands")]
         public async Task ModifyStatesAsync()
         {
-            await ReplyAsync(string.Join("\n", Extensions.EnumNames<Player.ModifyState>()));
+            await SimpleEmbedAsync(string.Join("\n", Extensions.EnumNames<Player.ModifyState>()), Color.Blue);
         }
 
         //TODO: Consider whether it's necessary to have the single user command as multi user already is able to accept only one.
@@ -48,7 +49,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 player.Points = newVal;
             }
             Service.SavePlayers(players);
-            await ReplyAsync("", false, responseString.QuickEmbed());
+            await SimpleEmbedAsync(responseString, Color.Blue);
         }
 
         [Command("Wins", RunMode = RunMode.Sync)]
@@ -71,7 +72,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 player.Wins = newVal;
             }
             Service.SavePlayers(players);
-            await ReplyAsync("", false, responseString.QuickEmbed());
+            await SimpleEmbedAsync(responseString, Color.Blue);
         }
 
         [Command("Losses", RunMode = RunMode.Sync)]
@@ -94,7 +95,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 player.Losses = newVal;
             }
             Service.SavePlayers(players);
-            await ReplyAsync("", false, responseString.QuickEmbed());
+            await SimpleEmbedAsync(responseString, Color.Blue);
         }
 
         [Command("Draws", RunMode = RunMode.Sync)]
@@ -117,7 +118,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 player.Draws = newVal;
             }
             Service.SavePlayers(players);
-            await ReplyAsync("", false, responseString.QuickEmbed());
+            await SimpleEmbedAsync(responseString, Color.Blue);
         }
 
         /*
