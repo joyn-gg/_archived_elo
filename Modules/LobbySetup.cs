@@ -304,30 +304,9 @@ namespace RavenBOT.ELO.Modules.Modules
             await SimpleEmbedAsync("Map added.", Color.Green);
         }
 
-        [Command("AddMap", RunMode = RunMode.Sync)]
-        [Alias("Add Map")]
-        [Summary("Adds a single map to the maps list.")]
-        public async Task AddMapAsync([Remainder]string mapName)
-        {
-            var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
-            if (lobby == null)
-            {
-                await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
-                return;
-            }
-
-            if (lobby.MapSelector == null)
-            {
-                lobby.MapSelector = new MapSelector();
-            }
-
-            lobby.MapSelector.Maps.Add(mapName);
-            Service.SaveLobby(lobby);
-            await SimpleEmbedAsync("Map added.", Color.Green);
-        }
 
         [Command("AddMaps", RunMode = RunMode.Sync)]
-        [Alias("Add Maps")]
+        [Alias("Add Maps", "Addmap", "Add map")]
         [Summary("Adds multiple maps to the map list.")]
         [Remarks("Separate the names using commas.")]
         public async Task AddMapsAsync([Remainder]string commaSeparatedMapNames)
