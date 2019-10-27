@@ -1,11 +1,11 @@
-using System;
-using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
 using RavenBOT.Common;
 using RavenBOT.ELO.Modules.Methods;
 using RavenBOT.ELO.Modules.Methods.Migrations;
 using RavenBOT.ELO.Modules.Premium;
+using System;
+using System.Threading.Tasks;
 
 namespace RavenBOT.ELO.Modules.Modules
 {
@@ -32,7 +32,7 @@ namespace RavenBOT.ELO.Modules.Modules
         public async Task RunMigrationTaskAsync()
         {
             await ReplyAsync("Running migration.");
-            var _ = Task.Run(async () => 
+            var _ = Task.Run(async () =>
             {
                 Migrator.RunMigration(Local);
                 await ReplyAsync("Done.");

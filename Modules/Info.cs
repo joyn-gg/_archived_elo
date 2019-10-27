@@ -1,14 +1,13 @@
-using System.Text;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using RavenBOT.Common;
 using RavenBOT.ELO.Modules.Methods;
 using RavenBOT.ELO.Modules.Models;
-using Discord;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace RavenBOT.ELO.Modules.Modules
 {
@@ -40,7 +39,7 @@ namespace RavenBOT.ELO.Modules.Modules
         [Command("Profile", RunMode = RunMode.Async)] // Please make default command name "Stats"
         [Alias("Info", "GetUser")]
         [Summary("Displays information about you or the specified user.")]
-        public async Task InfoAsync(SocketGuildUser user = null)    
+        public async Task InfoAsync(SocketGuildUser user = null)
         {
             if (user == null)
             {
@@ -60,7 +59,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 }
                 return;
             }
-            
+
             var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
             var rank = competition.MaxRank(player.Points);
             string rankStr = null;
@@ -70,18 +69,18 @@ namespace RavenBOT.ELO.Modules.Modules
             }
 
             var response = $"{player.GetDisplayNameSafe()} Stats\n" + // Use Title?
-                            $"Points: {player.Points}\n"+
+                            $"Points: {player.Points}\n" +
                             rankStr +
-                            $"Wins: {player.Wins}\n"+
-                            $"Losses: {player.Losses}\n"+
-                            $"Draws: {player.Draws}\n"+
-                            $"Games: {player.Games}\n"+
-                            $"Registered At: {player.RegistrationDate.ToString("dd MMM yyyy")} {player.RegistrationDate.ToShortTimeString()}\n"+
+                            $"Wins: {player.Wins}\n" +
+                            $"Losses: {player.Losses}\n" +
+                            $"Draws: {player.Draws}\n" +
+                            $"Games: {player.Games}\n" +
+                            $"Registered At: {player.RegistrationDate.ToString("dd MMM yyyy")} {player.RegistrationDate.ToShortTimeString()}\n" +
                             $"{string.Join("\n", player.AdditionalProperties.Select(x => $"{x.Key}: {x.Value}"))}";
 
-                            //TODO: Add game history (last 5) to this response
-                            //+ if they were on the winning team?
-                            //maybe only games with a decided result should be shown?
+            //TODO: Add game history (last 5) to this response
+            //+ if they were on the winning team?
+            //maybe only games with a decided result should be shown?
 
             await ReplyAsync("", false, response.QuickEmbed());
         }
@@ -135,7 +134,7 @@ namespace RavenBOT.ELO.Modules.Modules
         public (int, string) GetPlayerLines(Player[] players, int startValue)
         {
             var sb = new StringBuilder();
-            
+
             //Iterate through the players and add their summary line to the list.
             foreach (var player in players)
             {

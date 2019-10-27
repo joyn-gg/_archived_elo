@@ -1,12 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using ELO.Models;
 using RavenBOT.Common;
 using RavenBOT.Common.Interfaces.Database;
 using RavenBOT.ELO.Modules.Models;
 using RavenBOT.ELO.Modules.Premium;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace RavenBOT.ELO.Modules.Methods.Migrations
 {

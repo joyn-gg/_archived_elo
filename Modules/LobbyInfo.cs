@@ -1,11 +1,11 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using RavenBOT.Common;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace RavenBOT.ELO.Modules.Modules
 {
@@ -166,7 +166,7 @@ namespace RavenBOT.ELO.Modules.Modules
                             playerMatch.Item5++;
                         }
 
-                        playerInfos[player] = playerMatch;                       
+                        playerInfos[player] = playerMatch;
                     }
                 }
 
@@ -223,7 +223,7 @@ namespace RavenBOT.ELO.Modules.Modules
         public (int, string) GetPlayerLines((ulong, int, int, int, int)[] players, int startValue)
         {
             var sb = new StringBuilder();
-            
+
             //Iterate through the players and add their summary line to the list.
             foreach (var player in players)
             {
@@ -234,6 +234,6 @@ namespace RavenBOT.ELO.Modules.Modules
             //Return the updated start value and the list of player lines.
             return (startValue, sb.ToString());
         }
-        
+
     }
 }

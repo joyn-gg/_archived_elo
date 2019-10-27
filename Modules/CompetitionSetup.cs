@@ -1,6 +1,3 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using RavenBOT.Common;
@@ -8,6 +5,8 @@ using RavenBOT.ELO.Modules.Methods;
 using RavenBOT.ELO.Modules.Methods.Migrations;
 using RavenBOT.ELO.Modules.Models;
 using RavenBOT.ELO.Modules.Premium;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace RavenBOT.ELO.Modules.Modules
 {
@@ -236,7 +235,7 @@ namespace RavenBOT.ELO.Modules.Modules
             competition.Ranks.Add(new Rank
             {
                 RoleId = role.Id,
-                    Points = points
+                Points = points
             });
             Service.SaveCompetition(competition);
             await ReplyAsync("Rank added.");
@@ -299,7 +298,7 @@ namespace RavenBOT.ELO.Modules.Modules
             Service.SaveCompetition(competition);
             await ReplyAsync($"Allow re-register set to {reRegister.Value}");
         }
-                
+
         [Command("AllowSelfRename", RunMode = RunMode.Sync)]
         [Summary("Sets whether users are allowed to use the rename command")]
         public async Task AllowSelfRenameAsync(bool? selfRename = null)
@@ -331,13 +330,13 @@ namespace RavenBOT.ELO.Modules.Modules
             await ReplyAsync($"Default Win Modifier set to {competition.DefaultWinModifier}");
         }
 
-        
+
         [Command("DefaultLossModifier", RunMode = RunMode.Sync)]
         [Summary("Sets the default amount of points users lose when the lose a game.")]
         public async Task CompLossModifier(int? amountToSubtract = null)
         {
             var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
-            
+
             if (!amountToSubtract.HasValue)
             {
                 await ReplyAsync($"Current DefaultLossModifier Setting: {competition.DefaultLossModifier}");
@@ -411,7 +410,7 @@ namespace RavenBOT.ELO.Modules.Modules
             await ReplyAsync($"Update Nicknames set to {competition.UpdateNames}");
         }
 
-        
+
         [Command("CreateReactionRegistration", RunMode = RunMode.Sync)]
         [Summary("Creates a message which users can react to in order to register")]
         public async Task CreateReactAsync([Remainder]string message = null)

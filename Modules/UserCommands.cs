@@ -1,11 +1,9 @@
-using System;
-using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
 using RavenBOT.Common;
 using RavenBOT.ELO.Modules.Methods;
-using RavenBOT.ELO.Modules.Models;
 using RavenBOT.ELO.Modules.Premium;
+using System.Threading.Tasks;
 
 namespace RavenBOT.ELO.Modules.Modules
 {
@@ -26,12 +24,12 @@ namespace RavenBOT.ELO.Modules.Modules
         [Summary("Register for the ELO competition.")]
         public async Task RegisterAsync([Remainder]string name = null)
         {
-            
+
             if (name == null)
             {
                 name = Context.User.Username;
             }
-          
+
             var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
             if (Context.User.IsRegistered(Service, out var player))
             {
@@ -72,7 +70,7 @@ namespace RavenBOT.ELO.Modules.Modules
 
 
             if (!Context.User.IsRegistered(Service, out var player))
-            {              
+            {
                 await ReplyAsync("You are not registered yet.");
                 return;
             }
@@ -89,7 +87,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 await ReplyAsync("You must specify a new name in order to be renamed.");
                 return;
             }
-            
+
             var originalDisplayName = player.DisplayName;
             player.DisplayName = name;
             var newName = competition.GetNickname(player);
@@ -116,7 +114,7 @@ namespace RavenBOT.ELO.Modules.Modules
             }
 
             Service.SavePlayer(player);
-            await ReplyAsync($"Your profile has been renamed from {Discord.Format.Sanitize(originalDisplayName)} to {player.GetDisplayNameSafe()}");            
+            await ReplyAsync($"Your profile has been renamed from {Discord.Format.Sanitize(originalDisplayName)} to {player.GetDisplayNameSafe()}");
         }
     }
 }

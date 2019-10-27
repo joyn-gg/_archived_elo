@@ -1,11 +1,11 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using RavenBOT.Common;
 using RavenBOT.ELO.Modules.Models;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace RavenBOT.ELO.Modules.Modules
 {
@@ -111,13 +111,14 @@ namespace RavenBOT.ELO.Modules.Modules
             var pages = new List<ReactivePage>();
             foreach (var page in gamePages)
             {
-                var content = page.Select(x => {
+                var content = page.Select(x =>
+                {
                     if (x.ScoreUpdates.Count == 0) return null;
 
                     var scoreInfos = x.ScoreUpdates.Select(s =>
                         {
                             //TODO: reduce string construction nesting.
-                           return $"{MentionUtils.MentionUser(s.Key)} {(s.Value >= 0 ? "+" + s.Value : s.Value.ToString())}";
+                            return $"{MentionUtils.MentionUser(s.Key)} {(s.Value >= 0 ? "+" + s.Value : s.Value.ToString())}";
                         });
 
                     if (x.GameState != ManualGameResult.ManualGameState.Legacy)
@@ -184,7 +185,8 @@ namespace RavenBOT.ELO.Modules.Modules
             var pages = new List<ReactivePage>();
             foreach (var page in gamePages)
             {
-                var content = page.Select(x => {
+                var content = page.Select(x =>
+                {
                     if (x.GameState == GameResult.State.Decided)
                     {
                         return $"`#{x.GameId}:` Team {x.WinningTeam}";

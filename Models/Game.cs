@@ -1,10 +1,9 @@
-using System.Linq;
+using Discord;
+using Discord.WebSocket;
+using RavenBOT.Common;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using Discord.WebSocket;
-using Discord;
-using RavenBOT.Common;
+using System.Linq;
 
 namespace RavenBOT.ELO.Modules.Models
 {
@@ -15,7 +14,7 @@ namespace RavenBOT.ELO.Modules.Models
             return $"GameResult-{gameId}-{lobbyId}-{guildId}";
         }
 
-        public GameResult(){}
+        public GameResult() { }
 
         public GameResult(int gameId, ulong lobbyId, ulong guildId, Lobby.PickMode lobbyPickMode)
         {
@@ -41,16 +40,16 @@ namespace RavenBOT.ELO.Modules.Models
 
             public enum VoteState
             {
-                Cancel=   10,
-                Cancelled=10,
-                Canceled= 10,
-                Win =     20,                
-                Won =     20,
-                Lose =    30,
-                Lost =    30,                
-                Loss =    30,
-                Draw =    40,
-                Drew =    40
+                Cancel = 10,
+                Cancelled = 10,
+                Canceled = 10,
+                Win = 20,
+                Won = 20,
+                Lose = 30,
+                Lost = 30,
+                Loss = 30,
+                Draw = 40,
+                Drew = 40
             }
         }
 
@@ -197,7 +196,7 @@ namespace RavenBOT.ELO.Modules.Models
             {
                 return (1, Team1);
             }
-            
+
             return (-1, null);
         }
     }

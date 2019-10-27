@@ -1,12 +1,12 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using RavenBOT.Common;
 using RavenBOT.ELO.Modules.Methods;
 using RavenBOT.ELO.Modules.Models;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace RavenBOT.ELO.Modules.Modules
 {
@@ -175,7 +175,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 {
                     await ReplyAsync("You cannot remove a player from a game that is still being picked, try cancelling the game instead.");
                     return;
-                }                
+                }
             }
 
             if (CurrentLobby.Queue.Contains(user.Id))
@@ -266,7 +266,7 @@ namespace RavenBOT.ELO.Modules.Modules
                         ELOService.GameFlag.time);
 
                 await ReplyAsync(res.Item1, false, res.Item2.Build());
-                
+
                 if (CurrentLobby.GameReadyAnnouncementChannel != 0)
                 {
                     var channel = Context.Guild.GetTextChannel(CurrentLobby.GameReadyAnnouncementChannel);

@@ -1,7 +1,6 @@
-using System.Linq;
-using System.Collections.Generic;
-using System;
 using MoreLinq;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace RavenBOT.ELO.Modules.Models.Leaderboard
 {
@@ -25,7 +24,7 @@ namespace RavenBOT.ELO.Modules.Models.Leaderboard
 
             if (_leaderboard.ContainsKey(id))
             {
-                if (val < minValue) 
+                if (val < minValue)
                 {
                     _leaderboard.Remove(id);
                 }
@@ -35,7 +34,7 @@ namespace RavenBOT.ELO.Modules.Models.Leaderboard
                 }
                 return;
             }
-            
+
 
             //Ensure it does not exceed max size by removing smallest score if a new one is to be added.
             if (val > minValue && _leaderboard.Count > LeaderboardSize)

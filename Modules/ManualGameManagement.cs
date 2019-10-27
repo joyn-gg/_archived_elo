@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
@@ -10,6 +5,10 @@ using RavenBOT.Common;
 using RavenBOT.ELO.Modules.Methods;
 using RavenBOT.ELO.Modules.Models;
 using RavenBOT.ELO.Modules.Preconditions;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using static RavenBOT.ELO.Modules.Modules.GameManagement;
 
 namespace RavenBOT.ELO.Modules.Modules
@@ -47,7 +46,7 @@ namespace RavenBOT.ELO.Modules.Modules
         public async Task UpdateTeamScoresAsync(bool win, HashSet<ulong> userIds)
         {
             var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
-            var updates = new List < (Player, int, Rank, RankChangeState, Rank) > ();
+            var updates = new List<(Player, int, Rank, RankChangeState, Rank)>();
 
             var embed = new EmbedBuilder
             {

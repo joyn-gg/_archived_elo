@@ -10,19 +10,23 @@ namespace RavenBOT.ELO.Modules.Models
         public int? WinModifier { get; set; }
 
         private int? _LossModifier;
-        public int? LossModifier { get
+        public int? LossModifier
         {
-            return _LossModifier;
-        } set
-        {
-            if (value.HasValue)
+            get
             {
-                _LossModifier = Math.Abs(value.Value);
+                return _LossModifier;
             }
-            else
+            set
             {
-                _LossModifier = value;
+                if (value.HasValue)
+                {
+                    _LossModifier = Math.Abs(value.Value);
+                }
+                else
+                {
+                    _LossModifier = value;
+                }
             }
-        } }
+        }
     }
 }

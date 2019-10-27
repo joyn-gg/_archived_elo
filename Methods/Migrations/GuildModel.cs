@@ -147,7 +147,7 @@ namespace ELO.Models
 
                 public string Content { get; set; } = null;
             }
-            
+
             public class ResultProposal
             {
                 public ulong P1 { get; set; } = 0;

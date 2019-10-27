@@ -1,15 +1,15 @@
-﻿using System;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
+﻿using CommandLine;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using RavenBOT.Common;
 using RavenBOT.Common.Interfaces.Database;
+using System;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 using EventHandler = RavenBOT.Handlers.EventHandler;
-using CommandLine;
 
 namespace ELO
 {

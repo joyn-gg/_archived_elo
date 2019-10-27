@@ -75,7 +75,7 @@ namespace RavenBOT.ELO.Modules.Models
                 Comment = comment;
             }
 
-            public Ban() {}
+            public Ban() { }
             public string Comment { get; set; }
             public ulong Moderator { get; set; }
             public TimeSpan Length { get; set; }
@@ -92,13 +92,13 @@ namespace RavenBOT.ELO.Modules.Models
         /// </summary>
         /// <value></value>
         private int _points = 0;
-        public int Points 
-        { 
+        public int Points
+        {
             get
             {
-                return _points; 
-            } 
-            set 
+                return _points;
+            }
+            set
             {
                 //Unfortunately there isn't an efficient way to check if the competition is 'no-negative' and I cannot make this a readonly value as it would cause issues with LiteDB.
                 //All code that assigns points should run through the SetPoints function

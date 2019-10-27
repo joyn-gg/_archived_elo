@@ -1,7 +1,7 @@
+using RavenBOT.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using RavenBOT.Common;
 
 namespace RavenBOT.ELO.Modules.Models
 {
@@ -12,7 +12,7 @@ namespace RavenBOT.ELO.Modules.Models
             return $"CompetitionConfig-{guildId}";
         }
 
-        public CompetitionConfig(){}
+        public CompetitionConfig() { }
         public CompetitionConfig(ulong guildId)
         {
             this.GuildId = guildId;
@@ -36,7 +36,7 @@ namespace RavenBOT.ELO.Modules.Models
             return RegisterMessageTemplate
                     .Replace("{score}", player.Points.ToString(), StringComparison.InvariantCultureIgnoreCase)
                     .Replace("{name}", player.DisplayName, StringComparison.InvariantCultureIgnoreCase)
-                    .Replace("{wins}", player.Wins.ToString(), StringComparison.InvariantCultureIgnoreCase)                    
+                    .Replace("{wins}", player.Wins.ToString(), StringComparison.InvariantCultureIgnoreCase)
                     .Replace("{losses}", player.Losses.ToString(), StringComparison.InvariantCultureIgnoreCase)
                     .Replace("{draws}", player.Draws.ToString(), StringComparison.InvariantCultureIgnoreCase)
                     .Replace("{games}", player.Games.ToString(), StringComparison.InvariantCultureIgnoreCase)
@@ -51,7 +51,7 @@ namespace RavenBOT.ELO.Modules.Models
             return NameFormat
                     .Replace("{score}", player.Points.ToString(), StringComparison.InvariantCultureIgnoreCase)
                     .Replace("{name}", player.DisplayName, StringComparison.InvariantCultureIgnoreCase)
-                    .Replace("{wins}", player.Wins.ToString(), StringComparison.InvariantCultureIgnoreCase)                    
+                    .Replace("{wins}", player.Wins.ToString(), StringComparison.InvariantCultureIgnoreCase)
                     .Replace("{losses}", player.Losses.ToString(), StringComparison.InvariantCultureIgnoreCase)
                     .Replace("{draws}", player.Draws.ToString(), StringComparison.InvariantCultureIgnoreCase)
                     .Replace("{games}", player.Games.ToString(), StringComparison.InvariantCultureIgnoreCase)
@@ -62,7 +62,7 @@ namespace RavenBOT.ELO.Modules.Models
         public int RegistrationCount { get; set; } = 0;
 
         public bool AllowNegativeScore { get; set; } = false;
-        
+
         public bool AllowReRegister { get; set; } = true;
         public bool AllowSelfRename { get; set; } = true;
 
@@ -70,17 +70,20 @@ namespace RavenBOT.ELO.Modules.Models
         public int DefaultWinModifier { get; set; } = 10;
 
         private int _DefaultLossModifier;
-        
-        public int DefaultLossModifier { 
-        get
+
+        public int DefaultLossModifier
         {
-            return _DefaultLossModifier;
-        } set
-        {
-            //Ensure the value that gets set is positive as it will be subtracted from scores.
-            _DefaultLossModifier = Math.Abs(value);
-            
-        } }
+            get
+            {
+                return _DefaultLossModifier;
+            }
+            set
+            {
+                //Ensure the value that gets set is positive as it will be subtracted from scores.
+                _DefaultLossModifier = Math.Abs(value);
+
+            }
+        }
 
         /// <summary>
         /// Returns the highest available rank for the user or null

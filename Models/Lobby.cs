@@ -1,7 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using RavenBOT.ELO.Modules.Modules;
+using System.Collections.Generic;
 
 namespace RavenBOT.ELO.Modules.Models
 {
@@ -18,7 +16,7 @@ namespace RavenBOT.ELO.Modules.Models
             this.ChannelId = channelId;
         }
 
-        public Lobby() {}
+        public Lobby() { }
 
         public ulong GuildId { get; set; }
         public ulong ChannelId { get; set; }

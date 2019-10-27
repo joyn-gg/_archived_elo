@@ -1,10 +1,5 @@
-using System.Linq;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using Discord.WebSocket;
-using Discord;
-using RavenBOT.Common;
 
 namespace RavenBOT.ELO.Modules.Models
 {
@@ -15,7 +10,7 @@ namespace RavenBOT.ELO.Modules.Models
             return $"ManualGameResult-{gameId}-{guildId}";
         }
 
-        public ManualGameResult(){}
+        public ManualGameResult() { }
 
         public ManualGameResult(int gameId, ulong guildId)
         {

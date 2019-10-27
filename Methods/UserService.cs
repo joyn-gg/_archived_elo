@@ -1,10 +1,9 @@
+using Discord.WebSocket;
+using RavenBOT.ELO.Modules.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Discord.WebSocket;
-using RavenBOT.Common;
-using RavenBOT.ELO.Modules.Models;
 
 namespace RavenBOT.ELO.Modules.Methods
 {
@@ -111,7 +110,7 @@ namespace RavenBOT.ELO.Modules.Methods
             return noted;
         }
 
-        public(ulong, ulong) GetCaptains(Lobby lobby, GameResult game, Random rnd)
+        public (ulong, ulong) GetCaptains(Lobby lobby, GameResult game, Random rnd)
         {
             ulong cap1 = 0;
             ulong cap2 = 0;

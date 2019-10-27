@@ -1,6 +1,6 @@
+using RavenBOT.Common;
 using System;
 using System.Linq;
-using RavenBOT.Common;
 
 namespace RavenBOT.ELO.Modules.Premium
 {

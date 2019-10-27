@@ -1,10 +1,10 @@
-using System.Collections.Generic;
+using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 using RavenBOT.Common;
+using System.Collections.Generic;
 using System.Linq;
-using Discord.Commands;
 using System.Threading.Tasks;
-using Discord;
 
 namespace RavenBOT.ELO.Modules.Premium
 {
@@ -58,7 +58,7 @@ namespace RavenBOT.ELO.Modules.Premium
             var guildUpgrade = Database.Load<ClaimProfile>(ClaimProfile.DocumentName(guild.Id));
             if (guildUpgrade == null) return config.DefaultRegistrationLimit;
 
-            var patreonGuild = client.GetGuild(config.GuildId); 
+            var patreonGuild = client.GetGuild(config.GuildId);
             var patreonUser = patreonGuild?.GetUser(guildUpgrade.UserId);
             if (patreonUser == null) return config.DefaultRegistrationLimit;
 
@@ -74,7 +74,7 @@ namespace RavenBOT.ELO.Modules.Premium
         }
 
         public async Task Claim(ShardedCommandContext context)
-        {            
+        {
             //Assumed context, claim is being applied to the server where it's being claimed in
             //TODO: Check if this fetches user from cache.
             var config = GetConfig();
@@ -98,7 +98,7 @@ namespace RavenBOT.ELO.Modules.Premium
             if (currentRole.Value == null)
             {
                 await context.Channel.SendMessageAsync("You do not have a patreon role.");
-                return;   
+                return;
             }
 
             var guildLicense = Database.Load<ClaimProfile>(ClaimProfile.DocumentName(context.Guild.Id));
@@ -185,7 +185,7 @@ namespace RavenBOT.ELO.Modules.Premium
         }
 
         public class ClaimProfile
-        {            
+        {
             public static string DocumentName(ulong guildId)
             {
                 return $"ClaimProfile-{guildId}";

@@ -1,15 +1,14 @@
+using Discord;
+using Discord.Commands;
+using Discord.WebSocket;
+using RavenBOT.Common;
+using RavenBOT.ELO.Modules.Methods;
+using RavenBOT.ELO.Modules.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
-using Newtonsoft.Json;
-using RavenBOT.Common;
-using RavenBOT.ELO.Modules.Methods;
-using RavenBOT.ELO.Modules.Models;
 using static RavenBOT.ELO.Modules.Models.GameResult;
 
 namespace RavenBOT.ELO.Modules.Modules
@@ -31,7 +30,7 @@ namespace RavenBOT.ELO.Modules.Modules
         public async Task ShowResultsAsync()
         {
             await ReplyAsync(string.Join("\n", Extensions.EnumNames<GameResult.Vote.VoteState>()));
-        }        
+        }
 
 
         [Command("Result", RunMode = RunMode.Sync)]
@@ -100,7 +99,7 @@ namespace RavenBOT.ELO.Modules.Modules
             };
 
             game.Votes.Add(Context.User.Id, userVote);
-            
+
             //Ensure votes is greater than half the amount of players.
             if (game.Votes.Count * 2 > game.Team1.Players.Count + game.Team2.Players.Count)
             {
@@ -165,14 +164,14 @@ namespace RavenBOT.ELO.Modules.Modules
             {
                 Service.SaveGame(game);
                 await ReplyAsync($"Vote counted as: {vote.ToString()}");
-            }            
+            }
         }
 
         [Command("UndoGame", RunMode = RunMode.Sync)]
         [Alias("Undo Game")]
         [Summary("Undoes the specified game in the specified lobby")]
         [Preconditions.RequireModerator]
-        public async Task UndoGameAsync(SocketTextChannel lobbyChannel , int gameNumber)
+        public async Task UndoGameAsync(SocketTextChannel lobbyChannel, int gameNumber)
         {
             await UndoGameAsync(gameNumber, lobbyChannel);
         }
@@ -282,10 +281,10 @@ namespace RavenBOT.ELO.Modules.Modules
                     //The user cannot be found in the server so skip updating their name/profile
                     continue;
                 }
-                
+
                 var displayName = competition.GetNickname(player);
                 bool nicknameChange = false;
-                if (guildUser.Nickname != null && competition.UpdateNames) 
+                if (guildUser.Nickname != null && competition.UpdateNames)
                 {
                     if (!guildUser.Nickname.Equals(displayName))
                     {
@@ -350,7 +349,7 @@ namespace RavenBOT.ELO.Modules.Modules
             }
 
             game.GameState = GameResult.State.Undecided;
-            game.ScoreUpdates = new Dictionary <ulong, int> ();
+            game.ScoreUpdates = new Dictionary<ulong, int>();
             Service.SaveGame(game);
         }
 
@@ -538,8 +537,8 @@ namespace RavenBOT.ELO.Modules.Modules
 
             var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
 
-            List < (Player, int, Rank, RankChangeState, Rank) > winList;
-            List < (Player, int, Rank, RankChangeState, Rank) > loseList;
+            List<(Player, int, Rank, RankChangeState, Rank)> winList;
+            List<(Player, int, Rank, RankChangeState, Rank)> loseList;
             if (winning_team == TeamSelection.team1)
             {
                 winList = UpdateTeamScoresAsync(competition, true, game.Team1.Players);
@@ -551,7 +550,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 winList = UpdateTeamScoresAsync(competition, true, game.Team2.Players);
             }
 
-            var allUsers = new List < (Player, int, Rank, RankChangeState, Rank) > ();
+            var allUsers = new List<(Player, int, Rank, RankChangeState, Rank)>();
             allUsers.AddRange(winList);
             allUsers.AddRange(loseList);
 
@@ -563,7 +562,7 @@ namespace RavenBOT.ELO.Modules.Modules
 
                 await Service.UpdateUserAsync(competition, user.Item1, gUser);
             }
-            
+
             game.GameState = GameResult.State.Decided;
             game.ScoreUpdates = allUsers.ToDictionary(x => x.Item1.UserId, y => y.Item2);
             game.WinningTeam = (int)winning_team;
@@ -597,7 +596,7 @@ namespace RavenBOT.ELO.Modules.Modules
             await AnnounceResultAsync(lobby, response);
         }
 
-        
+
         [Command("Game", RunMode = RunMode.Sync)]
         [Alias("g")]
         [Summary("Calls a win for the specified team in the specified game and lobby with an optional comment")]
@@ -643,8 +642,8 @@ namespace RavenBOT.ELO.Modules.Modules
 
             var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
 
-            List < (Player, int, Rank, RankChangeState, Rank) > winList;
-            List < (Player, int, Rank, RankChangeState, Rank) > loseList;
+            List<(Player, int, Rank, RankChangeState, Rank)> winList;
+            List<(Player, int, Rank, RankChangeState, Rank)> loseList;
             if (winning_team == TeamSelection.team1)
             {
                 winList = UpdateTeamScoresAsync(competition, true, game.Team1.Players);
@@ -656,7 +655,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 winList = UpdateTeamScoresAsync(competition, true, game.Team2.Players);
             }
 
-            var allUsers = new List < (Player, int, Rank, RankChangeState, Rank) > ();
+            var allUsers = new List<(Player, int, Rank, RankChangeState, Rank)>();
             allUsers.AddRange(winList);
             allUsers.AddRange(loseList);
 
@@ -668,7 +667,7 @@ namespace RavenBOT.ELO.Modules.Modules
 
                 await Service.UpdateUserAsync(competition, user.Item1, gUser);
             }
-            
+
             game.GameState = GameResult.State.Decided;
             game.ScoreUpdates = allUsers.ToDictionary(x => x.Item1.UserId, y => y.Item2);
             game.WinningTeam = (int)winning_team;
@@ -702,12 +701,12 @@ namespace RavenBOT.ELO.Modules.Modules
             await AnnounceResultAsync(lobby, response);
         }
 
-        public string GetResponseContent(List < (Player, int, Rank, RankChangeState, Rank) > players)
+        public string GetResponseContent(List<(Player, int, Rank, RankChangeState, Rank)> players)
         {
             var sb = new StringBuilder();
             foreach (var player in players)
             {
-                if (player.Item4 == RankChangeState.None) 
+                if (player.Item4 == RankChangeState.None)
                 {
                     sb.AppendLine($"{player.Item1.GetDisplayNameSafe()} **Points:** {player.Item1.Points - player.Item2}{(player.Item2 >= 0 ? $" + {player.Item2}" : $" - {Math.Abs(player.Item2)}")} = {player.Item1.Points}");
                     continue;
@@ -752,9 +751,9 @@ namespace RavenBOT.ELO.Modules.Modules
         /// The player's rank change state (rank up, derank, none)
         /// The players new rank (if changed)
         /// </returns>
-        public List < (Player, int, Rank, RankChangeState, Rank) > UpdateTeamScoresAsync(CompetitionConfig competition, bool win, HashSet<ulong> userIds)
+        public List<(Player, int, Rank, RankChangeState, Rank)> UpdateTeamScoresAsync(CompetitionConfig competition, bool win, HashSet<ulong> userIds)
         {
-            var updates = new List < (Player, int, Rank, RankChangeState, Rank) > ();
+            var updates = new List<(Player, int, Rank, RankChangeState, Rank)>();
             foreach (var userId in userIds)
             {
                 var player = Service.GetPlayer(Context.Guild.Id, userId);

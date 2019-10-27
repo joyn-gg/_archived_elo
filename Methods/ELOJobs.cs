@@ -1,14 +1,14 @@
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using RavenBOT.ELO.Modules.Models;
 using RavenBOT.ELO.Modules.Premium;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace RavenBOT.ELO.Modules.Methods
 {
-    public partial class ELOService 
+    public partial class ELOService
     {
         public Timer CompetitionUpdateTimer { get; }
         public void UpdateCompetitionSetups(object stateInfo = null)
@@ -25,7 +25,7 @@ namespace RavenBOT.ELO.Modules.Methods
                 }
             });
         }
-        
+
         public readonly Emoji registrationConfirmEmoji = new Emoji("✅");
         public class ReactiveRegistrationMessage
         {
@@ -48,7 +48,7 @@ namespace RavenBOT.ELO.Modules.Methods
         }
 
         private async Task ReactiveRegistration(Cacheable<IUserMessage, ulong> messageCache, ISocketMessageChannel channel, SocketReaction reaction)
-        {            
+        {
             if (reaction.Emote.Name != registrationConfirmEmoji.Name) return;
             if (!reaction.User.IsSpecified) return;
             if (!(channel is SocketTextChannel guildChannel)) return;

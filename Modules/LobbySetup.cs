@@ -1,11 +1,11 @@
-using System.Linq;
-using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using RavenBOT.Common;
 using RavenBOT.ELO.Modules.Methods;
 using RavenBOT.ELO.Modules.Models;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace RavenBOT.ELO.Modules.Modules
 {
@@ -75,7 +75,7 @@ namespace RavenBOT.ELO.Modules.Modules
             await ReplyAsync($"Pick mode set.");
         }
 
-        
+
         [Command("ReactOnJoinLeave", RunMode = RunMode.Sync)]
         [Summary("Sets whether the bot will react or send a message when users join or leave a lobby.")]
         public async Task ReactOnJoinLeaveAsync(bool react)
@@ -118,12 +118,12 @@ namespace RavenBOT.ELO.Modules.Modules
         }
 
 
-        [Command("PickOrders", RunMode = RunMode.Async)]        
+        [Command("PickOrders", RunMode = RunMode.Async)]
         [Summary("Shows pickorder settings for the SetPickOrder command")]
         public async Task DisplayPickOrdersAsync()
         {
             var res = "`PickOne` - Captains each alternate picking one player until there are none remaining\n" +
-                    "`PickTwo` - 1-2-2-1-1... Pick order. Captain 1 gets first pick, then Captain 2 picks 2 players,\n"+
+                    "`PickTwo` - 1-2-2-1-1... Pick order. Captain 1 gets first pick, then Captain 2 picks 2 players,\n" +
                     "then Captain 1 picks 2 players and then alternate picking 1 player until teams are filled\n" +
                     "This is often used to reduce any advantage given for picking the first player.";
             await ReplyAsync(res);
@@ -220,7 +220,7 @@ namespace RavenBOT.ELO.Modules.Modules
             Service.SaveLobby(lobby);
             await ReplyAsync($"Minimum points is now disabled for this lobby.");
         }
-        
+
         [Command("MapMode", RunMode = RunMode.Sync)]
         [Summary("Sets the map selection mode for the lobby.")]
         public async Task MapModeAsync(MapSelector.MapMode mode)
@@ -247,13 +247,13 @@ namespace RavenBOT.ELO.Modules.Modules
             {
                 lobby.MapSelector = new MapSelector();
             }
-            
-           
+
+
 
             lobby.MapSelector.Mode = mode;
             Service.SaveLobby(lobby);
             await ReplyAsync("Mode set.");
-        }     
+        }
 
         [Command("MapMode", RunMode = RunMode.Async)]
         [Summary("Shows the current map selection mode for the lobby.")]
@@ -270,10 +270,10 @@ namespace RavenBOT.ELO.Modules.Modules
             {
                 lobby.MapSelector = new MapSelector();
             }
-            
+
             await ReplyAsync($"Current Map Mode: {lobby.MapSelector?.Mode}");
             return;
-        }         
+        }
 
         [Command("MapModes", RunMode = RunMode.Async)]
         [Summary("Shows all available map selection modes.")]
@@ -426,7 +426,7 @@ namespace RavenBOT.ELO.Modules.Modules
         public async Task AllowNegativeAsync(bool? hideQueue = null)
         {
             if (Context.Channel.IsLobby(Service, out var lobby))
-            {            
+            {
                 if (hideQueue == null)
                 {
                     await ReplyAsync($"Current Hide Queue Setting: {lobby.HideQueue}");
@@ -448,7 +448,7 @@ namespace RavenBOT.ELO.Modules.Modules
         public async Task MentionUsersReadyAsync(bool? mentionUsers = null)
         {
             if (Context.Channel.IsLobby(Service, out var lobby))
-            {            
+            {
                 if (mentionUsers == null)
                 {
                     await ReplyAsync($"Current Mention Users Setting: {lobby.MentionUsersInReadyAnnouncement}");

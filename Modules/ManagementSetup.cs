@@ -1,9 +1,8 @@
-using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
 using RavenBOT.Common;
 using RavenBOT.ELO.Modules.Methods;
-using RavenBOT.ELO.Modules.Models;
+using System.Threading.Tasks;
 
 namespace RavenBOT.ELO.Modules.Modules
 {
@@ -19,7 +18,7 @@ namespace RavenBOT.ELO.Modules.Modules
         }
 
         [Command("SetModerator", RunMode = RunMode.Sync)]
-        [Alias("Set Moderator", "Set Moderator Role", "SetMod" ,"Set Mod Role")]
+        [Alias("Set Moderator", "Set Moderator Role", "SetMod", "Set Mod Role")]
         [Summary("Sets the ELO moderator role for the server.")]
         public async Task SetModeratorAsync(SocketRole modRole = null)
         {
@@ -36,7 +35,7 @@ namespace RavenBOT.ELO.Modules.Modules
             }
         }
 
-        [Command("SetAdmin", RunMode = RunMode.Sync)]   
+        [Command("SetAdmin", RunMode = RunMode.Sync)]
         [Summary("Sets the ELO admin role for the server.")]
         public async Task SetAdminAsync(SocketRole adminRole = null)
         {

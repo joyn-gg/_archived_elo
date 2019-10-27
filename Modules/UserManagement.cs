@@ -1,12 +1,12 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using RavenBOT.Common;
 using RavenBOT.ELO.Modules.Methods;
 using RavenBOT.ELO.Modules.Models;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace RavenBOT.ELO.Modules.Modules
 {
@@ -33,7 +33,7 @@ namespace RavenBOT.ELO.Modules.Modules
 
             if (player.NameLog.Any())
             {
-                await SimpleEmbedAsync($"Current: {player.GetDisplayNameSafe()}\n" + string.Join("\n", player.NameLog.Select(x => 
+                await SimpleEmbedAsync($"Current: {player.GetDisplayNameSafe()}\n" + string.Join("\n", player.NameLog.Select(x =>
                 {
                     var time = new DateTime(x.Key);
                     return $"{time.ToString("dd MMM yyyy")} {time.ToShortTimeString()} - {x.Value}";

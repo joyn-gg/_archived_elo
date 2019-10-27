@@ -1,13 +1,12 @@
-using System.Linq.Expressions;
-using System.Collections.Generic;
-using System.Linq;
 using Discord.WebSocket;
 using RavenBOT.Common;
 using RavenBOT.ELO.Modules.Models;
-using System;
-using System.Threading;
 using RavenBOT.ELO.Modules.Premium;
-using System.Threading.Tasks;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Threading;
 
 namespace RavenBOT.ELO.Modules.Methods
 {
@@ -43,13 +42,13 @@ namespace RavenBOT.ELO.Modules.Methods
         {
             var lobbyMatch = Database.Load<Lobby>(Lobby.DocumentName(guildId, channelId));
             if (lobbyMatch == null) return;
-            
+
             Database.Remove<Lobby>(Lobby.DocumentName(guildId, channelId));
 
             var games = GetGames(guildId, channelId);
             foreach (var game in games)
             {
-                RemoveGame(game);                  
+                RemoveGame(game);
             }
         }
 
@@ -109,7 +108,7 @@ namespace RavenBOT.ELO.Modules.Methods
 
         public GameResult[] GetGames(ulong guildId, ulong channelId, int? limit = null)
         {
-            
+
             return Database.Query<GameResult>(x => x.GuildId == guildId && x.LobbyId == channelId).ToArray();
         }
 
@@ -131,12 +130,12 @@ namespace RavenBOT.ELO.Modules.Methods
 
         public ManualGameResult[] GetManualGames(ulong guildId, ulong channelId, int? limit = null)
         {
-            
+
             return Database.Query<ManualGameResult>(x => x.GuildId == guildId).ToArray();
         }
 
         public ManualGameResult[] GetManualGames(Expression<Func<ManualGameResult, bool>> queryFunc)
-        {            
+        {
             return Database.Query<ManualGameResult>(queryFunc).ToArray();
         }
         #endregion
@@ -185,7 +184,7 @@ namespace RavenBOT.ELO.Modules.Methods
             Database.Remove<Player>(Player.DocumentName(player.GuildId, player.UserId));
         }
 
-        
+
         public void SavePlayers(IEnumerable<Player> players)
         {
             Database.StoreMany<Player>(players.ToList(), x => Player.DocumentName(x.GuildId, x.UserId));

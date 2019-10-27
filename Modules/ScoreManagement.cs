@@ -1,11 +1,10 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
 using RavenBOT.Common;
 using RavenBOT.ELO.Modules.Methods;
 using RavenBOT.ELO.Modules.Models;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace RavenBOT.ELO.Modules.Modules
 {
@@ -51,7 +50,7 @@ namespace RavenBOT.ELO.Modules.Modules
             Service.SavePlayers(players);
             await ReplyAsync("", false, responseString.QuickEmbed());
         }
-        
+
         [Command("Wins", RunMode = RunMode.Sync)]
         [Summary("Modifies wins for the specified user.")]
         public async Task WinsAsync(SocketGuildUser user, Player.ModifyState state, int amount)
@@ -83,7 +82,7 @@ namespace RavenBOT.ELO.Modules.Modules
         }
 
         [Command("Losses", RunMode = RunMode.Sync)]
-        [Summary("Modifies losses for the specified users.")]        
+        [Summary("Modifies losses for the specified users.")]
         public async Task LossesAsync(Player.ModifyState state, int amount, params SocketGuildUser[] users)
         {
             var players = Service.GetPlayersSafe(users.Select(x => x.Id), Context.Guild.Id);

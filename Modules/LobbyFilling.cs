@@ -1,11 +1,11 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using RavenBOT.Common;
 using RavenBOT.ELO.Modules.Models;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace RavenBOT.ELO.Modules.Modules
 {
@@ -93,12 +93,12 @@ namespace RavenBOT.ELO.Modules.Modules
                     }
                     catch
                     {
-                        await ReplyAsync($"Added {CurrentPlayer.GetDisplayNameSafe()} to queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam*2}]**");
+                        await ReplyAsync($"Added {CurrentPlayer.GetDisplayNameSafe()} to queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**");
                     }
                 }
                 else
                 {
-                    await ReplyAsync($"Added {CurrentPlayer.GetDisplayNameSafe()} to queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam*2}]**");
+                    await ReplyAsync($"Added {CurrentPlayer.GetDisplayNameSafe()} to queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**");
                 }
             }
 
@@ -172,7 +172,7 @@ namespace RavenBOT.ELO.Modules.Modules
             else
             {
                 await Context.Message.DeleteAsync();
-                await ReplyAsync($"A player has joined the queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam*2}]**");
+                await ReplyAsync($"A player has joined the queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**");
             }
 
             Service.SaveLobby(CurrentLobby);
@@ -216,12 +216,12 @@ namespace RavenBOT.ELO.Modules.Modules
                     }
                     catch
                     {
-                        await ReplyAsync($"Removed {CurrentPlayer.GetDisplayNameSafe()} from queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam*2}]**");
+                        await ReplyAsync($"Removed {CurrentPlayer.GetDisplayNameSafe()} from queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**");
                     }
                 }
                 else
                 {
-                    await ReplyAsync($"Removed {CurrentPlayer.GetDisplayNameSafe()} from queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam*2}]**");
+                    await ReplyAsync($"Removed {CurrentPlayer.GetDisplayNameSafe()} from queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**");
                 }
             }
             else
@@ -248,7 +248,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 Service.SaveLobby(CurrentLobby);
 
                 await Context.Message.DeleteAsync();
-                await ReplyAsync($"Removed a player. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam*2}]**");
+                await ReplyAsync($"Removed a player. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**");
             }
             else
             {

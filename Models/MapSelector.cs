@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace RavenBOT.ELO.Modules.Models
 {
@@ -41,7 +40,7 @@ namespace RavenBOT.ELO.Modules.Models
         public (string, string, string) GenerateVoter(Random rnd)
         {
             throw new NotImplementedException();
-            
+
             if (Mode != MapSelector.MapMode.Vote)
             {
                 throw new InvalidOperationException("MakeVote is only used for vote mode.");
