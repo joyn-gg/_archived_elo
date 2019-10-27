@@ -66,13 +66,20 @@ namespace RavenBOT.ELO.Modules.Models
 
         public string RandomMap(Random rnd, bool addHistory)
         {
-            var mapRnd = Maps.OrderByDescending(x => rnd.Next()).ToArray();
-            var map = mapRnd.First();
-            if (addHistory)
+            if (Maps.Count > 0)
             {
-                AddToHistory(map);
+                var mapRnd = Maps.OrderByDescending(x => rnd.Next()).ToArray();
+                var map = mapRnd.First();
+                if (addHistory)
+                {
+                    AddToHistory(map);
+                }
+                return map;
             }
-            return map;
+            else
+            {
+                return null;
+            }
         }
 
         /// <summary>
@@ -83,7 +90,7 @@ namespace RavenBOT.ELO.Modules.Models
         public string NextMap(bool addHistory)
         {
             string map = null;
-            if (Mode != MapSelector.MapMode.Cycle)
+            if (Mode != MapMode.Cycle)
             {
                 throw new InvalidOperationException("NextMap is only used for cycle mode.");
             }

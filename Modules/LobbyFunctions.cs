@@ -18,7 +18,7 @@ namespace RavenBOT.ELO.Modules.Modules
             var game = new GameResult(CurrentLobby.CurrentGameCount, Context.Channel.Id, Context.Guild.Id, CurrentLobby.TeamPickMode);
             game.Queue = CurrentLobby.Queue;
 
-            if (CurrentLobby.MapSelector != null)
+            if (CurrentLobby.MapSelector != null && CurrentLobby.MapSelector.Maps.Count > 0)
             {
                 switch (CurrentLobby.MapSelector.Mode)
                 {
