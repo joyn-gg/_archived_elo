@@ -91,21 +91,30 @@ namespace RavenBOT.ELO.Modules.Modules
         public async Task CompetitionInfo()
         {
             var comp = Service.GetOrCreateCompetition(Context.Guild.Id);
-            var infoStr = $"**Register Role:** {(comp.RegisteredRankId == 0 ? "N/A" : MentionUtils.MentionRole(comp.RegisteredRankId))}\n" +
+            var embed = new EmbedBuilder
+            {
+                Color = Color.Blue
+            };
+            embed.AddField("Roles", 
+                        $"**Register Role:** {(comp.RegisteredRankId == 0 ? "N/A" : MentionUtils.MentionRole(comp.RegisteredRankId))}\n" +
                         $"**Admin Role:** {(comp.AdminRole == 0 ? "N/A" : MentionUtils.MentionRole(comp.AdminRole))}\n" +
-                        $"**Moderator Role:** {(comp.ModeratorRole == 0 ? "N/A" : MentionUtils.MentionRole(comp.ModeratorRole))}\n" +
-                        $"**Update Nicknames:** {comp.UpdateNames}\n" +
-                        $"**Nickname Format:** {comp.NameFormat}\n" +
+                        $"**Moderator Role:** {(comp.ModeratorRole == 0 ? "N/A" : MentionUtils.MentionRole(comp.ModeratorRole))}");
+            embed.AddField("Options",
                         $"**Block Multiqueuing:** {comp.BlockMultiQueueing}\n" +
                         $"**Allow Negative Score:** {comp.AllowNegativeScore}\n" +
-                        $"**Default Loss Amount:** -{comp.DefaultLossModifier}\n" +
-                        $"**Default Win Amount:** +{comp.DefaultWinModifier}\n" +
+                        $"**Update Nicknames:** {comp.UpdateNames}\n" +
                         $"**Allow Self Rename:** {comp.AllowSelfRename}\n" +
-                        $"**Allow Re-registering:** {comp.AllowReRegister}\n" +
+                        $"**Allow Re-registering:** {comp.AllowReRegister}");
+            embed.AddField("Stats", 
                         $"**Registered User Count:** {comp.RegistrationCount}\n" +
-                        $"**Manual Game Count:** {comp.ManualGameCounter}\n" +
-                        $"For rank info use the `ranks` command";
-            await SimpleEmbedAsync(infoStr, Color.Blue);
+                        $"**Manual Game Count:** {comp.ManualGameCounter}");
+            embed.AddField("Formating", $"**Nickname Format:** {comp.NameFormat}\n" +
+                        $"**Registration Message:** {comp.RegisterMessageTemplate}");
+            embed.AddField("Rank Info",
+            $"**Default Loss Amount:** -{comp.DefaultLossModifier}\n" +
+            $"**Default Win Amount:** +{comp.DefaultWinModifier}\n" +
+            $"For rank info use the `ranks` command");
+            await ReplyAsync(embed);
         }
 
         [Command("SetRegisterRole", RunMode = RunMode.Sync)]
