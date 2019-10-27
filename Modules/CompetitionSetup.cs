@@ -294,7 +294,7 @@ namespace RavenBOT.ELO.Modules.Modules
             };
             competition.Ranks.Add(newRank);
             Service.SaveCompetition(competition);
-            await SimpleEmbedAsync($"Rank added.\n**Required Points:** {newRank.Points}\n**Win Modifier:** +{newRank.WinModifier}\n**LossModifier:** -{newRank.LossModifier}", Color.Green);
+            await SimpleEmbedAsync($"Rank added.\n**Required Points:** {newRank.Points}\n**Win Modifier:** +{newRank.WinModifier}\n**Loss Modifier:** -{newRank.LossModifier}", Color.Green);
         }
 
 
