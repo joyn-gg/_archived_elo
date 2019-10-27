@@ -28,12 +28,12 @@ namespace RavenBOT.ELO.Modules.Modules
             var comp = Service.GetOrCreateCompetition(Context.Guild.Id);
             if (!comp.Ranks.Any())
             {
-                await ReplyAsync("There are currently no ranks set up.");
+                await SimpleEmbedAsync("There are currently no ranks set up.", Color.Blue);
                 return;
             }
 
             var msg = comp.Ranks.OrderByDescending(x => x.Points).Select(x => $"{MentionUtils.MentionRole(x.RoleId)} - ({x.Points}) W: (+{x.WinModifier ?? comp.DefaultWinModifier}) L: (-{x.LossModifier ?? comp.DefaultLossModifier})").ToArray();
-            await ReplyAsync("", false, string.Join("\n", msg).QuickEmbed());
+            await SimpleEmbedAsync(string.Join("\n", msg), Color.Blue);
         }
 
         [Command("Profile", RunMode = RunMode.Async)] // Please make default command name "Stats"
@@ -51,11 +51,11 @@ namespace RavenBOT.ELO.Modules.Modules
             {
                 if (user.Id == Context.User.Id)
                 {
-                    await ReplyAsync("You are not registered.");
+                    await SimpleEmbedAsync("You are not registered.", Color.DarkBlue);
                 }
                 else
                 {
-                    await ReplyAsync("That user is not registered.");
+                    await SimpleEmbedAsync("That user is not registered.", Color.Red);
                 }
                 return;
             }
@@ -82,7 +82,7 @@ namespace RavenBOT.ELO.Modules.Modules
             //+ if they were on the winning team?
             //maybe only games with a decided result should be shown?
 
-            await ReplyAsync("", false, response.QuickEmbed());
+            await SimpleEmbedAsync(response, Color.Blue);
         }
 
         [Command("Leaderboard", RunMode = RunMode.Async)]
@@ -100,7 +100,7 @@ namespace RavenBOT.ELO.Modules.Modules
             var userGroups = users.OrderByDescending(x => x.Points).SplitList(20).ToArray();
             if (userGroups.Length == 0)
             {
-                await ReplyAsync("There are no registered users in this server yet.");
+                await SimpleEmbedAsync("There are no registered users in this server yet.", Color.Blue);
                 return;
             }
 
