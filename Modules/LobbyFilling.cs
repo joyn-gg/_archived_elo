@@ -29,7 +29,7 @@ namespace RavenBOT.ELO.Modules.Modules
 
             if (CurrentPlayer.IsBanned)
             {
-                await ReplyAsync($"You are still banned from matchmaking for another: {CurrentPlayer.CurrentBan.RemainingTime.GetReadableLength()}");
+                await SimpleEmbedAndDeleteAsync($"{Context.User.Mention} - You are still banned from matchmaking for another: {CurrentPlayer.CurrentBan.RemainingTime.GetReadableLength()}", Color.Red);
                 return;
             }
 
@@ -37,7 +37,7 @@ namespace RavenBOT.ELO.Modules.Modules
             if (CurrentLobby.Queue.Count >= CurrentLobby.PlayersPerTeam * 2)
             {
                 //Queue will be reset after teams are completely picked.
-                await ReplyAsync("Queue is full, wait for teams to be chosen before joining.");
+                await SimpleEmbedAndDeleteAsync($"{Context.User.Mention} - Queue is full, wait for teams to be chosen before joining.", Color.DarkBlue);
                 return;
             }
 
@@ -48,7 +48,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 if (lobbyMatches.Any())
                 {
                     var guildChannels = lobbyMatches.Select(x => MentionUtils.MentionChannel(x.ChannelId));
-                    await ReplyAsync($"MultiQueuing is not enabled in this server.\nPlease leave: {string.Join("\n", guildChannels)}");
+                    await SimpleEmbedAndDeleteAsync($"{Context.User.Mention} - MultiQueuing is not enabled in this server.\nPlease leave: {string.Join("\n", guildChannels)}", Color.Red);
                     return;
                 }
             }
@@ -57,7 +57,7 @@ namespace RavenBOT.ELO.Modules.Modules
             {
                 if (CurrentPlayer.Points < CurrentLobby.MinimumPoints)
                 {
-                    await ReplyAsync($"You need a minimum of {CurrentLobby.MinimumPoints} points to join this lobby.");
+                    await SimpleEmbedAndDeleteAsync($"{Context.User.Mention} - You need a minimum of {CurrentLobby.MinimumPoints} points to join this lobby.", Color.Red);
                     return;
                 }
             }
@@ -65,16 +65,16 @@ namespace RavenBOT.ELO.Modules.Modules
             var currentGame = Service.GetCurrentGame(CurrentLobby);
             if (currentGame != null)
             {
-                if (currentGame.GameState == Models.GameResult.State.Picking)
+                if (currentGame.GameState == GameResult.State.Picking)
                 {
-                    await ReplyAsync("Current game is picking teams, wait until this is completed.");
+                    await SimpleEmbedAndDeleteAsync("Current game is picking teams, wait until this is completed.", Color.DarkBlue);
                     return;
                 }
             }
 
             if (CurrentLobby.Queue.Contains(Context.User.Id))
             {
-                await ReplyAsync("You are already queued.");
+                await SimpleEmbedAndDeleteAsync("You are already queued.", Color.DarkBlue);
                 return;
             }
 
@@ -93,12 +93,12 @@ namespace RavenBOT.ELO.Modules.Modules
                     }
                     catch
                     {
-                        await ReplyAsync($"Added {CurrentPlayer.GetDisplayNameSafe()} to queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**");
+                        await SimpleEmbedAsync($"{CurrentPlayer.GetDisplayNameSafe()} joined the queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**", Color.Green);
                     }
                 }
                 else
                 {
-                    await ReplyAsync($"Added {CurrentPlayer.GetDisplayNameSafe()} to queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**");
+                    await SimpleEmbedAsync($"{CurrentPlayer.GetDisplayNameSafe()} joined the queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**", Color.Green);
                 }
             }
 
@@ -110,7 +110,7 @@ namespace RavenBOT.ELO.Modules.Modules
             if (CurrentPlayer.IsBanned)
             {
                 await Context.Message.DeleteAsync();
-                await ReplyAndDeleteAsync($"You are still banned from matchmaking for another: {CurrentPlayer.CurrentBan.RemainingTime.GetReadableLength()}", null, TimeSpan.FromSeconds(5));
+                await SimpleEmbedAndDeleteAsync($"You are still banned from matchmaking for another: {CurrentPlayer.CurrentBan.RemainingTime.GetReadableLength()}", Color.Red, TimeSpan.FromSeconds(5));
                 return;
             }
 
@@ -119,7 +119,7 @@ namespace RavenBOT.ELO.Modules.Modules
             {
                 //Queue will be reset after teams are completely picked.
                 await Context.Message.DeleteAsync();
-                await ReplyAndDeleteAsync("Queue is full, wait for teams to be chosen before joining.");
+                await SimpleEmbedAndDeleteAsync("Queue is full, wait for teams to be chosen before joining.", Color.Red, TimeSpan.FromSeconds(5));
                 return;
             }
 
@@ -131,7 +131,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 {
                     var guildChannels = lobbyMatches.Select(x => MentionUtils.MentionChannel(x.ChannelId));
                     await Context.Message.DeleteAsync();
-                    await ReplyAndDeleteAsync($"MultiQueuing is not enabled in this server.\nPlease leave: {string.Join("\n", guildChannels)}", null, TimeSpan.FromSeconds(5));
+                    await SimpleEmbedAndDeleteAsync($"MultiQueuing is not enabled in this server.\nPlease leave: {string.Join("\n", guildChannels)}", Color.Red, TimeSpan.FromSeconds(5));
                     return;
                 }
             }
@@ -141,7 +141,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 if (CurrentPlayer.Points < CurrentLobby.MinimumPoints)
                 {
                     await Context.Message.DeleteAsync();
-                    await ReplyAndDeleteAsync($"You need a minimum of {CurrentLobby.MinimumPoints} points to join this lobby.", null, TimeSpan.FromSeconds(5));
+                    await SimpleEmbedAndDeleteAsync($"You need a minimum of {CurrentLobby.MinimumPoints} points to join this lobby.", Color.Red, TimeSpan.FromSeconds(5));
                     return;
                 }
             }
@@ -152,7 +152,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 if (currentGame.GameState == Models.GameResult.State.Picking)
                 {
                     await Context.Message.DeleteAsync();
-                    await ReplyAndDeleteAsync("Current game is picking teams, wait until this is completed.", null, TimeSpan.FromSeconds(5));
+                    await SimpleEmbedAndDeleteAsync("Current game is picking teams, wait until this is completed.", Color.DarkBlue, TimeSpan.FromSeconds(5));
                     return;
                 }
             }
@@ -160,7 +160,7 @@ namespace RavenBOT.ELO.Modules.Modules
             if (CurrentLobby.Queue.Contains(Context.User.Id))
             {
                 await Context.Message.DeleteAsync();
-                await ReplyAndDeleteAsync("You are already queued.", null, TimeSpan.FromSeconds(5));
+                await SimpleEmbedAndDeleteAsync("You are already queued.", Color.DarkBlue, TimeSpan.FromSeconds(5));
                 return;
             }
 
@@ -172,7 +172,7 @@ namespace RavenBOT.ELO.Modules.Modules
             else
             {
                 await Context.Message.DeleteAsync();
-                await ReplyAsync($"A player has joined the queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**");
+                await SimpleEmbedAsync($"A player has joined the queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**");
             }
 
             Service.SaveLobby(CurrentLobby);
@@ -201,7 +201,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 {
                     if (game.GameState == GameResult.State.Picking)
                     {
-                        await ReplyAsync("Lobby is currently picking teams. You cannot leave a queue while this is happening.");
+                        await SimpleEmbedAsync("Lobby is currently picking teams. You cannot leave a queue while this is happening.", Color.Red);
                         return;
                     }
                 }
@@ -216,17 +216,17 @@ namespace RavenBOT.ELO.Modules.Modules
                     }
                     catch
                     {
-                        await ReplyAsync($"Removed {CurrentPlayer.GetDisplayNameSafe()} from queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**");
+                        await SimpleEmbedAsync($"Removed {CurrentPlayer.GetDisplayNameSafe()} from queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**", Color.DarkBlue);
                     }
                 }
                 else
                 {
-                    await ReplyAsync($"Removed {CurrentPlayer.GetDisplayNameSafe()} from queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**");
+                    await SimpleEmbedAsync($"Removed {CurrentPlayer.GetDisplayNameSafe()} from queue. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**", Color.DarkBlue);
                 }
             }
             else
             {
-                await ReplyAsync("You are not queued for the next game.");
+                await SimpleEmbedAsync("You are not queued for the next game.", Color.DarkBlue);
             }
         }
 
@@ -240,7 +240,7 @@ namespace RavenBOT.ELO.Modules.Modules
                     if (game.GameState == GameResult.State.Picking)
                     {
                         await Context.Message.DeleteAsync();
-                        await ReplyAndDeleteAsync("Lobby is currently picking teams. You cannot leave a queue while this is happening.", null, TimeSpan.FromSeconds(5));
+                        await SimpleEmbedAndDeleteAsync("Lobby is currently picking teams. You cannot leave a queue while this is happening.", Color.Red, TimeSpan.FromSeconds(5));
                         return;
                     }
                 }
@@ -248,12 +248,12 @@ namespace RavenBOT.ELO.Modules.Modules
                 Service.SaveLobby(CurrentLobby);
 
                 await Context.Message.DeleteAsync();
-                await ReplyAsync($"Removed a player. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**");
+                await SimpleEmbedAsync($"Removed a player. **[{CurrentLobby.Queue.Count}/{CurrentLobby.PlayersPerTeam * 2}]**");
             }
             else
             {
                 await Context.Message.DeleteAsync();
-                await ReplyAndDeleteAsync("You are not queued for the next game.", null, TimeSpan.FromSeconds(5));
+                await SimpleEmbedAndDeleteAsync("You are not queued for the next game.", Color.DarkBlue, TimeSpan.FromSeconds(5));
             }
         }
     }
