@@ -42,17 +42,17 @@ namespace RavenBOT.ELO.Modules.Modules
         {
             if (token == null)
             {
-                await ReplyAsync("This is used to redeem tokens that were created using the old ELO version.");
+                await SimpleEmbedAsync("This is used to redeem tokens that were created using the old ELO version.", Color.Blue);
                 return;
             }
 
             if (Migrator.RedeemToken(Context.Guild.Id, token))
             {
-                await ReplyAsync("Token redeemed.");
+                await SimpleEmbedAsync("Token redeemed.", Color.Green);
             }
             else
             {
-                await ReplyAsync("Invalid token provided.");
+                await SimpleEmbedAsync($"Invalid token provided, if you believe this is a mistake please contact support at: {PatreonIntegration.GetConfig().ServerInvite}", Color.Red);
             }
         }
 
@@ -65,16 +65,16 @@ namespace RavenBOT.ELO.Modules.Modules
             {
                 if (config.IsPremium())
                 {
-                    await ReplyAsync($"Expires on: {config.ExpiryDate.ToString("dd MMM yyyy")} {config.ExpiryDate.ToShortTimeString()}\nRemaining: {config.Remaining().GetReadableLength()}");
+                    await SimpleEmbedAsync($"Expires on: {config.ExpiryDate.ToString("dd MMM yyyy")} {config.ExpiryDate.ToShortTimeString()}\nRemaining: {config.Remaining().GetReadableLength()}", Color.Blue);
                 }
                 else
                 {
-                    await ReplyAsync("Legacy premium has already expired.");
+                    await SimpleEmbedAsync("Legacy premium has already expired.", Color.Red);
                 }
             }
             else
             {
-                await ReplyAsync("This server does not have a legacy premium subscription.");
+                await SimpleEmbedAsync("This server does not have a legacy premium subscription.", Color.Red);
             }
         }
 
@@ -82,7 +82,7 @@ namespace RavenBOT.ELO.Modules.Modules
         [Summary("Displays the maximum amount of registrations for the server")]
         public async Task GetRegisterLimit()
         {
-            await ReplyAsync($"Current registration limit is a maximum of: {PatreonIntegration.GetRegistrationLimit(Context)}");
+            await SimpleEmbedAsync($"Current registration limit is a maximum of: {PatreonIntegration.GetRegistrationLimit(Context)}", Color.Blue);
         }
 
         [Command("CompetitionInfo", RunMode = RunMode.Async)]
@@ -105,7 +105,7 @@ namespace RavenBOT.ELO.Modules.Modules
                         $"**Registered User Count:** {comp.RegistrationCount}\n" +
                         $"**Manual Game Count:** {comp.ManualGameCounter}\n" +
                         $"For rank info use the `ranks` command";
-            await SimpleEmbedAsync(infoStr);
+            await SimpleEmbedAsync(infoStr, Color.Blue);
         }
 
         [Command("SetRegisterRole", RunMode = RunMode.Sync)]
@@ -125,17 +125,17 @@ namespace RavenBOT.ELO.Modules.Modules
                         //May as well reset it.
                         competition.RegisteredRankId = 0;
                         Service.SaveCompetition(competition);
-                        await ReplyAsync("Register role had previously been set but can no longer be found in the server. It has been reset.");
+                        await SimpleEmbedAsync("Register role had previously been set but can no longer be found in the server. It has been reset.", Color.DarkBlue);
                     }
                     else
                     {
-                        await ReplyAsync($"Current register role is: {gRole.Mention}");
+                        await SimpleEmbedAsync($"Current register role is: {gRole.Mention}", Color.Blue);
                     }
                 }
                 else
                 {
                     var serverPrefix = Prefix.GetPrefix(Context.Guild.Id) ?? Prefix.DefaultPrefix;
-                    await ReplyAsync($"There is no register role set. You can set one with `{serverPrefix}SetRegisterRole @role` or `{serverPrefix}SetRegisterRole rolename`");
+                    await SimpleEmbedAsync($"There is no register role set. You can set one with `{serverPrefix}SetRegisterRole @role` or `{serverPrefix}SetRegisterRole rolename`", Color.Blue);
                 }
 
                 return;
@@ -143,7 +143,7 @@ namespace RavenBOT.ELO.Modules.Modules
 
             competition.RegisteredRankId = role.Id;
             Service.SaveCompetition(competition);
-            await ReplyAsync($"Register role set to {role.Mention}");
+            await SimpleEmbedAsync($"Register role set to {role.Mention}", Color.Green);
         }
 
         [Command("SetRegisterMessage", RunMode = RunMode.Sync)]
@@ -165,7 +165,7 @@ namespace RavenBOT.ELO.Modules.Modules
             var exampleNick = competition.GetNickname(testProfile);
 
             Service.SaveCompetition(competition);
-            await ReplyAsync($"Register Message set.\nExample:\n{exampleNick}");
+            await SimpleEmbedAsync($"Register Message set.\nExample:\n{exampleNick}", Color.Green);
         }
 
         [Command("RegisterMessageFormats", RunMode = RunMode.Async)]
@@ -184,7 +184,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 "`RegisterMessageFormats Thank you for registering {name}` `Thank you for registering Player`\n" +
                 "NOTE: Format is limited to 1024 characters long";
 
-            await SimpleEmbedAsync(response);
+            await SimpleEmbedAsync(response, Color.Blue);
         }
 
         [Command("SetNicknameFormat", RunMode = RunMode.Sync)]
@@ -202,7 +202,7 @@ namespace RavenBOT.ELO.Modules.Modules
             var exampleNick = competition.GetNickname(testProfile);
 
             Service.SaveCompetition(competition);
-            await ReplyAsync($"Nickname Format set.\nExample: `{exampleNick}`");
+            await SimpleEmbedAsync($"Nickname Format set.\nExample: `{exampleNick}`", Color.Green);
         }
 
         [Command("NicknameFormats", RunMode = RunMode.Async)]
@@ -222,7 +222,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 "`SetNicknameFormat [{wins}] {name}` `[5] Player`\n" +
                 "NOTE: Nicknames are limited to 32 characters long on discord";
 
-            await ReplyAsync("", false, response.QuickEmbed());
+            await SimpleEmbedAsync(response, Color.Blue);
         }
 
         [Command("AddRank", RunMode = RunMode.Sync)]
@@ -238,7 +238,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 Points = points
             });
             Service.SaveCompetition(competition);
-            await ReplyAsync("Rank added.");
+            await SimpleEmbedAsync("Rank added, if you wish to change the win/loss point values, use the `RankWinModifier` and `RankLossModifier` commands.", Color.Green);
         }
 
         [Command("AddRank", RunMode = RunMode.Sync)]
@@ -257,7 +257,7 @@ namespace RavenBOT.ELO.Modules.Modules
             var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
             competition.Ranks = competition.Ranks.Where(x => x.RoleId != roleId).ToList();
             Service.SaveCompetition(competition);
-            await ReplyAsync("Rank Removed.");
+            await SimpleEmbedAsync("Rank Removed.", Color.Green);
         }
 
         [Command("RemoveRank", RunMode = RunMode.Sync)]
@@ -276,12 +276,12 @@ namespace RavenBOT.ELO.Modules.Modules
             var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
             if (allowNegative == null)
             {
-                await ReplyAsync($"Current Allow Negative Score Setting: {competition.AllowNegativeScore}");
+                await SimpleEmbedAsync($"Current Allow Negative Score Setting: {competition.AllowNegativeScore}", Color.Blue);
                 return;
             }
             competition.AllowNegativeScore = allowNegative.Value;
             Service.SaveCompetition(competition);
-            await ReplyAsync($"Allow Negative Score set to {allowNegative.Value}");
+            await SimpleEmbedAsync($"Allow Negative Score set to {allowNegative.Value}", Color.Green);
         }
 
         [Command("AllowReRegister", RunMode = RunMode.Sync)]
@@ -291,12 +291,12 @@ namespace RavenBOT.ELO.Modules.Modules
             var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
             if (reRegister == null)
             {
-                await ReplyAsync($"Current Allow re-register Setting: {competition.AllowReRegister}");
+                await SimpleEmbedAsync($"Current Allow re-register Setting: {competition.AllowReRegister}", Color.Blue);
                 return;
             }
             competition.AllowReRegister = reRegister.Value;
             Service.SaveCompetition(competition);
-            await ReplyAsync($"Allow re-register set to {reRegister.Value}");
+            await SimpleEmbedAsync($"Allow re-register set to {reRegister.Value}", Color.Green);
         }
 
         [Command("AllowSelfRename", RunMode = RunMode.Sync)]
@@ -306,12 +306,12 @@ namespace RavenBOT.ELO.Modules.Modules
             var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
             if (selfRename == null)
             {
-                await ReplyAsync($"Current Allow Self Rename Setting: {competition.AllowSelfRename}");
+                await SimpleEmbedAsync($"Current Allow Self Rename Setting: {competition.AllowSelfRename}", Color.Blue);
                 return;
             }
             competition.AllowSelfRename = selfRename.Value;
             Service.SaveCompetition(competition);
-            await ReplyAsync($"Allow Self Rename set to {selfRename.Value}");
+            await SimpleEmbedAsync($"Allow Self Rename set to {selfRename.Value}", Color.Green);
         }
 
         [Command("DefaultWinModifier", RunMode = RunMode.Sync)]
@@ -322,12 +322,12 @@ namespace RavenBOT.ELO.Modules.Modules
 
             if (!amountToAdd.HasValue)
             {
-                await ReplyAsync($"Current DefaultWinModifier Setting: {competition.DefaultWinModifier}");
+                await SimpleEmbedAsync($"Current DefaultWinModifier Setting: {competition.DefaultWinModifier}", Color.Blue);
                 return;
             }
             competition.DefaultWinModifier = amountToAdd.Value;
             Service.SaveCompetition(competition);
-            await ReplyAsync($"Default Win Modifier set to {competition.DefaultWinModifier}");
+            await SimpleEmbedAsync($"Default Win Modifier set to {competition.DefaultWinModifier}", Color.Green);
         }
 
 
@@ -339,12 +339,12 @@ namespace RavenBOT.ELO.Modules.Modules
 
             if (!amountToSubtract.HasValue)
             {
-                await ReplyAsync($"Current DefaultLossModifier Setting: {competition.DefaultLossModifier}");
+                await SimpleEmbedAsync($"Current DefaultLossModifier Setting: {competition.DefaultLossModifier}", Color.Blue);
                 return;
             }
             competition.DefaultLossModifier = amountToSubtract.Value;
             Service.SaveCompetition(competition);
-            await ReplyAsync($"Default Loss Modifier set to {competition.DefaultLossModifier}");
+            await SimpleEmbedAsync($"Default Loss Modifier set to {competition.DefaultLossModifier}", Color.Green);
         }
 
         [Command("RankLossModifier", RunMode = RunMode.Sync)]
@@ -355,7 +355,7 @@ namespace RavenBOT.ELO.Modules.Modules
             var rank = competition.Ranks.FirstOrDefault(x => x.RoleId == role.Id);
             if (rank == null)
             {
-                await ReplyAsync("Provided role is not a rank.");
+                await SimpleEmbedAsync("Provided role is not a rank.", Color.Red);
                 return;
             }
 
@@ -363,11 +363,11 @@ namespace RavenBOT.ELO.Modules.Modules
             Service.SaveCompetition(competition);
             if (!amountToSubtract.HasValue)
             {
-                await ReplyAsync($"This rank will now use the server's default loss value (-{competition.DefaultLossModifier}) when subtracting points.");
+                await SimpleEmbedAsync($"This rank will now use the server's default loss value (-{competition.DefaultLossModifier}) when subtracting points.", Color.Blue);
             }
             else
             {
-                await ReplyAsync($"When a player with this rank loses they will lose {amountToSubtract} points");
+                await SimpleEmbedAsync($"When a player with this rank loses they will lose {amountToSubtract} points", Color.Green);
             }
         }
 
@@ -379,7 +379,7 @@ namespace RavenBOT.ELO.Modules.Modules
             var rank = competition.Ranks.FirstOrDefault(x => x.RoleId == role.Id);
             if (rank == null)
             {
-                await ReplyAsync("Provided role is not a rank.");
+                await SimpleEmbedAsync("Provided role is not a rank.", Color.Red);
                 return;
             }
 
@@ -387,11 +387,11 @@ namespace RavenBOT.ELO.Modules.Modules
             Service.SaveCompetition(competition);
             if (!amountToAdd.HasValue)
             {
-                await ReplyAsync($"This rank will now use the server's default win value (+{competition.DefaultWinModifier}) when adding points.");
+                await SimpleEmbedAsync($"This rank will now use the server's default win value (+{competition.DefaultWinModifier}) whenSimpleEmbedAsync adding points.", Color.Blue);
             }
             else
             {
-                await ReplyAsync($"When a player with this rank wins they will gain {amountToAdd} points");
+                await SimpleEmbedAsync($"When a player with this rank wins they will gain {amountToAdd} points", Color.Green);
             }
         }
 
@@ -402,12 +402,12 @@ namespace RavenBOT.ELO.Modules.Modules
             var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
             if (updateNicknames == null)
             {
-                await ReplyAsync($"Current Update Nicknames Setting: {competition.UpdateNames}");
+                await SimpleEmbedAsync($"Current Update Nicknames Setting: {competition.UpdateNames}", Color.Blue);
                 return;
             }
             competition.UpdateNames = updateNicknames.Value;
             Service.SaveCompetition(competition);
-            await ReplyAsync($"Update Nicknames set to {competition.UpdateNames}");
+            await SimpleEmbedAsync($"Update Nicknames set to {competition.UpdateNames}", Color.Green);
         }
 
 
