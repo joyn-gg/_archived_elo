@@ -218,6 +218,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 var lines = GetPlayerLines(playerGroup, index);
                 index = lines.Item1;
                 var page = new ReactivePage();
+                page.Color = Color.Blue;
                 page.Title = $"{channel.Name} - Leaderboard";
                 page.Description = lines.Item2;
                 pages.Add(page);
