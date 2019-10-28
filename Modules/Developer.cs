@@ -28,7 +28,7 @@ namespace RavenBOT.ELO.Modules.Modules
         public ELOMigrator Migrator { get; }
         public LocalManagementService Local { get; }
 
-        [Command("RunMigrationTask", RunMode = RunMode.Sync)]
+        [Command("RunMigrationTask", RunMode = RunMode.Async)]
         public async Task RunMigrationTaskAsync()
         {
             await ReplyAsync("Running migration.");
@@ -36,6 +36,17 @@ namespace RavenBOT.ELO.Modules.Modules
             {
                 Migrator.RunMigration(Local);
                 await ReplyAsync("Done.");
+            });
+        }
+
+        [Command("ClearMigrationTask", RunMode = RunMode.Async)]
+        public async Task RunClearMigrationTaskAsync()
+        {
+            await ReplyAsync("Running migration clear.");
+            var _ = Task.Run(async () =>
+            {
+                Migrator.RunClear(Context);
+                await ReplyAsync("Done clearing.");
             });
         }
 
