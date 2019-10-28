@@ -1,3 +1,4 @@
+using Discord.Commands;
 using ELO.Models;
 using RavenBOT.Common;
 using RavenBOT.Common.Interfaces.Database;
@@ -74,6 +75,29 @@ namespace RavenBOT.ELO.Modules.Methods.Migrations
 
         public LegacyIntegration Legacy { get; }
 
+        public void RunClear(ShardedCommandContext context)
+        {
+            var guildIds = context.Client.Guilds.Select(x => x.Id).ToArray();
+            var removePlayers = currentDatabase.Query<Player>(x => !guildIds.Contains(x.GuildId));
+            var removeLobbies = currentDatabase.Query<Lobby>(x => !guildIds.Contains(x.GuildId));
+            var removeGuilds = currentDatabase.Query<CompetitionConfig>(x => !guildIds.Contains(x.GuildId));
+
+            foreach (var player in removePlayers)
+            {
+                currentDatabase.Remove<Player>(Player.DocumentName(player.GuildId, player.UserId));
+            }
+
+            foreach (var lobby in removeLobbies)
+            {
+                currentDatabase.Remove<Lobby>(Lobby.DocumentName(lobby.GuildId, lobby.ChannelId));
+            }
+
+            foreach (var guild in removeGuilds)
+            {
+                currentDatabase.Remove<CompetitionConfig>(CompetitionConfig.DocumentName(guild.GuildId));
+            }
+        }
+
         public void RunMigration(LocalManagementService local)
         {
             if (oldDatabase == null)
@@ -103,7 +127,19 @@ namespace RavenBOT.ELO.Modules.Methods.Migrations
                             {
                                 //Do not use if new competition already exists
                                 var newComp = currentDatabase.Load<CompetitionConfig>(CompetitionConfig.DocumentName(config.ID));
-                                if (newComp != null) continue;
+                                if (newComp != null)
+                                {
+                                    if (config.Settings.Premium.Expiry > DateTime.UtcNow)
+                                    {
+                                        Legacy.SaveConfig(new LegacyIntegration.LegacyPremium
+                                        {
+                                            GuildId = config.ID,
+                                            ExpiryDate = config.Settings.Premium.Expiry
+                                        });
+                                    }
+                                    continue;
+                                }
+
                                 newComp = new CompetitionConfig();
 
                                 //Do not set this due to incompatibilities with new replacements
