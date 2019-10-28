@@ -128,6 +128,10 @@ namespace RavenBOT.ELO.Modules.Methods.Migrations
                                 newComp.AdminRole = config.Settings.Moderation.AdminRoles.FirstOrDefault();
                                 newComp.ModeratorRole = config.Settings.Moderation.ModRoles.FirstOrDefault();
                                 newComp.RegistrationCount = config.Users.Count;
+                                if (config.Settings.GameSettings.ReQueueDelay != TimeSpan.Zero)
+                                {
+                                    newComp.RequeueDelay = config.Settings.GameSettings.ReQueueDelay;
+                                }
                                 //TODO: Remove user on afk   
 
                                 if (config.Settings.Premium.Expiry > DateTime.UtcNow)
