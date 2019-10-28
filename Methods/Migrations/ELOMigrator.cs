@@ -160,7 +160,27 @@ namespace RavenBOT.ELO.Modules.Methods.Migrations
                                         newLobby.MapSelector = new MapSelector();
                                         newLobby.MapSelector.Maps = lobby.Maps.ToHashSet();
                                     }
-                                    //TODO: Lobby requeue delay      
+                                    //TODO: Lobby requeue delay     
+
+                                    
+                                    if (lobby.PickMode == GuildModel.Lobby._PickMode.Captains)
+                                    {
+                                        newLobby.TeamPickMode = Lobby.PickMode.Captains_HighestRanked;
+                                        newLobby.CaptainPickOrder = GameResult.CaptainPickOrder.PickOne;
+                                    }
+                                    else if (lobby.PickMode == GuildModel.Lobby._PickMode.CompleteRandom)
+                                    {
+                                        newLobby.TeamPickMode = Lobby.PickMode.Random;
+                                    }
+                                    else if (lobby.PickMode == GuildModel.Lobby._PickMode.Pick2)
+                                    {
+                                        newLobby.CaptainPickOrder = GameResult.CaptainPickOrder.PickTwo;
+                                        newLobby.TeamPickMode = Lobby.PickMode.Captains_HighestRanked;
+                                    }
+                                    else if (lobby.PickMode == GuildModel.Lobby._PickMode.SortByScore)
+                                    {
+                                        newLobby.TeamPickMode = Lobby.PickMode.TryBalance;
+                                    }
 
                                     currentDatabase.Store(newLobby, Lobby.DocumentName(config.ID, lobby.ChannelID));
                                 }
