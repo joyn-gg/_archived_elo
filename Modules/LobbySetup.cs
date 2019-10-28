@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using RavenBOT.Common;
 using RavenBOT.ELO.Modules.Methods;
 using RavenBOT.ELO.Modules.Models;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 

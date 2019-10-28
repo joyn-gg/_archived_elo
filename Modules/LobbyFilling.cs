@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using RavenBOT.Common;
 using RavenBOT.ELO.Modules.Models;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -11,6 +12,10 @@ namespace RavenBOT.ELO.Modules.Modules
 {
     public partial class LobbyManagement
     {
+        //This needs to be static as module contexts are disposed of between commands.
+        public static Dictionary<ulong, Dictionary<ulong, DateTime>> QueueDelays = new Dictionary<ulong, Dictionary<ulong, DateTime>>();
+
+
         [Command("Join", RunMode = RunMode.Sync)]
         [Alias("JoinLobby", "Join Lobby", "j", "sign", "play", "ready")]
         [Summary("Join the queue in the current lobby.")]
@@ -41,7 +46,8 @@ namespace RavenBOT.ELO.Modules.Modules
                 return;
             }
 
-            if (Service.GetOrCreateCompetition(Context.Guild.Id).BlockMultiQueueing)
+            var comp = Service.GetOrCreateCompetition(Context.Guild.Id);
+            if (comp.BlockMultiQueueing)
             {
                 var lobbies = Service.GetLobbies(Context.Guild.Id);
                 var lobbyMatches = lobbies.Where(x => x.Queue.Contains(Context.User.Id));
@@ -74,8 +80,40 @@ namespace RavenBOT.ELO.Modules.Modules
 
             if (CurrentLobby.Queue.Contains(Context.User.Id))
             {
-                await SimpleEmbedAndDeleteAsync("You are already queued.", Color.DarkBlue);
+                await SimpleEmbedAndDeleteAsync($"{Context.User.Mention} - You are already queued.", Color.DarkBlue);
                 return;
+            }
+
+            if (comp.RequeueDelay.HasValue)
+            {
+                if (QueueDelays.ContainsKey(Context.Guild.Id))
+                {
+                    var currentGuild = QueueDelays[Context.Guild.Id];
+                    if (currentGuild.ContainsKey(Context.User.Id))
+                    {
+                        var currentUserLastJoin = currentGuild[Context.User.Id];
+                        if (currentUserLastJoin + comp.RequeueDelay.Value > DateTime.UtcNow)
+                        {
+                            var remaining = currentUserLastJoin + comp.RequeueDelay.Value - DateTime.UtcNow;
+                            await SimpleEmbedAndDeleteAsync($"{Context.User.Mention} - You cannot requeue for another {remaining.GetReadableLength()}", Color.Red);
+                            return;
+                        }
+                        else
+                        {
+                            currentUserLastJoin = DateTime.UtcNow;
+                        }
+                    }
+                    else
+                    {
+                        currentGuild.Add(Context.User.Id, DateTime.UtcNow);
+                    }
+                }
+                else
+                {
+                    var newDict = new Dictionary<ulong, DateTime>();
+                    newDict.Add(Context.User.Id, DateTime.UtcNow);
+                    QueueDelays.Add(Context.Guild.Id, newDict);
+                }
             }
 
             CurrentLobby.Queue.Add(Context.User.Id);
@@ -123,7 +161,9 @@ namespace RavenBOT.ELO.Modules.Modules
                 return;
             }
 
-            if (Service.GetOrCreateCompetition(Context.Guild.Id).BlockMultiQueueing)
+            var comp = Service.GetOrCreateCompetition(Context.Guild.Id);
+
+            if (comp.BlockMultiQueueing)
             {
                 var lobbies = Service.GetLobbies(Context.Guild.Id);
                 var lobbyMatches = lobbies.Where(x => x.Queue.Contains(Context.User.Id));
@@ -163,6 +203,39 @@ namespace RavenBOT.ELO.Modules.Modules
                 await SimpleEmbedAndDeleteAsync("You are already queued.", Color.DarkBlue, TimeSpan.FromSeconds(5));
                 return;
             }
+
+            if (comp.RequeueDelay.HasValue)
+            {
+                if (QueueDelays.ContainsKey(Context.Guild.Id))
+                {
+                    var currentGuild = QueueDelays[Context.Guild.Id];
+                    if (currentGuild.ContainsKey(Context.User.Id))
+                    {
+                        var currentUserLastJoin = currentGuild[Context.User.Id];
+                        if (currentUserLastJoin + comp.RequeueDelay.Value > DateTime.UtcNow)
+                        {
+                            var remaining = currentUserLastJoin + comp.RequeueDelay.Value - DateTime.UtcNow;
+                            await SimpleEmbedAndDeleteAsync($"You cannot requeue for another {remaining.GetReadableLength()}", Color.Red, TimeSpan.FromSeconds(5));
+                            return;
+                        }
+                        else
+                        {
+                            currentUserLastJoin = DateTime.UtcNow;
+                        }
+                    }
+                    else
+                    {
+                        currentGuild.Add(Context.User.Id, DateTime.UtcNow);
+                    }
+                }
+                else
+                {
+                    var newDict = new Dictionary<ulong, DateTime>();
+                    newDict.Add(Context.User.Id, DateTime.UtcNow);
+                    QueueDelays.Add(Context.Guild.Id, newDict);
+                }
+            }
+
 
             CurrentLobby.Queue.Add(Context.User.Id);
             if (CurrentLobby.Queue.Count >= CurrentLobby.PlayersPerTeam * 2)

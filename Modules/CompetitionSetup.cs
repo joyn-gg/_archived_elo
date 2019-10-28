@@ -5,6 +5,7 @@ using RavenBOT.ELO.Modules.Methods;
 using RavenBOT.ELO.Modules.Methods.Migrations;
 using RavenBOT.ELO.Modules.Models;
 using RavenBOT.ELO.Modules.Premium;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -104,7 +105,8 @@ namespace RavenBOT.ELO.Modules.Modules
                         $"**Allow Negative Score:** {comp.AllowNegativeScore}\n" +
                         $"**Update Nicknames:** {comp.UpdateNames}\n" +
                         $"**Allow Self Rename:** {comp.AllowSelfRename}\n" +
-                        $"**Allow Re-registering:** {comp.AllowReRegister}");
+                        $"**Allow Re-registering:** {comp.AllowReRegister}\n" +
+                        $"**Requeue Delay:** {(comp.RequeueDelay.HasValue ? comp.RequeueDelay.Value.GetReadableLength() : "None")}");
             embed.AddField("Stats", 
                         $"**Registered User Count:** {comp.RegistrationCount}\n" +
                         $"**Manual Game Count:** {comp.ManualGameCounter}");
@@ -491,6 +493,35 @@ namespace RavenBOT.ELO.Modules.Modules
             config.MessageId = response.Id;
             Service.SaveReactiveRegistrationMessage(config);
             await response.AddReactionAsync(Service.registrationConfirmEmoji);
+        }
+
+
+        [Command("ReQueueDelay", RunMode = RunMode.Sync)]
+        [Summary("Set or displays the amount of time required between joining queues.")]
+        [Alias("SetRequeueDelay")]
+        public async Task SetReQueueDelayAsync([Remainder]TimeSpan? delay = null)
+        {
+            var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
+            if (delay == null)
+            {
+                await SimpleEmbedAsync($"Current Requeue Delay Setting: {(competition.RequeueDelay.HasValue ? competition.RequeueDelay.Value.GetReadableLength() : "None")}", Color.Blue);
+                return;
+            }
+
+            competition.RequeueDelay = delay;
+            Service.SaveCompetition(competition);
+            await SimpleEmbedAsync($"Requeue Delay Set to {competition.RequeueDelay.Value.GetReadableLength()}", Color.Green);
+        }
+
+        [Command("ResetReQueueDelay", RunMode = RunMode.Sync)]
+        [Summary("Removes the amount of time required between joining queues.")]
+        public async Task ResetReQueueDelayAsync()
+        {
+            var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
+
+            competition.RequeueDelay = null;
+            Service.SaveCompetition(competition);
+            await SimpleEmbedAsync($"Requeue Delay Removed.", Color.Green);
         }
     }
 }

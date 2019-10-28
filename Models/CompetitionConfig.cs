@@ -22,6 +22,7 @@ namespace RavenBOT.ELO.Modules.Models
         public ulong GuildId { get; set; }
         public ulong AdminRole { get; set; }
         public ulong ModeratorRole { get; set; }
+        public TimeSpan? RequeueDelay { get; set; } = null;
 
         public List<Rank> Ranks { get; set; } = new List<Rank>();
 
