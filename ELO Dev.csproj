@@ -10,9 +10,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\RavenBOT-Libraries\RavenBOT.Core\RavenBOT.Core.csproj" />
-    <ProjectReference Include="..\..\RavenBOT-Libraries\RavenBOT.Database.LiteDatabase\RavenBOT.Database.LiteDatabase.csproj" />
-    <ProjectReference Include="..\..\RavenBOT-Libraries\RavenBOT.Database.RavenDatabase\RavenBOT.Database.RavenDatabase.csproj" />
+    <ProjectReference Include="..\..\RavenBOT-Libraries\RavenBOT.Core\RavenBOT.Core Dev.csproj" />
+    <ProjectReference Include="..\..\RavenBOT-Libraries\RavenBOT.Database.LiteDatabase\RavenBOT.Database.LiteDatabase Dev.csproj" />
+    <ProjectReference Include="..\..\RavenBOT-Libraries\RavenBOT.Database.RavenDatabase\RavenBOT.Database.RavenDatabase Dev.csproj" />
   </ItemGroup>
 
 </Project>
