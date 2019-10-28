@@ -97,7 +97,7 @@ namespace RavenBOT.ELO.Modules.Premium
             var currentRole = GetPremiumRole(patreonUser);
             if (currentRole.Value == null)
             {
-                await context.Channel.SendMessageAsync("You do not have a patreon role.");
+                await context.Channel.SendMessageAsync($"You do not have a patreon role, you can receive one by becoming a patron at {config.PageUrl}");
                 return;
             }
 
