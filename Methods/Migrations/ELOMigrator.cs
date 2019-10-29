@@ -253,6 +253,15 @@ namespace RavenBOT.ELO.Modules.Methods.Migrations
                                     newLobby.GameReadyAnnouncementChannel = config.Settings.GameSettings.AnnouncementsChannel;
                                     newLobby.PlayersPerTeam = lobby.UserLimit / 2;
                                     newLobby.Description = lobby.Description;
+                                    var results = config.Results.Where(x => x.LobbyID == lobby.ChannelID).ToArray();
+                                    if (results.Length == 0)
+                                    {
+                                        newLobby.CurrentGameCount = 0;
+                                    }
+                                    else
+                                    {
+                                        newLobby.CurrentGameCount = results.Max(x => x.GameNumber) + 1;
+                                    }
 
                                     if (lobby.Maps.Any())
                                     {
