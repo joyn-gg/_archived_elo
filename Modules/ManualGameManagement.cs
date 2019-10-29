@@ -28,8 +28,6 @@ namespace RavenBOT.ELO.Modules.Modules
         public async Task WinAsync(params SocketGuildUser[] users)
         {
             await UpdateTeamScoresAsync(true, users.Select(x => x.Id).ToHashSet());
-
-            var cmds = new CommandService();
         }
 
         [Command("Lose", RunMode = RunMode.Sync)]
