@@ -67,6 +67,20 @@ namespace RavenBOT.ELO.Modules.Modules
 
         [Command("Rename", RunMode = RunMode.Sync)]
         [Summary("Rename yourself.")]
+        public async Task RenameAsync(SocketGuildUser user, [Remainder]string name)
+        {
+            if (user.Id == Context.User.Id)
+            {
+                await SimpleEmbedAsync("Try renaming yourself without the @mention ex. `Rename NewName`", Color.DarkBlue);
+            }
+            else
+            {
+                await SimpleEmbedAsync("To rename another user, use the `RenameUser` command instead.", Color.DarkBlue);
+            }
+        }
+
+        [Command("Rename", RunMode = RunMode.Sync)]
+        [Summary("Rename yourself.")]
         public async Task RenameAsync([Remainder]string name = null)
         {
 
