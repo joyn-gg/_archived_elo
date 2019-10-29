@@ -81,6 +81,7 @@ namespace RavenBOT.ELO.Modules.Methods.Migrations
             var removePlayers = currentDatabase.Query<Player>(x => !guildIds.Contains(x.GuildId));
             var removeLobbies = currentDatabase.Query<Lobby>(x => !guildIds.Contains(x.GuildId));
             var removeGuilds = currentDatabase.Query<CompetitionConfig>(x => !guildIds.Contains(x.GuildId));
+            var removeGames = currentDatabase.Query<GameResult>(x => x.LegacyGame);
 
             foreach (var player in removePlayers)
             {
@@ -95,6 +96,11 @@ namespace RavenBOT.ELO.Modules.Methods.Migrations
             foreach (var guild in removeGuilds)
             {
                 currentDatabase.Remove<CompetitionConfig>(CompetitionConfig.DocumentName(guild.GuildId));
+            }
+
+            foreach (var game in removeGames)
+            {
+                currentDatabase.Remove<GameResult>(GameResult.DocumentName(game.GameId, game.LobbyId, game.GuildId));
             }
         }
 
