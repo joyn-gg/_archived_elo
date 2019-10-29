@@ -47,7 +47,7 @@ namespace RavenBOT.ELO.Modules.Modules
             }
 
             var comp = Service.GetOrCreateCompetition(Context.Guild.Id);
-            if (comp.BlockMultiQueueing)
+            /*if (comp.BlockMultiQueueing)
             {
                 var lobbies = Service.GetLobbies(Context.Guild.Id);
                 var lobbyMatches = lobbies.Where(x => x.Queue.Contains(Context.User.Id));
@@ -57,7 +57,7 @@ namespace RavenBOT.ELO.Modules.Modules
                     await SimpleEmbedAndDeleteAsync($"{Context.User.Mention} - MultiQueuing is not enabled in this server.\nPlease leave: {string.Join("\n", guildChannels)}", Color.Red);
                     return;
                 }
-            }
+            }*/
 
             if (CurrentLobby.MinimumPoints != null)
             {
