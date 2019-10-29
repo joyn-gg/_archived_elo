@@ -1,3 +1,4 @@
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using RavenBOT.Common;
@@ -5,6 +6,7 @@ using RavenBOT.ELO.Modules.Methods;
 using RavenBOT.ELO.Modules.Methods.Migrations;
 using RavenBOT.ELO.Modules.Premium;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace RavenBOT.ELO.Modules.Modules
@@ -62,6 +64,13 @@ namespace RavenBOT.ELO.Modules.Modules
             });
             PremiumService.SaveConfig(config);
             await ReplyAsync("Done.");
+        }
+
+        [Command("PremiumRoles")]
+        public async Task ShowRolesAsync()
+        {
+            var config = PremiumService.GetConfig();
+            await SimpleEmbedAsync("Roles:\n" + string.Join("\n", config.Roles.Select(x => MentionUtils.MentionRole(x.Key) + " - " + x.Value.MaxRegistrationCount)));
         }
 
         [Command("SetRegistrationCounts", RunMode = RunMode.Async)]
