@@ -21,6 +21,7 @@ namespace RavenBOT.ELO.Modules.Models
             GameId = gameId;
             LobbyId = lobbyId;
             GuildId = guildId;
+            GamePickMode = lobbyPickMode;
         }
         public int GameId { get; set; }
 
@@ -92,7 +93,7 @@ namespace RavenBOT.ELO.Modules.Models
 
         public CaptainPickOrder PickOrder { get; set; } = CaptainPickOrder.PickTwo;
 
-        public Lobby.PickMode GamePickMode { get; set; }
+        public Lobby.PickMode GamePickMode { get; set; } = Lobby.PickMode.Random;
 
         public int WinningTeam { get; set; } = -1;
 
