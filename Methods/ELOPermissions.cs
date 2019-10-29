@@ -51,8 +51,8 @@ namespace RavenBOT.ELO.Modules.Methods
 
         public bool? EvaluatePermission(CachedPermission permissions, string commandName, SocketGuildUser user, out PermissionLevel? permissionLevel)
         {
-            var match = permissions.CachedPermissions.FirstOrDefault(x => x.Key.Equals(commandName, StringComparison.OrdinalIgnoreCase));
-            if (permissions.CachedPermissions.TryGetValue(commandName, out var value))
+            var match = permissions.CachedPermissions.FirstOrDefault(x => x.Key.Equals(commandName.ToLower(), StringComparison.OrdinalIgnoreCase));
+            if (permissions.CachedPermissions.TryGetValue(commandName.ToLower(), out var value))
             {
                 permissionLevel = value;
                 if (value == PermissionLevel.Default) return null;
