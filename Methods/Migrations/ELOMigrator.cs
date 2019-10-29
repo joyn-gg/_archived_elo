@@ -124,6 +124,10 @@ namespace RavenBOT.ELO.Modules.Methods.Migrations
                 {
                     var query = session.Query<GuildModel>();
 
+                    int guilds = 0;
+                    int games = 0;
+                    int users = 0;
+                    int lobbys = 0;
                     using (var enumerator = session.Advanced.Stream(query))
                     {
                         while (enumerator.MoveNext())
@@ -186,6 +190,7 @@ namespace RavenBOT.ELO.Modules.Methods.Migrations
                                 }
 
                                 currentDatabase.Store(newComp, CompetitionConfig.DocumentName(config.ID));
+                                guilds++;
 
                                 foreach (var game in config.Results)
                                 {
@@ -242,6 +247,7 @@ namespace RavenBOT.ELO.Modules.Methods.Migrations
 
                                     newResult.LegacyGame = true;
                                     currentDatabase.Store(newResult, GameResult.DocumentName(newResult.GameId, newResult.LobbyId, newResult.GuildId));
+                                    games++;
                                     
 
                                     //Untransferrable info: Captains
@@ -297,6 +303,7 @@ namespace RavenBOT.ELO.Modules.Methods.Migrations
                                     }
 
                                     currentDatabase.Store(newLobby, Lobby.DocumentName(config.ID, lobby.ChannelID));
+                                    lobbys++;
                                 }
 
                                 foreach (var user in config.Users)
@@ -316,6 +323,7 @@ namespace RavenBOT.ELO.Modules.Methods.Migrations
                                     }
 
                                     currentDatabase.Store(newUser, Player.DocumentName(config.ID, user.UserID));
+                                    users++;
                                 }
                             }
                             catch (Exception e)
@@ -323,6 +331,8 @@ namespace RavenBOT.ELO.Modules.Methods.Migrations
                                 Console.WriteLine(e);
                             }
                         }
+
+                        Console.WriteLine($"Guilds: {guilds} Lobbys: {lobbys} Games: {games} Users: {users}");
                     }
                 }
             }
