@@ -25,7 +25,8 @@ namespace RavenBOT.ELO.Modules.Modules
 
         //TODO: Ensure correct commands require mod/admin perms
 
-        [Command("Results", RunMode = RunMode.Async)]
+        [Command("VoteTypes", RunMode = RunMode.Async)]
+        [Alias("Results")]
         [Summary("Shows possible vote options for the Result command")]
         public async Task ShowResultsAsync()
         {
@@ -33,7 +34,8 @@ namespace RavenBOT.ELO.Modules.Modules
         }
 
 
-        [Command("Result", RunMode = RunMode.Sync)]
+        [Command("Vote", RunMode = RunMode.Sync)]
+        [Alias("GameResult", "Result")]
         [Summary("Vote on the specified game's outcome in the specified lobby")]
         [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.Registered)]
         public async Task GameResultAsync(SocketTextChannel lobbyChannel, int gameNumber, string voteState)
@@ -41,7 +43,8 @@ namespace RavenBOT.ELO.Modules.Modules
             await GameResultAsync(gameNumber, voteState, lobbyChannel);
         }
 
-        [Command("Result", RunMode = RunMode.Sync)]
+        [Command("Vote", RunMode = RunMode.Sync)]
+        [Alias("GameResult", "Result")]
         [Summary("Vote on the specified game's outcome in the current (or specified) lobby")]
         [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.Registered)]
         public async Task GameResultAsync(int gameNumber, string voteState, SocketTextChannel lobbyChannel = null)
