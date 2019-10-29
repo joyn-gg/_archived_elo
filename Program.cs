@@ -9,7 +9,7 @@ using System;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using EventHandler = RavenBOT.Handlers.EventHandler;
+using EventHandler = ELO.Handlers.EventHandler;
 
 namespace ELO
 {

@@ -121,5 +121,15 @@ namespace RavenBOT.ELO.Modules.Modules
             PremiumService.SaveConfig(config);
             await ReplyAsync($"Set.");
         }
+
+        [Command("BlockingTask", RunMode = RunMode.Sync)]
+        public async Task BlockingTaskAsync()
+        {
+            var g = Guid.NewGuid();
+            await ReplyAsync("Starting - " + g.ToString());
+            await Task.Delay(10000);
+            await ReplyAsync("Done - " + g.ToString());
+        }
+
     }
 }
