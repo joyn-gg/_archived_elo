@@ -91,7 +91,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 {
                     var gameEmbed = new EmbedBuilder
                     {
-                        Title = $"Current Teams."
+                        Title = $"Game: #{game.GameId} - Current Teams."
                     };
 
                     var t1Users = GetMentionList(GetUserList(Context.Guild, game.Team1.Players));
