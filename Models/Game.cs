@@ -33,7 +33,7 @@ namespace RavenBOT.ELO.Modules.Models
         /// <returns></returns>
         public Dictionary<ulong, Vote> Votes { get; set; } = new Dictionary<ulong, Vote>();
         public bool VoteComplete { get; set; } = false;
-        public bool LegacyGame { get; set; } = true;
+        public bool LegacyGame { get; set; } = false;
 
         public class Vote
         {
