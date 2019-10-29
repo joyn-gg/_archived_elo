@@ -203,6 +203,12 @@ namespace RavenBOT.ELO.Modules.Modules
                 return;
             }
 
+            if (game.LegacyGame)
+            {
+                await SimpleEmbedAsync("This is a Legacy game which cannot be undone.", Color.DarkBlue);
+                return;
+            }
+
             if (game.GameState != GameResult.State.Decided)
             {
                 await SimpleEmbedAsync("Game result is not decided and therefore cannot be undone.", Color.Red);

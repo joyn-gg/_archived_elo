@@ -181,6 +181,68 @@ namespace RavenBOT.ELO.Modules.Methods.Migrations
 
                                 currentDatabase.Store(newComp, CompetitionConfig.DocumentName(config.ID));
 
+                                foreach (var game in config.Results)
+                                {
+                                    //Skip games for lobbys that dont exist
+                                    var lobby = config.Lobbies.FirstOrDefault(x => x.ChannelID == game.LobbyID);
+                                    if (lobby == null) continue;
+
+                                    var newResult = new GameResult();
+                                    newResult.GameId = game.GameNumber;
+                                    newResult.LobbyId = game.LobbyID;
+                                    newResult.GuildId = config.ID;
+                                    newResult.CreationTime = game.Time;
+                                    
+                                    if (game.Result == GuildModel.GameResult._Result.Canceled)
+                                    {
+                                        newResult.GameState = GameResult.State.Canceled;
+                                    }
+                                    else if (game.Result == GuildModel.GameResult._Result.Team1)
+                                    {
+                                        newResult.GameState = GameResult.State.Decided;
+                                        newResult.WinningTeam = 1;
+                                    }
+                                    else if (game.Result == GuildModel.GameResult._Result.Team2)
+                                    {
+                                        newResult.GameState = GameResult.State.Decided;
+                                        newResult.WinningTeam = 2;
+                                    }
+                                    else if (game.Result == GuildModel.GameResult._Result.Undecided)
+                                    {
+                                        newResult.GameState = GameResult.State.Undecided;
+                                    }
+
+                                    newResult.Team1.Players = game.Team1.ToHashSet();
+                                    newResult.Team2.Players = game.Team2.ToHashSet();
+
+                                    if (lobby.PickMode == GuildModel.Lobby._PickMode.Captains)
+                                    {
+                                        newResult.GamePickMode = Lobby.PickMode.Captains_HighestRanked;
+                                        newResult.PickOrder = GameResult.CaptainPickOrder.PickOne;
+                                    }
+                                    else if (lobby.PickMode == GuildModel.Lobby._PickMode.Pick2)
+                                    {
+                                        newResult.GamePickMode = Lobby.PickMode.Captains_HighestRanked;
+                                        newResult.PickOrder = GameResult.CaptainPickOrder.PickTwo;
+                                    }
+                                    else if (lobby.PickMode == GuildModel.Lobby._PickMode.CompleteRandom)
+                                    {
+                                        newResult.GamePickMode = Lobby.PickMode.Random;
+                                    }
+                                    else if (lobby.PickMode == GuildModel.Lobby._PickMode.SortByScore)
+                                    {
+                                        newResult.GamePickMode = Lobby.PickMode.TryBalance;
+                                    }
+
+                                    newResult.LegacyGame = true;
+                                    currentDatabase.Store(newResult, GameResult.DocumentName(newResult.GameId, newResult.LobbyId, newResult.GuildId));
+                                    
+
+                                    //Untransferrable info: Captains
+                                    //Unfortunately, the old ELO bot didn't store captains
+                                    //Also the undogame method will not work on these
+                                }
+
                                 foreach (var lobby in config.Lobbies)
                                 {
                                     var newLobby = new Lobby();
@@ -191,6 +253,7 @@ namespace RavenBOT.ELO.Modules.Methods.Migrations
                                     newLobby.GameReadyAnnouncementChannel = config.Settings.GameSettings.AnnouncementsChannel;
                                     newLobby.PlayersPerTeam = lobby.UserLimit / 2;
                                     newLobby.Description = lobby.Description;
+
                                     if (lobby.Maps.Any())
                                     {
                                         newLobby.MapSelector = new MapSelector();
