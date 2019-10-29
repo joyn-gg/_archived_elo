@@ -228,7 +228,7 @@ namespace RavenBOT.ELO.Modules.Modules
                 game.Picks++;
                 PickResponse = $"{MentionUtils.MentionUser(offTeam.Captain)} can select **2** players for the next pick.";
             }
-            else if (game.Picks <= 2)
+            else if (game.Picks == 1)
             {
                 //cap 2 turn to pick. they get to pick 2 people.
                 if (Context.User.Id != team.Captain)
@@ -247,6 +247,27 @@ namespace RavenBOT.ELO.Modules.Modules
                 team.Players.Add(team.Captain);
                 team.Players.UnionWith(users.Select(x => x.Id));
                 PickResponse = $"{MentionUtils.MentionUser(offTeam.Captain)} can select **2** players for the next pick.";
+                game.Picks++;
+            }
+            else if (game.Picks == 2)
+            {
+                //cap 2 turn to pick. they get to pick 2 people.
+                if (Context.User.Id != team.Captain)
+                {
+                    await SimpleEmbedAndDeleteAsync("It is currently the other captains turn to pick.", Color.Red);
+                    return null;
+                }
+
+                if (uc != 2)
+                {
+                    await SimpleEmbedAndDeleteAsync("You must specify 2 players for this pick.", Color.Red);
+                    return null;
+                }
+
+                //Note adding a player multiple times (ie team captain to team 1) will not affect it because the players are a hashset.
+                team.Players.Add(team.Captain);
+                team.Players.UnionWith(users.Select(x => x.Id));
+                PickResponse = $"{MentionUtils.MentionUser(offTeam.Captain)} can select **1** player for the next pick.";
                 game.Picks++;
             }
             else
