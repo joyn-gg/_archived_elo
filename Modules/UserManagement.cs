@@ -98,32 +98,6 @@ namespace RavenBOT.ELO.Modules.Modules
             await SimpleEmbedAsync($"{user.Mention} banned from joining games until: {player.CurrentBan.ExpiryTime.ToString("dd MMM yyyy")} {player.CurrentBan.ExpiryTime.ToShortTimeString()} in {player.CurrentBan.RemainingTime.GetReadableLength()}", Color.DarkRed);
         }
 
-        [Command("RenameUser", RunMode = RunMode.Sync)]
-        [Alias("ForceRename")]
-        [Summary("Renames the specified user.")]
-        public async Task RenameUserAsync(SocketGuildUser user, [Remainder]string newname)
-        {
-            if (!user.IsRegistered(Service, out var player))
-            {
-                await SimpleEmbedAndDeleteAsync("User isn't registered.", Color.Red);
-                return;
-            }
-
-            player.DisplayName = newname;
-            Service.SavePlayer(player);
-
-            var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
-            var responses = await Service.UpdateUserAsync(competition, player, user);
-            if (responses.Any())
-            {
-                await SimpleEmbedAsync("User's profile has been renamed\n" + string.Join("\n", responses), Color.Red);
-            }
-            else
-            {
-                await SimpleEmbedAsync("User's profile has been renamed successfully.", Color.Green);
-            }
-        }
-
         [Command("DeleteUser", RunMode = RunMode.Sync)]
         [Alias("DelUser")]
         [Summary("Deletes the specified user from the ELO competition, NOTE: Will not affect the LobbyLeaderboard command")]

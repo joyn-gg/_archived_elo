@@ -79,6 +79,33 @@ namespace RavenBOT.ELO.Modules.Modules
             }
         }
 
+        [Command("RenameUser", RunMode = RunMode.Sync)]
+        [Alias("ForceRename")]
+        [Summary("Renames the specified user.")]
+        [Preconditions.RequireModerator]
+        public async Task RenameUserAsync(SocketGuildUser user, [Remainder]string newname)
+        {
+            if (!user.IsRegistered(Service, out var player))
+            {
+                await SimpleEmbedAndDeleteAsync("User isn't registered.", Color.Red);
+                return;
+            }
+
+            player.DisplayName = newname;
+            Service.SavePlayer(player);
+
+            var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
+            var responses = await Service.UpdateUserAsync(competition, player, user);
+            if (responses.Any())
+            {
+                await SimpleEmbedAsync("User's profile has been renamed\n" + string.Join("\n", responses), Color.Red);
+            }
+            else
+            {
+                await SimpleEmbedAsync("User's profile has been renamed successfully.", Color.Green);
+            }
+        }
+
         [Command("Rename", RunMode = RunMode.Sync)]
         [Summary("Rename yourself.")]
         public async Task RenameAsync([Remainder]string name = null)
