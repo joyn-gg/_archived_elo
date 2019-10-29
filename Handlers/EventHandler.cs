@@ -7,6 +7,7 @@ using RavenBOT.Core.TypeReaders.EmojiReader;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -86,6 +87,12 @@ namespace ELO.Handlers
 
                 if (result is ExecuteResult exResult)
                 {
+                    //TODO: Implement custom error handling for different discord.net httpexceptions
+                    /*
+                    if (exResult.Exception is Discord.Net.HttpException httpEx)
+                    {
+                    }
+                    */
                     Logger.Log($"{context.Message.Content}\n{result.Error}\n{result.ErrorReason}\n{exResult.Exception}", new LogContext(context), LogSeverity.Error);
                     await context.Channel.SendMessageAsync("", false, new EmbedBuilder
                     {
