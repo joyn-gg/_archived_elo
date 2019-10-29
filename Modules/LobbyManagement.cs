@@ -91,6 +91,64 @@ namespace RavenBOT.ELO.Modules.Modules
         [Command("ForceJoin", RunMode = RunMode.Sync)]
         [Summary("Forcefully adds a user to queue, bypasses minimum points")]
         [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.Moderator)]
+        public async Task ForceJoinAsync(params SocketGuildUser[] users)
+        {
+            if (!await CheckLobbyAsync())
+            {
+                return;
+            }
+
+            foreach (var user in users)
+            {
+                if (!user.IsRegistered(Service, out var response))
+                {
+                    await SimpleEmbedAndDeleteAsync($"{user.Mention} - is not registered.", Color.Red);
+                    return;
+                }
+
+                if (CurrentLobby.Queue.Count >= CurrentLobby.PlayersPerTeam * 2)
+                {
+                    //Queue will be reset after teams are completely picked.
+                    await SimpleEmbedAndDeleteAsync("Queue is full, wait for teams to be chosen before joining.", Color.DarkBlue);
+                    return;
+                }
+
+                var currentGame = Service.GetCurrentGame(CurrentLobby);
+                if (currentGame != null)
+                {
+                    if (currentGame.GameState == GameResult.State.Picking)
+                    {
+                        await SimpleEmbedAndDeleteAsync("Current game is picking teams, wait until this is completed.", Color.Red);
+                        return;
+                    }
+                }
+
+                if (CurrentLobby.Queue.Contains(user.Id))
+                {
+                    await SimpleEmbedAndDeleteAsync("User is already queued.", Color.DarkBlue);
+                    return;
+                }
+
+                CurrentLobby.Queue.Add(user.Id);
+                if (CurrentLobby.Queue.Count >= CurrentLobby.PlayersPerTeam * 2)
+                {
+                    await LobbyFullAsync();
+                    Service.SaveLobby(CurrentLobby);
+                    return;
+                }
+                else
+                {
+                    await SimpleEmbedAsync($"{user.Mention} - Added to queue.", Color.Green);
+                }
+
+            }
+
+            Service.SaveLobby(CurrentLobby);
+        }
+
+        [Command("ForceJoin", RunMode = RunMode.Sync)]
+        [Summary("Forcefully adds a user to queue, bypasses minimum points")]
+        [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.Moderator)]
         public async Task ForceJoinAsync(SocketGuildUser user)
         {
             if (!await CheckLobbyAsync())
