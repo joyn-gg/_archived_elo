@@ -73,14 +73,16 @@ namespace RavenBOT.ELO.Modules.Modules
             }
 
             var game = Service.GetCurrentGame(CurrentLobby);
+
             if (game != null)
             {
                 if (game.GameState == GameResult.State.Picking)
                 {
-                    await SimpleEmbedAndDeleteAsync("Current game is being picked, cannot clear queue.", Color.Red);
+                    await SimpleEmbedAsync("Current game is being picked, cannot clear queue. Try cancelling it instead.", Color.Red);
                     return;
                 }
             }
+
             CurrentLobby.Queue.Clear();
             Service.SaveLobby(CurrentLobby);
             await SimpleEmbedAsync("Queue Cleared.", Color.Green);
