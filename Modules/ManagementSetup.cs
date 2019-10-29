@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using RavenBOT.ELO.Modules.Models;
 using static RavenBOT.ELO.Modules.Models.CompetitionConfig;
 using System.Linq;
+using RavenBOT.ELO.Modules.Preconditions;
 
 namespace RavenBOT.ELO.Modules.Modules
 {
@@ -51,6 +52,12 @@ namespace RavenBOT.ELO.Modules.Modules
             if (match == null)
             {
                 await SimpleEmbedAsync("Unknown command name.", Color.Red);
+                return;
+            }
+
+            if (!match.Preconditions.Any(x => x is RequirePermission))
+            {
+                await SimpleEmbedAsync("This command cannot have it's permission overwritten.");
                 return;
             }
 
