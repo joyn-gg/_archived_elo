@@ -66,30 +66,9 @@ namespace ELO
                 }))
                 .AddSingleton(x => new LogHandler(x.GetRequiredService<DiscordShardedClient>(), x.GetRequiredService<IDatabase>()))
                 .AddSingleton(localManagement)
-                .AddSingleton(x =>
-                {
-                    //Initialize the bot config by asking for token and name
-                    var config = x.GetRequiredService<IDatabase>().Load<BotConfig>("BotConfig");
-                    if (config == null)
-                    {
-                        Console.WriteLine("Please enter your bot token (found at https://discordapp.com/developers/applications/ )");
-                        var token = Console.ReadLine();
-
-                        Console.WriteLine("Input a bot name (this will be used for certain database tasks)");
-                        var name = Console.ReadLine();
-
-                        Console.WriteLine("Input a bot prefix (this will be used to run commands, ie. prefix = f. command will be f.command)");
-                        var prefix = Console.ReadLine();
-                        config = new BotConfig(token, prefix, name);
-
-                        x.GetRequiredService<IDatabase>().Store(config, "BotConfig");
-                    }
-
-                    return config;
-                })
                 .AddSingleton<DeveloperSettings>()
                 .AddSingleton<GuildService>()
-                .AddSingleton(x => new HelpService(x.GetRequiredService<CommandService>(), x.GetRequiredService<BotConfig>(), x.GetRequiredService<GuildService>(), x.GetRequiredService<DeveloperSettings>(), x))
+                .AddSingleton(x => new HelpService(x.GetRequiredService<CommandService>(), localManagement, x.GetRequiredService<GuildService>(), x.GetRequiredService<DeveloperSettings>(), x))
                 .AddSingleton(new CommandService(new CommandServiceConfig
                 {
                     ThrowOnError = false,
