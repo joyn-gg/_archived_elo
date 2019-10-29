@@ -526,7 +526,7 @@ namespace RavenBOT.ELO.Modules.Modules
             {
                 Fields = new List<EmbedFieldBuilder> { winField, loseField },
                 //TODO: Remove this if from the vote command
-                Title = $"GameID: {gameNumber}"
+                Title = $"Game Id: {gameNumber}"
             };
 
             if (!string.IsNullOrWhiteSpace(comment))
