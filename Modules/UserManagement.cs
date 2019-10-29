@@ -76,6 +76,12 @@ namespace RavenBOT.ELO.Modules.Modules
                 return;
             }
 
+            if (player.CurrentBan == null)
+            {
+                await SimpleEmbedAsync("Player is not banned.", Color.DarkBlue);
+                return;
+            }
+
             player.CurrentBan.ManuallyDisabled = true;
             Service.SavePlayer(player);
             await SimpleEmbedAsync("Unbanned player.", Color.Green);
