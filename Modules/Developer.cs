@@ -131,5 +131,13 @@ namespace RavenBOT.ELO.Modules.Modules
             await ReplyAsync("Done - " + g.ToString());
         }
 
+        [Command("NonBlockingTask", RunMode = RunMode.Async)]
+        public async Task NonBlockingTaskAsync()
+        {
+            var g = Guid.NewGuid();
+            await ReplyAsync("A-Starting - " + g.ToString());
+            await Task.Delay(10000);
+            await ReplyAsync("A-Done - " + g.ToString());
+        }
     }
 }

@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ELO.Handlers
@@ -20,6 +21,18 @@ namespace ELO.Handlers
             private Queue<(ICommandContext, int)> Queue = new Queue<(ICommandContext, int)>();
             public void AddTask(ICommandContext message, int argPos)
             {
+                var commandMatch = Service.Search(message, argPos);
+                if (commandMatch.IsSuccess)
+                {
+                    //Ensure none of the possible commands are syncrhronous
+                    if (!commandMatch.Commands.Any(x => x.Command.RunMode == RunMode.Sync))
+                    {
+                        //If command is async then swap in a task and return
+                        var _ = Task.Run(() => Service.ExecuteAsync(message, argPos, Provider));
+                        return;
+                    }
+                }
+
                 Queue.Enqueue((message, argPos));
 
                 if (ProcessorTask == null)
