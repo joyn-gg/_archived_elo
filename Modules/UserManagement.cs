@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace RavenBOT.ELO.Modules.Modules
 {
     [RavenRequireContext(ContextType.Guild)]
-    [Preconditions.RequireAdmin]
+    [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.ELOAdmin)]
     public class UserManagement : ReactiveBase
     {
         public UserManagement(ELOService service)

@@ -4,7 +4,6 @@ using Discord.WebSocket;
 using RavenBOT.Common;
 using RavenBOT.ELO.Modules.Methods;
 using RavenBOT.ELO.Modules.Models;
-using RavenBOT.ELO.Modules.Preconditions;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +12,7 @@ using static RavenBOT.ELO.Modules.Modules.GameManagement;
 
 namespace RavenBOT.ELO.Modules.Modules
 {
-    [RequireModerator]
+    [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.Moderator)]
     [RavenRequireContext(ContextType.Guild)]
     public class ManualGameManagement : ReactiveBase
     {

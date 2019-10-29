@@ -52,6 +52,13 @@ namespace RavenBOT.ELO.Modules.Modules
             });
         }
 
+        [Command("SetPermissionBypass", RunMode = RunMode.Async)]
+        public async Task SetPermissionBypass(bool state)
+        {
+            Service.PermissionBypass = state;
+            await ReplyAsync("Set.");
+        }
+
         [Command("AddPremiumRole", RunMode = RunMode.Sync)]
         public async Task AddRoleAsync(SocketRole role, int maxCount)
         {

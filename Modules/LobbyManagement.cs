@@ -64,7 +64,7 @@ namespace RavenBOT.ELO.Modules.Modules
         [Command("ClearQueue", RunMode = RunMode.Sync)]
         [Alias("Clear Queue", "clearq", "clearque")]
         [Summary("Clears the current queue.")]
-        [Preconditions.RequireModerator]
+        [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.Moderator)]
         public async Task ClearQueueAsync()
         {
             if (!await CheckLobbyAsync())
@@ -88,7 +88,7 @@ namespace RavenBOT.ELO.Modules.Modules
 
         [Command("ForceJoin", RunMode = RunMode.Sync)]
         [Summary("Forcefully adds a user to queue, bypasses minimum points")]
-        [Preconditions.RequireModerator]
+        [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.Moderator)]
         public async Task ForceJoinAsync(SocketGuildUser user)
         {
             if (!await CheckLobbyAsync())
@@ -159,7 +159,7 @@ namespace RavenBOT.ELO.Modules.Modules
 
         [Command("ForceRemove", RunMode = RunMode.Sync)]
         [Summary("Forcefully removes a player for the queue")]
-        [Preconditions.RequireModerator]
+        [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.Moderator)]
         public async Task ForceRemoveAsync(SocketGuildUser user)
         {
             if (!await CheckLobbyAsync())

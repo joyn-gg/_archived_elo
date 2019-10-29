@@ -1,4 +1,6 @@
+using Discord.WebSocket;
 using RavenBOT.Common;
+using RavenBOT.ELO.Modules.Methods;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -102,5 +104,17 @@ namespace RavenBOT.ELO.Modules.Models
 
             return maxRank;
         }
+
+        public enum PermissionLevel
+        {
+            Owner,
+            ServerAdmin,
+            ELOAdmin,
+            Moderator,
+            Registered,
+            Default
+        }
+
+        public Dictionary<string, PermissionLevel> Permissions { get; set; } = new Dictionary<string, PermissionLevel>(StringComparer.OrdinalIgnoreCase);
     }
 }

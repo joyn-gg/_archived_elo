@@ -12,7 +12,7 @@ namespace RavenBOT.ELO.Modules.Modules
 {
     [RavenRequireContext(ContextType.Guild)]
     //TODO: Potential different permissions for creating lobby
-    [Preconditions.RequireAdmin]
+    [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.ELOAdmin)]
     public class LobbySetup : ReactiveBase
     {
         public ELOService Service { get; }

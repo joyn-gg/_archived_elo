@@ -3,12 +3,15 @@ using Discord.Commands;
 using Discord.WebSocket;
 using RavenBOT.Common;
 using RavenBOT.ELO.Modules.Methods;
+using RavenBOT.ELO.Modules.Models;
 using RavenBOT.ELO.Modules.Premium;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace RavenBOT.ELO.Modules.Modules
 {
     [RavenRequireContext(ContextType.Guild)]
+
     public class UserCommands : ReactiveBase
     {
         public ELOService Service { get; }
@@ -82,7 +85,7 @@ namespace RavenBOT.ELO.Modules.Modules
         [Command("RenameUser", RunMode = RunMode.Sync)]
         [Alias("ForceRename")]
         [Summary("Renames the specified user.")]
-        [Preconditions.RequireModerator]
+        [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.Moderator)]
         public async Task RenameUserAsync(SocketGuildUser user, [Remainder]string newname)
         {
             if (!user.IsRegistered(Service, out var player))

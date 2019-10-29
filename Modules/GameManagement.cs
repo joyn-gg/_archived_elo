@@ -35,6 +35,7 @@ namespace RavenBOT.ELO.Modules.Modules
 
         [Command("Result", RunMode = RunMode.Sync)]
         [Summary("Vote on the specified game's outcome in the specified lobby")]
+        [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.Registered)]
         public async Task GameResultAsync(SocketTextChannel lobbyChannel, int gameNumber, string voteState)
         {
             await GameResultAsync(gameNumber, voteState, lobbyChannel);
@@ -42,6 +43,7 @@ namespace RavenBOT.ELO.Modules.Modules
 
         [Command("Result", RunMode = RunMode.Sync)]
         [Summary("Vote on the specified game's outcome in the current (or specified) lobby")]
+        [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.Registered)]
         public async Task GameResultAsync(int gameNumber, string voteState, SocketTextChannel lobbyChannel = null)
         {
             if (lobbyChannel == null)
@@ -171,7 +173,7 @@ namespace RavenBOT.ELO.Modules.Modules
         [Command("UndoGame", RunMode = RunMode.Sync)]
         [Alias("Undo Game")]
         [Summary("Undoes the specified game in the specified lobby")]
-        [Preconditions.RequireModerator]
+        [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.Moderator)]
         public async Task UndoGameAsync(SocketTextChannel lobbyChannel, int gameNumber)
         {
             await UndoGameAsync(gameNumber, lobbyChannel);
@@ -180,7 +182,7 @@ namespace RavenBOT.ELO.Modules.Modules
         [Command("UndoGame", RunMode = RunMode.Sync)]
         [Alias("Undo Game")]
         [Summary("Undoes the specified game in the current (or specified) lobby")]
-        [Preconditions.RequireModerator]
+        [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.Moderator)]
         public async Task UndoGameAsync(int gameNumber, SocketTextChannel lobbyChannel = null)
         {
             if (lobbyChannel == null)
@@ -339,7 +341,7 @@ namespace RavenBOT.ELO.Modules.Modules
         [Command("Cancel", RunMode = RunMode.Sync)]
         [Alias("CancelGame")]
         [Summary("Cancels the specified game in the specified lobby with an optional comment.")]
-        [Preconditions.RequireModerator]
+        [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.Moderator)]
         public async Task CancelAsync(SocketTextChannel lobbyChannel, int gameNumber, [Remainder]string comment = null)
         {
             await CancelAsync(gameNumber, lobbyChannel, comment);
@@ -348,7 +350,7 @@ namespace RavenBOT.ELO.Modules.Modules
         [Command("Cancel", RunMode = RunMode.Sync)]
         [Alias("CancelGame")]
         [Summary("Cancels the specified game in the current (or specified) lobby with an optional comment.")]
-        [Preconditions.RequireModerator]
+        [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.Moderator)]
         public async Task CancelAsync(int gameNumber, SocketTextChannel lobbyChannel = null, [Remainder]string comment = null)
         {
             if (lobbyChannel == null)
@@ -385,7 +387,7 @@ namespace RavenBOT.ELO.Modules.Modules
 
         [Command("Draw", RunMode = RunMode.Sync)]
         [Summary("Calls a draw for the specified game in the specified lobby with an optional comment.")]
-        [Preconditions.RequireModerator]
+        [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.Moderator)]
         public async Task DrawAsync(SocketTextChannel lobbyChannel, int gameNumber, [Remainder]string comment = null)
         {
             await DrawAsync(gameNumber, lobbyChannel, comment);
@@ -393,7 +395,7 @@ namespace RavenBOT.ELO.Modules.Modules
 
         [Command("Draw", RunMode = RunMode.Sync)]
         [Summary("Calls a draw for the specified in the current (or specified) lobby with an optional comment.")]
-        [Preconditions.RequireModerator]
+        [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.Moderator)]
         public async Task DrawAsync(int gameNumber, SocketTextChannel lobbyChannel = null, [Remainder]string comment = null)
         {
             if (lobbyChannel == null)
@@ -539,7 +541,7 @@ namespace RavenBOT.ELO.Modules.Modules
         [Command("Game", RunMode = RunMode.Sync)]
         [Alias("g")]
         [Summary("Calls a win for the specified team in the specified game and lobby with an optional comment")]
-        [Preconditions.RequireModerator]
+        [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.Moderator)]
         public async Task GameAsync(SocketTextChannel lobbyChannel, int gameNumber, TeamSelection winning_team, [Remainder]string comment = null)
         {
             await GameAsync(gameNumber, winning_team, lobbyChannel, comment);
@@ -548,7 +550,7 @@ namespace RavenBOT.ELO.Modules.Modules
         [Command("Game", RunMode = RunMode.Sync)]
         [Alias("g")]
         [Summary("Calls a win for the specified team in the specified game and current (or specified) lobby with an optional comment")]
-        [Preconditions.RequireModerator]
+        [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.Moderator)]
         public async Task GameAsync(int gameNumber, TeamSelection winning_team, SocketTextChannel lobbyChannel = null, [Remainder]string comment = null)
         {
             if (lobbyChannel == null)
