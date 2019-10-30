@@ -53,6 +53,14 @@ namespace RavenBOT.ELO.Modules.Modules
         [Command("GameInfo", RunMode = RunMode.Async)]
         [Alias("Game Info", "Show Game", "ShowGame", "sg")]
         [Summary("Shows information about the specified game in the current (or specified) lobby")]
+        public async Task GameInfoAsync(SocketGuildChannel lobbyChannel, int gameNumber) //add functionality to specify lobby
+        {
+            await GameInfoAsync(gameNumber, lobbyChannel);
+        }
+
+        [Command("GameInfo", RunMode = RunMode.Async)]
+        [Alias("Game Info", "Show Game", "ShowGame", "sg")]
+        [Summary("Shows information about the specified game in the current (or specified) lobby")]
         public async Task GameInfoAsync(int gameNumber, SocketGuildChannel lobbyChannel = null) //add functionality to specify lobby
         {
             if (lobbyChannel == null)
