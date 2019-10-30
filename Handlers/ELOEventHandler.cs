@@ -53,32 +53,29 @@ namespace ELO.Handlers
             public Task ProcessorTask = null;
             public async Task RunProcessor()
             {
-                while (true)
+                try
                 {
-                    try
-                    {
-                        var context = Queue.Dequeue();
+                    var context = Queue.Dequeue();
 
-                        //Continue getting the next item in queue until there are none left.
-                        while (context != default)
+                    //Continue getting the next item in queue until there are none left.
+                    while (context != default)
+                    {
+                        await Service.ExecuteAsync(context.Item1, context.Item2, Provider);
+
+                        if (ProcessorTask.IsCanceled)
                         {
-                            await Service.ExecuteAsync(context.Item1, context.Item2, Provider);
-
-                            if (ProcessorTask.IsCanceled)
-                            {
-                                ProcessorTask = null;
-                                return;
-                            }
-
-                            context = Queue.Dequeue();
+                            ProcessorTask = null;
+                            return;
                         }
-                    }
-                    finally
-                    {
-                        await Task.Delay(1000);
+
+                        context = Queue.Dequeue();
                     }
                 }
-
+                finally
+                {
+                    await Task.Delay(1000);
+                    await RunProcessor();
+                }
             }
         }
 
