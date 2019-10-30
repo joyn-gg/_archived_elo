@@ -12,100 +12,109 @@ namespace RavenBOT.ELO.Modules.Methods
         public async Task<List<string>> UpdateUserAsync(CompetitionConfig comp, Player player, SocketGuildUser user)
         {
             var noted = new List<string>();
-            if (user.Guild.CurrentUser.GuildPermissions.ManageRoles)
+            try
             {
-                var rankMatches = comp.Ranks.Where(x => x.Points <= player.Points);
-                if (rankMatches.Any())
+                if (user.Guild.CurrentUser.GuildPermissions.ManageRoles)
                 {
-                    //Get the highest rank that the user can receive from the bot.
-                    var maxRank = rankMatches.Max(x => x.Points);
-                    var match = rankMatches.First(x => x.Points == maxRank);
-
-                    //Remove other rank roles.
-                    var gRoles = user.Guild.Roles.Where(x => rankMatches.Any(r => r.RoleId == x.Id) && x.Id != match.RoleId && x.IsEveryone == false && x.IsManaged == false && x.Position < user.Guild.CurrentUser.Hierarchy).ToList();
-
-                    //Check to see if the player already has the role
-                    if (!user.Roles.Any(x => x.Id == match.RoleId))
+                    var rankMatches = comp.Ranks.Where(x => x.Points <= player.Points);
+                    if (rankMatches.Any())
                     {
-                        //Try to retrieve the role in the server
-                        var role = user.Guild.GetRole(match.RoleId);
-                        if (role != null)
-                        {
-                            if (role.Position < user.Guild.CurrentUser.Hierarchy)
-                            {
-                                await user.AddRoleAsync(role);
-                                await user.ModifyAsync(x =>
-                                {
-                                    var ids = user.Roles.Select(r => r.Id).ToList();
-                                    ids.RemoveAll(r => gRoles.Any(g => g.Id == r));
-                                    ids.Remove(user.Guild.EveryoneRole.Id);
-                                    ids.Add(role.Id);
+                        //Get the highest rank that the user can receive from the bot.
+                        var maxRank = rankMatches.Max(x => x.Points);
+                        var match = rankMatches.First(x => x.Points == maxRank);
 
-                                    x.RoleIds = ids;
-                                });
-                                noted.Add($"{user.Mention} received the {(role.IsMentionable ? role.Mention : role.Name)} rank");
+                        //Remove other rank roles.
+                        var gRoles = user.Guild.Roles.Where(x => rankMatches.Any(r => r.RoleId == x.Id) && x.Id != match.RoleId && x.IsEveryone == false && x.IsManaged == false && x.Position < user.Guild.CurrentUser.Hierarchy).ToList();
+
+                        //Check to see if the player already has the role
+                        if (!user.Roles.Any(x => x.Id == match.RoleId))
+                        {
+                            //Try to retrieve the role in the server
+                            var role = user.Guild.GetRole(match.RoleId);
+                            if (role != null)
+                            {
+                                if (role.Position < user.Guild.CurrentUser.Hierarchy)
+                                {
+                                    await user.RemoveRolesAsync(gRoles);
+                                    await user.AddRoleAsync(role);
+                                    /*await user.ModifyAsync(x =>
+                                    {
+                                        var ids = user.Roles.Select(r => r.Id).ToList();
+                                        ids.RemoveAll(r => gRoles.Any(g => g.Id == r));
+                                        ids.Remove(user.Guild.EveryoneRole.Id);
+                                        ids.Add(role.Id);
+
+                                        x.RoleIds = ids;
+                                    });*/
+                                    noted.Add($"{user.Mention} received the {(role.IsMentionable ? role.Mention : role.Name)} rank");
+                                }
+                                else
+                                {
+                                    noted.Add($"The {(role.IsMentionable ? role.Mention : role.Name)} rank is above ELO bot's highest role and cannot be added to the user");
+                                }
                             }
                             else
                             {
-                                noted.Add($"The {(role.IsMentionable ? role.Mention : role.Name)} rank is above ELO bot's highest role and cannot be added to the user");
+                                comp.Ranks.Remove(match);
+                                noted.Add($"A rank could not be found in the server and was subsequently deleted from the server config [{match.RoleId} w:{match.WinModifier} l:{match.LossModifier} p:{match.Points}]");
+                                SaveCompetition(comp);
                             }
                         }
-                        else
-                        {
-                            comp.Ranks.Remove(match);
-                            noted.Add($"A rank could not be found in the server and was subsequently deleted from the server config [{match.RoleId} w:{match.WinModifier} l:{match.LossModifier} p:{match.Points}]");
-                            SaveCompetition(comp);
-                        }
                     }
-                }
 
-                //Ensure the user has the registerd role if it exists.
-                if (comp.RegisteredRankId != 0)
-                {
-                    if (!user.Roles.Any(x => x.Id == comp.RegisteredRankId))
+                    //Ensure the user has the registerd role if it exists.
+                    if (comp.RegisteredRankId != 0)
                     {
-                        var role = user.Guild.GetRole(comp.RegisteredRankId);
-                        if (role != null)
+                        if (!user.Roles.Any(x => x.Id == comp.RegisteredRankId))
                         {
-                            if (role.Position < user.Guild.CurrentUser.Hierarchy)
+                            var role = user.Guild.GetRole(comp.RegisteredRankId);
+                            if (role != null)
                             {
-                                await user.AddRoleAsync(role);
+                                if (role.Position < user.Guild.CurrentUser.Hierarchy)
+                                {
+                                    await user.AddRoleAsync(role);
+                                }
                             }
                         }
                     }
                 }
-            }
-            else
-            {
-                noted.Add("The bot requires manage roles permissions in order to modify user roles.");
-            }
-
-            if (comp.UpdateNames)
-            {
-                var newName = comp.GetNickname(player);
-                var currentName = user.Nickname ?? user.Username;
-                //TODO: Investigate null ref here?
-                //Not sure if newname or current name could be null.
-                if (!currentName.Equals(newName, StringComparison.InvariantCultureIgnoreCase))
+                else
                 {
-                    //Use heirachy check to ensure that the bot can actually set the nickname
-                    if (user.Guild.CurrentUser.GuildPermissions.ManageNicknames)
+                    noted.Add("The bot requires manage roles permissions in order to modify user roles.");
+                }
+
+                if (comp.UpdateNames)
+                {
+                    var newName = comp.GetNickname(player);
+                    var currentName = user.Nickname ?? user.Username;
+                    //TODO: Investigate null ref here?
+                    //Not sure if newname or current name could be null.
+                    if (!currentName.Equals(newName, StringComparison.InvariantCultureIgnoreCase))
                     {
-                        if (user.Hierarchy < user.Guild.CurrentUser.Hierarchy)
+                        //Use heirachy check to ensure that the bot can actually set the nickname
+                        if (user.Guild.CurrentUser.GuildPermissions.ManageNicknames)
                         {
-                            await user.ModifyAsync(x => x.Nickname = newName);
+                            if (user.Hierarchy < user.Guild.CurrentUser.Hierarchy)
+                            {
+                                await user.ModifyAsync(x => x.Nickname = newName);
+                            }
+                            else
+                            {
+                                noted.Add("You have a higher permission level than the bot and therefore it cannot edit your nickname.");
+                            }
                         }
                         else
                         {
-                            noted.Add("You have a higher permission level than the bot and therefore it cannot edit your nickname.");
+                            noted.Add("The bot cannot edit your nickname as it does not have the `ManageNicknames` permission");
                         }
-                    }
-                    else
-                    {
-                        noted.Add("The bot cannot edit your nickname as it does not have the `ManageNicknames` permission");
                     }
                 }
             }
+            catch (Exception e)
+            {
+                noted.Add($"Issue updating {user.Mention} name/roles.");
+            }
+
 
             return noted;
         }

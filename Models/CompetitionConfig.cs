@@ -58,7 +58,7 @@ namespace RavenBOT.ELO.Modules.Models
                     .Replace("{losses}", player.Losses.ToString(), StringComparison.InvariantCultureIgnoreCase)
                     .Replace("{draws}", player.Draws.ToString(), StringComparison.InvariantCultureIgnoreCase)
                     .Replace("{games}", player.Games.ToString(), StringComparison.InvariantCultureIgnoreCase)
-                    .FixLength(32);
+                    .FixLength(31);
         }
 
         public bool BlockMultiQueueing { get; set; } = false;

@@ -281,7 +281,6 @@ namespace RavenBOT.ELO.Modules.Modules
                 //Save the player profile after updating scores.
                 Service.SavePlayer(player);
 
-
                 var guildUser = Context.Guild.GetUser(player.UserId);
                 if (guildUser == null)
                 {
