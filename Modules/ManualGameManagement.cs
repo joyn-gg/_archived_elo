@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using RavenBOT.Common;
 using RavenBOT.ELO.Modules.Methods;
 using RavenBOT.ELO.Modules.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -39,6 +40,51 @@ namespace RavenBOT.ELO.Modules.Modules
 
         //TODO: Undo manual game
         //TODO: Display manual game info/stats
+
+        [Command("UndoManualGame", RunMode = RunMode.Sync)]
+        [Summary("Adds a win and updates points for the specified users.")]
+        public async Task UndoManualAsync(int gameId)
+        {
+            var game = Service.GetManualGame(Context.Guild.Id, gameId);
+            if (game == null)
+            {
+                await SimpleEmbedAsync("Invalid game id.", Color.Red);
+                return;
+            }
+            var responseEmbed = new EmbedBuilder();
+            responseEmbed.AddField("Game Info", $"State: {game.GameState}\n" +
+                                                $"Submitted by: {MentionUtils.MentionUser(game.Submitter)}\n" +
+                                                $"Submitted at: {game.CreationTime}");
+            var updateChanges = new StringBuilder();
+            var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
+            foreach (var scoreUpdate in game.ScoreUpdates)
+            {
+                var player = Service.GetPlayer(Context.Guild.Id, scoreUpdate.Key);
+                if (player == null) continue;
+
+                if (game.GameState == ManualGameResult.ManualGameState.Win)
+                {
+                    player.SetPoints(competition, player.Points - scoreUpdate.Value);
+                }
+                else if (game.GameState == ManualGameResult.ManualGameState.Lose)
+                {
+                    player.SetPoints(competition, player.Points + Math.Abs(scoreUpdate.Value));
+                }
+                else
+                {
+                    return;
+                }
+
+                var gUser = Context.Guild.GetUser(player.UserId);
+                if (gUser == null) continue;
+
+                var _ = Task.Run(() => Service.UpdateUserAsync(competition, player, gUser));
+            }
+            Service.RemoveManualGame(game);
+
+            await SimpleEmbedAsync("Manual game undone.");
+        }
+
 
         public async Task UpdateTeamScoresAsync(bool win, HashSet<ulong> userIds)
         {

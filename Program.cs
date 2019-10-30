@@ -2,6 +2,7 @@
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using ELO.Handlers;
 using Microsoft.Extensions.DependencyInjection;
 using RavenBOT.Common;
 using RavenBOT.Common.Interfaces.Database;
@@ -9,7 +10,6 @@ using System;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using EventHandler = ELO.Handlers.EventHandler;
 
 namespace ELO
 {
@@ -77,7 +77,7 @@ namespace ELO
                     DefaultRunMode = RunMode.Async,
                     LogLevel = LogSeverity.Info
                 }))
-                .AddSingleton<EventHandler>()
+                .AddSingleton<ELOEventHandler>()
                 .AddSingleton(x => new LicenseService(x.GetRequiredService<IDatabase>()))
                 .AddSingleton<Random>()
                 .AddSingleton<HttpClient>()
@@ -85,7 +85,7 @@ namespace ELO
 
             try
             {
-                await Provider.GetRequiredService<EventHandler>().InitializeAsync();
+                await Provider.GetRequiredService<ELOEventHandler>().InitializeAsync();
             }
             catch (Exception e)
             {

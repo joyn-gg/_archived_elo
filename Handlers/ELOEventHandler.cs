@@ -1,24 +1,33 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using RavenBOT.Common;
 
 namespace ELO.Handlers
 {
-    //Command handling section of the event handler
-    public partial class EventHandler
+    public class ELOEventHandler : RavenBOT.Handlers.EventHandler
     {
+        public ELOEventHandler(DiscordShardedClient client, CommandService commandService, GuildService guildService, LocalManagementService local, LogHandler handler, IServiceProvider provider) : base(client, commandService, guildService, local, handler, provider)
+        {
+            GuildSchedule.Service = commandService;
+            GuildSchedule.Provider = provider;
+        }
+
         public Dictionary<ulong, GuildSchedule> GuildScheduler = new Dictionary<ulong, GuildSchedule>();
+
         public class GuildSchedule
         {
             public static CommandService Service;
             public static IServiceProvider Provider;
-
             public ulong GuildId;
             private Queue<(ICommandContext, int)> Queue = new Queue<(ICommandContext, int)>();
+
+            //Message should already be verified to have a proper prefix at this point.
             public void AddTask(ICommandContext message, int argPos)
             {
                 var commandMatch = Service.Search(message, argPos);
@@ -37,32 +46,43 @@ namespace ELO.Handlers
 
                 if (ProcessorTask == null)
                 {
-                    ProcessorTask = Task.Run(() =>RunProcessor());
+                    ProcessorTask = Task.Run(() => RunProcessor());
                 }
             }
 
             public Task ProcessorTask = null;
             public async Task RunProcessor()
             {
-                try
+                while (true)
                 {
-                    var context = Queue.Dequeue();
-
-                    while (context != default)
+                    try
                     {
-                        await Service.ExecuteAsync(context.Item1, context.Item2, Provider);
-                        context = Queue.Dequeue();
+                        var context = Queue.Dequeue();
+
+                        //Continue getting the next item in queue until there are none left.
+                        while (context != default)
+                        {
+                            await Service.ExecuteAsync(context.Item1, context.Item2, Provider);
+
+                            if (ProcessorTask.IsCanceled)
+                            {
+                                ProcessorTask = null;
+                                return;
+                            }
+
+                            context = Queue.Dequeue();
+                        }
+                    }
+                    finally
+                    {
+                        await Task.Delay(1000);
                     }
                 }
-                finally
-                {
-                    await Task.Delay(1000);
-                    await RunProcessor();
-                }
+
             }
         }
 
-        private async Task MessageReceivedAsync(SocketMessage discordMessage)
+        public override async Task MessageReceivedAsync(SocketMessage discordMessage)
         {
             if (!(discordMessage is SocketUserMessage message))
             {
@@ -95,9 +115,9 @@ namespace ELO.Handlers
                 return;
             }
 
-            var context = GetCommandContext(Client, message);
+            var context = new ShardedCommandContext(Client, message);
             var argPos = 0;
-            if (!message.HasStringPrefix(LocalManagementService.LastConfig.Developer ? LocalManagementService.LastConfig.DeveloperPrefix : GuildService.GetPrefix(guildId), ref argPos, System.StringComparison.InvariantCultureIgnoreCase) /*&& !message.HasMentionPrefix(Client.CurrentUser, ref argPos)*/ )
+            if (!message.HasStringPrefix(LocalManagementService.LastConfig.Developer ? LocalManagementService.LastConfig.DeveloperPrefix : GuildService.GetPrefix(guildId), ref argPos, StringComparison.InvariantCultureIgnoreCase) /*&& !message.HasMentionPrefix(Client.CurrentUser, ref argPos)*/ )
             {
                 return;
             }
@@ -124,9 +144,5 @@ namespace ELO.Handlers
                 var result = await CommandService.ExecuteAsync(context, argPos, Provider);
             }
         }
-
-        public Func<DiscordShardedClient, SocketUserMessage, ICommandContext> GetCommandContext = (c, m) => new ShardedCommandContext(c, m);
     }
-
-
 }
