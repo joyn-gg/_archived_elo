@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -10,14 +9,100 @@ using RavenBOT.Common;
 
 namespace ELO.Handlers
 {
-    public class ELOEventHandler : RavenBOT.Handlers.EventHandler
+    public class ELOEventHandler : RavenBOT.Common.EventHandler
     {
-        public ELOEventHandler(DiscordShardedClient client, CommandService commandService, GuildService guildService, LocalManagementService local, LogHandler handler, IServiceProvider provider) : base(client, commandService, guildService, local, handler, provider)
+        public ELOEventHandler(ConfigManager configManager, Logger logHandler, IServiceProvider provider) : base(provider)
         {
-            GuildSchedule.Service = commandService;
-            GuildSchedule.Provider = provider;
+            //Ensure lastconfig is populated
+            configManager.GetConfig();
+            ConfigManager = configManager;
+            Logger.Message += (m, l) => logHandler.Log(m, l);
         }
 
+        public ConfigManager ConfigManager { get; }
+
+        public override async Task JoinedGuildAsync(SocketGuild guild)
+        {
+            if (!ConfigManager.LastConfig.IsAcceptable(guild.Id))
+            {
+                return;
+            }
+
+            var firstChannel = guild.TextChannels.Where(x =>
+            {
+                var permissions = guild.CurrentUser?.GetPermissions(x);
+                return permissions.HasValue ? permissions.Value.ViewChannel && permissions.Value.SendMessages : false;
+            }).OrderBy(c => c.Position).FirstOrDefault();
+
+            await firstChannel?.SendMessageAsync("", false, new EmbedBuilder()
+            {
+                Title = $"{Client.CurrentUser.Username}",
+                Description = $"Get started by using the help command: `{ConfigManager.LastConfig.Prefix}help`",
+                Color = Color.Green
+            }.Build());
+        }
+
+        public override async Task MessageReceivedAsync(SocketMessage discordMessage)
+        {
+            if (!(discordMessage is SocketUserMessage message))
+            {
+                return;
+            }
+
+            if (ConfigManager.LastConfig.IgnoreBotInput)
+            {
+                if (message.Author.IsBot || message.Author.IsWebhook)
+                {
+                    return;
+                }
+            }
+            else
+            {
+                if (message.Author.Id == Client.CurrentUser.Id)
+                {
+                    return;
+                }
+            }
+
+            ulong guildId = 0;
+            if (message.Channel is IGuildChannel gChannel)
+            {
+                guildId = gChannel.GuildId;
+            }
+
+            if (!ConfigManager.LastConfig.IsAcceptable(guildId))
+            {
+                return;
+            }
+
+            var context = new ShardedCommandContext(Client, message);
+            var argPos = 0;
+
+            //TODO: Add support for Custom prefixes.
+            if (!message.HasStringPrefix(ConfigManager.LastConfig.Developer ? ConfigManager.LastConfig.DeveloperPrefix : ConfigManager.LastConfig.Prefix, ref argPos, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return;
+            }
+
+            if (guildId != 0)
+            {
+                if (!GuildScheduler.ContainsKey(guildId))
+                {
+                    GuildScheduler[guildId] = new GuildSchedule
+                    {
+                        GuildId = guildId
+                    };
+                }
+
+                GuildScheduler[guildId].AddTask(context, argPos);
+            }
+            else
+            {
+                var result = await CommandService.ExecuteAsync(context, argPos, Provider);
+            }
+        }
+
+        /* Note, all commands must be written in order to make sure there are no guild independent race conditions due to this */
         public Dictionary<ulong, GuildSchedule> GuildScheduler = new Dictionary<ulong, GuildSchedule>();
 
         public class GuildSchedule
@@ -76,69 +161,6 @@ namespace ELO.Handlers
                     await Task.Delay(1000);
                     await RunProcessor();
                 }
-            }
-        }
-
-        public override async Task MessageReceivedAsync(SocketMessage discordMessage)
-        {
-            if (!(discordMessage is SocketUserMessage message))
-            {
-                return;
-            }
-
-            if (LocalManagementService.LastConfig.IgnoreBotInput)
-            {
-                if (message.Author.IsBot || message.Author.IsWebhook)
-                {
-                    return;
-                }
-            }
-            else
-            {
-                if (message.Author.Id == Client.CurrentUser.Id)
-                {
-                    return;
-                }
-            }
-
-            ulong guildId = 0;
-            if (message.Channel is IGuildChannel gChannel)
-            {
-                guildId = gChannel.GuildId;
-            }
-
-            if (!LocalManagementService.LastConfig.IsAcceptable(guildId))
-            {
-                return;
-            }
-
-            var context = new ShardedCommandContext(Client, message);
-            var argPos = 0;
-            if (!message.HasStringPrefix(LocalManagementService.LastConfig.Developer ? LocalManagementService.LastConfig.DeveloperPrefix : GuildService.GetPrefix(guildId), ref argPos, StringComparison.InvariantCultureIgnoreCase) /*&& !message.HasMentionPrefix(Client.CurrentUser, ref argPos)*/ )
-            {
-                return;
-            }
-
-            if (!GuildService.IsModuleAllowed(context.Guild?.Id ?? 0, message.Content))
-            {
-                return;
-            }
-
-            if (guildId != 0)
-            {
-                if (!GuildScheduler.ContainsKey(guildId))
-                {
-                    GuildScheduler[guildId] = new GuildSchedule
-                    {
-                        GuildId = guildId
-                    };
-                }
-
-                GuildScheduler[guildId].AddTask(context, argPos);
-            }
-            else
-            {
-                var result = await CommandService.ExecuteAsync(context, argPos, Provider);
             }
         }
     }

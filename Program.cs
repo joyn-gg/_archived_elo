@@ -5,9 +5,7 @@ using Discord.WebSocket;
 using ELO.Handlers;
 using Microsoft.Extensions.DependencyInjection;
 using RavenBOT.Common;
-using RavenBOT.Common.Interfaces.Database;
 using System;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -21,7 +19,13 @@ namespace ELO
             public string Path { get; set; }
         }
 
-        public static IServiceProvider Provider { get; set; }
+        public IServiceProvider Provider { get; set; }
+        public static void Main(string[] args)
+        {
+            var program = new Program();
+            program.RunAsync(args).GetAwaiter().GetResult();
+        }
+
         public async Task RunAsync(string[] args = null)
         {
             if (args != null)
@@ -31,28 +35,30 @@ namespace ELO
                     {
                         if (o.Path != null)
                         {
-                            LocalManagementService.ConfigPath = o.Path;
+                            ConfigManager.ConfigPath = o.Path;
                         }
                     });
             }
 
-            var localManagement = new LocalManagementService();
-            IDatabase database = new LiteDataStore(localManagement);
-
-            var types = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(s => s.GetTypes())
-                .Where(p => typeof(IServiceable).IsAssignableFrom(p) && !p.IsInterface);
-
-            IServiceCollection collection = new ServiceCollection();
-            foreach (var type in types)
+            var localManagement = new ConfigManager();
+            localManagement.GetConfig();
+            var socketConfig = localManagement.LastConfig.GetConfig<DscSerializable>("SocketConfig")?.ToConfig();
+            if (socketConfig == null)
             {
-                collection = collection.AddSingleton(type);
+                localManagement.LastConfig.AdditionalConfigs.Add("SocketConfig", new DscSerializable());
+                localManagement.SaveConfig(localManagement.LastConfig);
             }
 
+            var commandConfig = localManagement.LastConfig.GetConfig<CscSerializable>("CommandConfig")?.ToConfig();
+            if (commandConfig == null)
+            {
+                localManagement.LastConfig.AdditionalConfigs.Add("CommandConfig", new CscSerializable());
+                localManagement.SaveConfig(localManagement.LastConfig);
+            }            
+
             //Configure the service provider with all relevant and required services to be injected into other classes.
-            Provider = collection
-                .AddSingleton(database)
-                .AddSingleton(x => new DiscordShardedClient(new DiscordSocketConfig
+            Provider = new ServiceCollection()
+                .AddSingleton(x => new DiscordShardedClient(localManagement.LastConfig.GetConfig<DscSerializable>("SocketConfig")?.ToConfig() ?? new DiscordSocketConfig
                 {
                     AlwaysDownloadUsers = false,
                     MessageCacheSize = 50,
@@ -64,12 +70,9 @@ namespace ELO
                     //May be advisable to fetch from a config file OR default to 1
                     TotalShards = 1
                 }))
-                .AddSingleton(x => new LogHandler(x.GetRequiredService<DiscordShardedClient>(), x.GetRequiredService<IDatabase>()))
                 .AddSingleton(localManagement)
-                .AddSingleton<DeveloperSettings>()
-                .AddSingleton<GuildService>()
-                .AddSingleton(x => new HelpService(x.GetRequiredService<CommandService>(), localManagement, x.GetRequiredService<GuildService>(), x.GetRequiredService<DeveloperSettings>(), x))
-                .AddSingleton(new CommandService(new CommandServiceConfig
+                .AddSingleton<HelpService>()
+                .AddSingleton(new CommandService(localManagement.LastConfig.GetConfig<CscSerializable>("CommandConfig")?.ToConfig() ?? new CommandServiceConfig
                 {
                     ThrowOnError = false,
                     CaseSensitiveCommands = false,
@@ -78,14 +81,13 @@ namespace ELO
                     LogLevel = LogSeverity.Info
                 }))
                 .AddSingleton<ELOEventHandler>()
-                .AddSingleton(x => new LicenseService(x.GetRequiredService<IDatabase>()))
                 .AddSingleton<Random>()
                 .AddSingleton<HttpClient>()
                 .BuildServiceProvider();
 
             try
             {
-                await Provider.GetRequiredService<ELOEventHandler>().InitializeAsync();
+                await Provider.GetRequiredService<ELOEventHandler>().InitializeAsync(localManagement.GetConfig().Token);
             }
             catch (Exception e)
             {
@@ -94,12 +96,6 @@ namespace ELO
             }
 
             await Task.Delay(-1);
-        }
-
-        public static void Main(string[] args)
-        {
-            var program = new Program();
-            program.RunAsync(args).GetAwaiter().GetResult();
         }
     }
 }
