@@ -19,8 +19,4 @@
     <ProjectReference Include="..\..\..\RavenBOT-Libraries\RavenBOT.Common\RavenBOT.Common.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="EF\" />
-  </ItemGroup>
-
 </Project>

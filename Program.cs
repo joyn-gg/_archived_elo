@@ -74,7 +74,7 @@ namespace ELO
                 localManagement.LastConfig.AdditionalConfigs.Add("DatabaseConfig", config);
                 localManagement.SaveConfig(localManagement.LastConfig);
                 dbConfig = localManagement.LastConfig.GetConfig<DatabaseConfig>("DatabaseConfig");
-            }                
+            }
             Database.Config = dbConfig;
 
             using (var db = new Database())

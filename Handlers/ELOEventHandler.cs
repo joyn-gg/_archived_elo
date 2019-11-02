@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using RavenBOT.Common;
 using Microsoft.Extensions.DependencyInjection;
+using RavenBOT.Common;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ELO.Handlers
 {
@@ -90,6 +89,6 @@ namespace ELO.Handlers
 
             var result = await CommandService.ExecuteAsync(context, argPos, Provider);
         }
-        
+
     }
 }

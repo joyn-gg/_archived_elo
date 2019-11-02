@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace ELO.Preconditions
 {
     public class RequirePermission : PreconditionBase
-    {        
+    {
         private readonly PermissionLevel Level;
         public RequirePermission(PermissionLevel level)
         {

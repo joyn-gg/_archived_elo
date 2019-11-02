@@ -37,7 +37,7 @@ namespace ELO.Services
                                 {
                                     await user.RemoveRolesAsync(gRoles);
                                     await user.AddRoleAsync(role);
-  
+
                                     noted.Add($"{user.Mention} received the {(role.IsMentionable ? role.Mention : role.Name)} rank");
                                 }
                                 else

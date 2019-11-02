@@ -115,7 +115,7 @@ namespace ELO.Services
             modelBuilder.Entity<QueuedPlayer>(entity =>
             {
                 entity.HasKey(e => new { e.ChannelId, e.UserId });
-                      
+
             });
 
             modelBuilder.Entity<TeamPlayer>(entity =>

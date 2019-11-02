@@ -1,10 +1,6 @@
 ﻿using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using RavenBOT.Common;
-using Discord;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -31,7 +27,7 @@ namespace ELO.Models
 
 
         [ForeignKey("LobbyId")]
-        public Lobby Lobby { get; set; }        
+        public Lobby Lobby { get; set; }
         public ulong LobbyId { get; set; }
 
 

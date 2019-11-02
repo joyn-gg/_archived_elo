@@ -42,7 +42,7 @@ namespace ELO.Modules
                 {
                     var page = new ReactivePage();
 
-                    page.Description = string.Join("\n", x.Select(p => 
+                    page.Description = string.Join("\n", x.Select(p =>
                     {
                         if (p.IsExpired)
                         {
@@ -118,7 +118,7 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                var player = db.Players.Find(Context.Guild.Id, user.Id); 
+                var player = db.Players.Find(Context.Guild.Id, user.Id);
                 if (player == null)
                 {
                     await SimpleEmbedAndDeleteAsync("User is not registered.", Color.Red);
