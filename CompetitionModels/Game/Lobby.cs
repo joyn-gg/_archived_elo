@@ -29,7 +29,7 @@ namespace ELO.Models
         public int? MinimumPoints { get; set; } = null;
 
         public bool DmUsersOnGameReady { get; set; } = false;
-        public bool ReactOnJoinLeave { get; set; } = false;
+        //public bool ReactOnJoinLeave { get; set; } = false;
         public bool HideQueue { get; set; } = false;
 
         public int PlayersPerTeam { get; set; } = 5;

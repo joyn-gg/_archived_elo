@@ -1,4 +1,6 @@
-﻿using ELO.Models;
+﻿using Discord.WebSocket;
+using ELO.CompetitionModels.Legacy;
+using ELO.Models;
 using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using System.Collections.Generic;
@@ -21,6 +23,7 @@ namespace ELO.Services
         public DbSet<ScoreUpdate> ScoreUpdates { get; set; }
         public DbSet<TeamCaptain> TeamCaptains { get; set; }
         public DbSet<TeamPlayer> TeamPlayers { get; set; }
+        public DbSet<Token> LegacyTokens { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -42,6 +45,18 @@ namespace ELO.Services
             return comp;
         }
 
+        public Lobby GetLobby(ISocketMessageChannel channel)
+        {
+            return Lobbies.Find(channel.Id);
+        }
+        public Player GetUser(SocketGuildUser user)
+        {
+            return GetUser(user.Guild.Id, user.Id);
+        }
+        public Player GetUser(ulong guildId, ulong userId)
+        {
+            return Players.Find(guildId, userId);
+        }
         public GameResult GetLatestGame(Lobby lobby)
         {
             return GameResults.Where(x => x.LobbyId == lobby.ChannelId).OrderByDescending(x => x.GameId).FirstOrDefault();

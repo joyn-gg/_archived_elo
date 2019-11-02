@@ -76,5 +76,6 @@ namespace ELO.Models
         public ulong? PremiumRedeemer { get; set; }
 
         public DateTime? LegacyPremiumExpiry { get; set; }
+        public ulong? ReactiveMessage { get; set; }
     }
 }
