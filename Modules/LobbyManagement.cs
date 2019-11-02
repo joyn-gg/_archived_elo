@@ -87,8 +87,7 @@ namespace ELO.Modules
                 var queue = db.QueuedPlayers.Where(x => x.GuildId == Context.Guild.Id && x.ChannelId == Context.Channel.Id).ToList();
                 int queueCount = queue.Count;
                 var latestGame = db.GameResults.Where(x => x.LobbyId == Context.Channel.Id).OrderByDescending(x => x.GameId).FirstOrDefault();
-
-                if (latestGame.GameState == GameState.Picking)
+                if (latestGame != null && latestGame.GameState == GameState.Picking)
                 {
                     await SimpleEmbedAndDeleteAsync("Current game is picking teams, wait until this is completed.", Color.Red);
                     return;
