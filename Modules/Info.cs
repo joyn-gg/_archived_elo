@@ -67,6 +67,14 @@ namespace ELO.Modules
             }
         }
 
+        [Command("Shards")]
+        [Summary("Displays information about all shards")]
+        public async Task ShardInfoAsync()
+        {
+            var info = Context.Client.Shards.Select(x => $"[{x.ShardId}] {x.Status} {x.ConnectionState} - Guilds: {x.Guilds.Count} Users: {x.Guilds.Sum(g => g.MemberCount)}");
+            await ReplyAsync($"```\n" + $"{string.Join("\n", info)}\n" + $"```");
+        }
+
         [RateLimit(1, 1, Measure.Minutes, RateLimitFlags.ApplyPerGuild)]
         [Command("Stats")]
         [Summary("Bot Info and Stats")]
