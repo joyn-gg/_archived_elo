@@ -108,28 +108,29 @@ namespace ELO.Services
 
             modelBuilder.Entity<GameResult>(entity =>
             {
-                entity.HasAlternateKey(e => new { e.GuildId, e.LobbyId, e.GameId });
+                entity.HasAlternateKey(e => new { e.LobbyId, e.GameId });
+                entity.HasMany(x => x.ScoreUpdates);
             });
 
             modelBuilder.Entity<QueuedPlayer>(entity =>
             {
-                entity.HasKey(e => new { e.GuildId, e.ChannelId, e.UserId });
+                entity.HasKey(e => new { e.ChannelId, e.UserId });
                       
             });
 
             modelBuilder.Entity<TeamPlayer>(entity =>
             {
-                entity.HasKey(e => new { e.GuildId, e.ChannelId, e.UserId });
+                entity.HasKey(e => new { e.ChannelId, e.UserId });
             });
 
             modelBuilder.Entity<TeamCaptain>(entity =>
             {
-                entity.HasKey(e => new { e.GuildId, e.ChannelId, e.UserId, e.GameNumber, e.TeamNumber });
+                entity.HasKey(e => new { e.ChannelId, e.UserId, e.GameNumber, e.TeamNumber });
             });
 
             modelBuilder.Entity<ScoreUpdate>(entity =>
             {
-                entity.HasKey(e => new { e.GuildId, e.ChannelId, e.UserId, e.GameNumber });
+                entity.HasKey(e => new { e.ChannelId, e.UserId, e.GameNumber });
             });
 
             modelBuilder.Entity<ManualGameScoreUpdate>(entity =>

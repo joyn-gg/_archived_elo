@@ -73,5 +73,7 @@ namespace ELO.Models
             }
             return guild.GetTextChannel(LobbyId);
         }
+
+        public ICollection<ScoreUpdate> ScoreUpdates { get; set; }
     }
 }

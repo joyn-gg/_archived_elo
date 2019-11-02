@@ -15,8 +15,8 @@ namespace ELO.Models
 
         [Key]
         public ulong GuildId { get; set; }
-        public ulong AdminRole { get; set; }
-        public ulong ModeratorRole { get; set; }
+        public ulong? AdminRole { get; set; }
+        public ulong? ModeratorRole { get; set; }
         public TimeSpan? RequeueDelay { get; set; } = null;
         public ulong RegisteredRankId { get; set; } = 0;
         public int ManualGameCounter { get; set; } = 0;
