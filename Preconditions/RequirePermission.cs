@@ -1,32 +1,17 @@
 ﻿using Discord.Commands;
 using Discord.WebSocket;
-using ELO.EF;
-using ELO.EF.Models;
 using ELO.Extensions;
-using ELO.Models;
 using ELO.Services;
 using Microsoft.Extensions.DependencyInjection;
 using RavenBOT.Common;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ELO.Preconditions
 {
     public class RequirePermission : PreconditionBase
     {        
-        public enum PermissionLevel
-        {
-            Owner,
-            ServerAdmin,
-            ELOAdmin,
-            Moderator,
-            Registered,
-            Default
-        }
-
         private readonly PermissionLevel Level;
         public RequirePermission(PermissionLevel level)
         {

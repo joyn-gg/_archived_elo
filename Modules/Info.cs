@@ -1,10 +1,9 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using ELO.EF;
-using ELO.EF.Models;
+using ELO.Models;
+using ELO.Services;
 using RavenBOT.Common;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,7 +21,7 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                var comp = db.Competitions.Find(Context.Guild.Id) ?? new Competition();
+                var comp = db.GetOrCreateCompetition(Context.Guild.Id);
                 var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToList();
                 if (ranks.Count == 0)
                 {

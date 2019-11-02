@@ -1,18 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.ComponentModel.DataAnnotations;
 
-namespace ELO.EF.Models
+namespace ELO.Models
 {
     public class Competition
     {
         public Competition() { }
         public Competition(ulong guildId)
         {
-            this.GuildId = guildId;
-            this.DefaultLossModifier = 5;
+            GuildId = guildId;
+            DefaultLossModifier = 5;
         }
 
+        [Key]
         public ulong GuildId { get; set; }
         public ulong AdminRole { get; set; }
         public ulong ModeratorRole { get; set; }

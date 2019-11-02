@@ -1,9 +1,8 @@
-﻿using ELO.EF.Models;
-using ELO.Models;
+﻿using ELO.Models;
 using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
-namespace ELO.EF
+namespace ELO.Services
 {
     public class Database : DbContext
     {
@@ -25,13 +24,25 @@ namespace ELO.EF
                 });
         }
 
+        public Competition GetOrCreateCompetition(ulong guildId)
+        {
+            var comp = Competitions.Find(guildId);
+            if (comp == null)
+            {
+                comp = new Competition(guildId);
+                Competitions.Add(comp);
+            }
+
+            return comp;
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<Rank>(entity =>
             {
-                entity.HasKey(e => new { e.GuildId, e.RoleId });
+                entity.HasKey(e => e.RoleId);
                 entity.Property(e => e.Points).IsRequired();
                 entity.Property(e => e.WinModifier);
                 entity.Property(e => e.LossModifier);
@@ -50,9 +61,8 @@ namespace ELO.EF
 
             modelBuilder.Entity<Competition>(entity =>
             {
-                entity.HasKey(e => e.GuildId);
-                entity.Property(e => e.AdminRole).HasDefaultValue();
-                entity.Property(e => e.ModeratorRole).HasDefaultValue();
+                entity.Property(e => e.AdminRole);
+                entity.Property(e => e.ModeratorRole);
                 entity.Property(e => e.RequeueDelay);
                 entity.Property(e => e.RegisteredRankId);
                 entity.Property(e => e.RegisterMessageTemplate);
@@ -78,16 +88,10 @@ namespace ELO.EF
             {
             });
 
-
-            modelBuilder.Entity<Player>(entity =>
-            {
-                entity.HasKey(e => new { e.GuildId, e.UserId });
-            });
-
             // Game Setup
             modelBuilder.Entity<Lobby>(entity =>
             {
-                entity.HasKey(e => new { e.GuildId, e.ChannelId });
+                entity.HasKey(e => e.ChannelId);
                 /*entity.Property(e => e.Description);
                 entity.Property(e => e.GameReadyAnnouncementChannel);
                 entity.Property(e => e.MentionUsersInReadyAnnouncement).IsRequired();
@@ -104,12 +108,13 @@ namespace ELO.EF
 
             modelBuilder.Entity<GameResult>(entity =>
             {
-                entity.HasKey(e => new { e.GuildId, e.LobbyId, e.GameId });
+                entity.HasAlternateKey(e => new { e.GuildId, e.LobbyId, e.GameId });
             });
 
             modelBuilder.Entity<QueuedPlayer>(entity =>
             {
                 entity.HasKey(e => new { e.GuildId, e.ChannelId, e.UserId });
+                      
             });
 
             modelBuilder.Entity<TeamPlayer>(entity =>
@@ -125,6 +130,17 @@ namespace ELO.EF
             modelBuilder.Entity<ScoreUpdate>(entity =>
             {
                 entity.HasKey(e => new { e.GuildId, e.ChannelId, e.UserId, e.GameNumber });
+            });
+
+            modelBuilder.Entity<ManualGameScoreUpdate>(entity =>
+            {
+                entity.HasKey(e => new { e.GuildId, e.ManualGameId, e.UserId });
+            });
+
+            modelBuilder.Entity<ManualGameResult>(entity =>
+            {
+                entity.HasKey(e => new { e.GuildId, e.GameId });
+                entity.HasMany(x => x.ScoreUpdates);
             });
         }
     }

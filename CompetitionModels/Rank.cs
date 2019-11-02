@@ -1,12 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace ELO.EF.Models
+namespace ELO.Models
 {
     public class Rank
-    {
+    {        
+        [ForeignKey("GuildId")]
+        public Competition Competition { get; set; }
         public ulong GuildId { get; set; }
+
+
         public ulong RoleId { get; set; }
         public int Points { get; set; }
 

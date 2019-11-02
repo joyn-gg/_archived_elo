@@ -1,9 +1,6 @@
 ﻿using Discord.WebSocket;
-using ELO.EF;
-using ELO.EF.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using ELO.Models;
+using ELO.Services;
 
 namespace ELO.Extensions
 {

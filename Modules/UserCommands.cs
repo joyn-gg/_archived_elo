@@ -1,11 +1,8 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using ELO.EF;
-using ELO.EF.Models;
 using ELO.Extensions;
 using ELO.Models;
-using ELO.Preconditions;
 using ELO.Services;
 using RavenBOT.Common;
 using System.Linq;
@@ -37,7 +34,7 @@ namespace ELO.Modules
 
             using (var db = new Database())
             {
-                var comp = db.Competitions.Find(Context.Guild.Id) ?? new Competition();
+                var comp = db.GetOrCreateCompetition(Context.Guild.Id);
 
                 if (!(Context.User as SocketGuildUser).IsRegistered(out var user))
                 {
@@ -109,7 +106,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var comp = db.Competitions.Find(Context.Guild.Id) ?? new Competition();
+                var comp = db.GetOrCreateCompetition(Context.Guild.Id);
                 if (!comp.AllowSelfRename)
                 {
                     await SimpleEmbedAndDeleteAsync("You are not allowed to rename yourself.", Color.Red);
@@ -149,7 +146,7 @@ namespace ELO.Modules
         [Command("RenameUser", RunMode = RunMode.Sync)]
         [Alias("ForceRename")]
         [Summary("Renames the specified user.")]
-        [Preconditions.RequirePermission(RequirePermission.PermissionLevel.Moderator)]
+        [Preconditions.RequirePermission(PermissionLevel.Moderator)]
         public async Task RenameUserAsync(SocketGuildUser user, [Remainder]string newname)
         {
             if (!user.IsRegistered(out var player))

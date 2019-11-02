@@ -1,20 +1,26 @@
-﻿using System;
+﻿using ELO.Models;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
-namespace ELO.EF.Models
+namespace ELO.Models
 {
     public class Lobby
     {
         public Lobby(ulong guildId, ulong channelId)
         {
-            this.GuildId = guildId;
-            this.ChannelId = channelId;
+            GuildId = guildId;
+            ChannelId = channelId;
         }
 
         public Lobby() { }
 
+        [ForeignKey("GuildId")]
+        public Competition Competition { get; set; }
         public ulong GuildId { get; set; }
+
+
         public ulong ChannelId { get; set; }
         public string Description { get; set; } = null;
 
@@ -35,17 +41,10 @@ namespace ELO.EF.Models
 
         public int CurrentGameCount { get; set; } = 0;
 
-        public GameResult.CaptainPickOrder CaptainPickOrder { get; set; } = GameResult.CaptainPickOrder.PickTwo;
+        public CaptainPickOrder CaptainPickOrder { get; set; } = CaptainPickOrder.PickTwo;
 
         //TODO: Specific announcement channel per lobby
-        public enum PickMode
-        {
-            Captains_HighestRanked,
-            Captains_RandomHighestRanked,
-            Captains_Random,
-            Random,
-            TryBalance
-        }
+
 
         /// <summary>
         /// Checks whether the specified pickmode is captains

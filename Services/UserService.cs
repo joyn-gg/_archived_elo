@@ -1,10 +1,8 @@
 ﻿using Discord.WebSocket;
-using ELO.EF;
-using ELO.EF.Models;
+using ELO.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ELO.Services

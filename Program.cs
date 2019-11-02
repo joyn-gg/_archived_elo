@@ -1,15 +1,12 @@
 ﻿using CommandLine;
-using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using ELO.EF;
 using ELO.Handlers;
 using ELO.Models;
 using ELO.Services;
 using Microsoft.Extensions.DependencyInjection;
 using RavenBOT.Common;
 using System;
-using System.Data.SqlClient;
 using System.Net.Http;
 using System.Threading.Tasks;
 

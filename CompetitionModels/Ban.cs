@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
 
-namespace ELO.EF.Models
+namespace ELO.Models
 {
 
     public class Ban
@@ -13,8 +11,14 @@ namespace ELO.EF.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int BanId { get; set; }
 
+
+        [ForeignKey("GuildId")]
+        public Competition Competition { get; set; }
         public ulong GuildId { get; set; }
+
+
         public ulong UserId { get; set; }
+
 
         public string Comment { get; set; }
         public ulong Moderator { get; set; }

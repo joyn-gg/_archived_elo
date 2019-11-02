@@ -1,55 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
-namespace ELO.EF.Models
+namespace ELO.Models
 {
     public class Player
     {
-
-        public string GetDisplayNameSafe()
-        {
-            return Discord.Format.Sanitize(DisplayName);
-        }
-
-        //TODO: Add display name logging
-        public string DisplayName { get; set; }
-
-        /// <summary>
-        /// The user ID
-        /// </summary>
-        /// <value></value>
-        public ulong UserId { get; set; }
-
-        /// <summary>
-        /// The server ID
-        /// </summary>
-        /// <value></value>
-        public ulong GuildId { get; set; }
-
         public Player(ulong userId, ulong guildId, string displayName)
         {
-            this.DisplayName = displayName;
-            this.UserId = userId;
-            this.GuildId = guildId;
-            this.RegistrationDate = DateTime.UtcNow;
+            DisplayName = displayName;
+            UserId = userId;
+            GuildId = guildId;
+            RegistrationDate = DateTime.UtcNow;
         }
 
         public Player() { }
 
-        public int Points { get; set; } = 0;
+        //TODO: Add display name logging
+        public string DisplayName { get; set; }
 
-        public void SetPoints(bool allowNegative, int points)
-        {
-            if (allowNegative)
-            {
-                Points = points;
-            }
-            else
-            {
-                Points = NoNegative(points);
-            }
-        }
+
+        public ulong UserId { get; set; }
+
+
+        [ForeignKey("GuildId")]
+        public Competition Competition { get; set; }
+        public ulong GuildId { get; set; }
+
+        public int Points { get; set; } = 0;
 
         private int _Wins = 0;
 
@@ -96,6 +75,7 @@ namespace ELO.EF.Models
         /// <summary>
         /// This can be inferred from other stored data
         /// </summary>
+        [NotMapped]
         public int Games => Draws + Losses + Wins;
 
         public DateTime RegistrationDate { get; set; }
@@ -110,10 +90,9 @@ namespace ELO.EF.Models
             return value;
         }
 
-        public enum ModifyState
+        public string GetDisplayNameSafe()
         {
-            Modify,
-            Set
+            return Discord.Format.Sanitize(DisplayName);
         }
     }
 }

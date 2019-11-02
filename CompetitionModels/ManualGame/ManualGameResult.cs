@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace ELO.EF.Models
+namespace ELO.Models
 {
     public class ManualGameResult
     {
@@ -14,7 +15,11 @@ namespace ELO.EF.Models
             GuildId = guildId;
         }
 
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int GameId { get; set; }
+
+        [ForeignKey("GuildId")]
+        public Competition Comp { get; set; }
         public ulong GuildId { get; set; }
         public DateTime CreationTime { get; set; } = DateTime.UtcNow;
 
@@ -24,14 +29,6 @@ namespace ELO.EF.Models
 
         public ManualGameState GameState { get; set; } = ManualGameState.Legacy;
 
-        public enum ManualGameState
-        {
-            Win,
-            Lose,
-            Draw,
-            Legacy
-        }
-
-        public Dictionary<ulong, int> ScoreUpdates { get; set; } = new Dictionary<ulong, int>();
+        public ICollection<ManualGameScoreUpdate> ScoreUpdates { get; set; }
     }
 }

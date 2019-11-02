@@ -1,15 +1,12 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using ELO.EF;
-using ELO.EF.Models;
 using ELO.Extensions;
+using ELO.Models;
 using ELO.Services;
 using RavenBOT.Common;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ELO.Modules
