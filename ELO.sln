@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ELO", "ELO.csproj", "{6B0E4
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RavenBOT.Common", "..\..\..\RavenBOT-Libraries\RavenBOT.Common\RavenBOT.Common.csproj", "{DC4FB1BF-854F-4983-94CE-2004B13EB8F2}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RavenBOT.Services.HelpService", "..\..\..\RavenBOT-Libraries\RavenBOT.Services.HelpService\RavenBOT.Services.HelpService.csproj", "{765E89E7-DDBB-4E45-8C35-99E1813F50A4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{DC4FB1BF-854F-4983-94CE-2004B13EB8F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DC4FB1BF-854F-4983-94CE-2004B13EB8F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DC4FB1BF-854F-4983-94CE-2004B13EB8F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{765E89E7-DDBB-4E45-8C35-99E1813F50A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{765E89E7-DDBB-4E45-8C35-99E1813F50A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{765E89E7-DDBB-4E45-8C35-99E1813F50A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{765E89E7-DDBB-4E45-8C35-99E1813F50A4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

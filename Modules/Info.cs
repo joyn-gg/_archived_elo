@@ -2,10 +2,15 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using ELO.Models;
+using ELO.Preconditions;
 using ELO.Services;
+using Newtonsoft.Json.Linq;
 using RavenBOT.Common;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,6 +19,96 @@ namespace ELO.Modules
     [RavenRequireContext(ContextType.Guild)]
     public partial class Info : ReactiveBase
     {
+        public HttpClient HttpClient { get; }
+        public CommandService CommandService { get; }
+        public HelpService HelpService { get; }
+
+        public Info(HttpClient httpClient, CommandService commandService, HelpService helpService)
+        {
+            HttpClient = httpClient;
+            CommandService = commandService;
+            HelpService = helpService;
+        }
+
+        [Command("Invite")]
+        [Summary("Returns the bot invite")]
+        public async Task InviteAsync()
+        {
+            await SimpleEmbedAsync($"Invite: https://discordapp.com/oauth2/authorize?client_id={Context.Client.CurrentUser.Id}&scope=bot&permissions=8");
+        }
+
+        [Command("Help")]
+        [Summary("Shows available commands based on the current user permissions")]
+        public async Task HelpAsync()
+        {
+            await GenerateHelpAsync();
+        }
+
+        [Command("FullHelp")]
+        [Summary("Displays all commands without checking permissions")]
+        public async Task FullHelpAsync()
+        {
+            await GenerateHelpAsync(false);
+        }
+
+        public async Task GenerateHelpAsync(bool checkPreconditions = true)
+        {
+            try
+            {
+                var res = await HelpService.PagedHelpAsync(Context, checkPreconditions, null, null);
+                if (res != null)
+                {
+                    await PagedReplyAsync(res.ToCallBack().WithDefaultPagerCallbacks());
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+
+        [RateLimit(1, 1, Measure.Minutes, RateLimitFlags.ApplyPerGuild)]
+        [Command("Stats")]
+        [Summary("Bot Info and Stats")]
+        public async Task InformationAsync()
+        {
+            string changes;
+            var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/PassiveModding/ELO/commits");
+            request.Headers.Add("User-Agent", "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; WOW64; Trident/6.0)");
+            var response = await HttpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                changes = "There was an error fetching the latest changes.";
+            }
+            else
+            {
+                dynamic result = JArray.Parse(await response.Content.ReadAsStringAsync());
+                changes = $"[{((string)result[0].sha).Substring(0, 7)}]({result[0].html_url}) {result[0].commit.message}\n" + $"[{((string)result[1].sha).Substring(0, 7)}]({result[1].html_url}) {result[1].commit.message}\n" + $"[{((string)result[2].sha).Substring(0, 7)}]({result[2].html_url}) {result[2].commit.message}";
+            }
+
+            var embed = new EmbedBuilder();
+
+            embed.WithAuthor(
+                x =>
+                {
+                    x.IconUrl = Context.Client.CurrentUser.GetAvatarUrl();
+                    x.Name = $"{Context.Client.CurrentUser.Username}'s Official Invite";
+                    x.Url = $"https://discordapp.com/oauth2/authorize?client_id={Context.Client.CurrentUser.Id}&scope=bot&permissions=2146958591";
+                });
+            embed.AddField("Changes", changes.FixLength());
+
+            embed.AddField("Members", $"Bot: {Context.Client.Guilds.Sum(x => x.Users.Count(z => z.IsBot))}\nHuman: {Context.Client.Guilds.Sum(x => x.Users.Count(z => !z.IsBot))}\nPresent: {Context.Client.Guilds.Sum(x => x.Users.Count(u => u.Status != UserStatus.Offline))}", true);
+            embed.AddField("Members", $"Online: {Context.Client.Guilds.Sum(x => x.Users.Count(z => z.Status == UserStatus.Online))}\nAFK: {Context.Client.Guilds.Sum(x => x.Users.Count(z => z.Status == UserStatus.Idle))}\nDND: {Context.Client.Guilds.Sum(x => x.Users.Count(u => u.Status == UserStatus.DoNotDisturb))}", true);
+            embed.AddField("Channels", $"Text: {Context.Client.Guilds.Sum(x => x.TextChannels.Count)}\nVoice: {Context.Client.Guilds.Sum(x => x.VoiceChannels.Count)}\nTotal: {Context.Client.Guilds.Sum(x => x.Channels.Count)}", true);
+            embed.AddField("Guilds", $"Count: {Context.Client.Guilds.Count}\nTotal Users: {Context.Client.Guilds.Sum(x => x.MemberCount)}\nTotal Cached: {Context.Client.Guilds.Sum(x => x.Users.Count())}\n", true);
+            var orderedShards = Context.Client.Shards.OrderByDescending(x => x.Guilds.Count).ToList();
+            embed.AddField("Shards", $"Shards: {Context.Client.Shards.Count}\nMax: G:{orderedShards.First().Guilds.Count} ID:{orderedShards.First().ShardId}\nMin: G:{orderedShards.Last().Guilds.Count} ID:{orderedShards.Last().ShardId}", true);
+            embed.AddField("Commands", $"Commands: {CommandService.Commands.Count()}\nAliases: {CommandService.Commands.Sum(x => x.Attributes.Count)}\nModules: {CommandService.Modules.Count()}", true);
+            embed.AddField(":hammer_pick:", $"Heap: {Math.Round(GC.GetTotalMemory(true) / (1024.0 * 1024.0), 2)} MB\nUp: {(DateTime.Now - Process.GetCurrentProcess().StartTime).ToString(@"dd\D\ hh\H\ mm\M\ ss\S")}", true);
+            embed.AddField(":beginner:", $"Written by: [PassiveModding](https://github.com/PassiveModding)\nDiscord.Net {DiscordConfig.Version}", true);
+
+            await ReplyAsync("", false, embed.Build());
+        }
 
         [Command("Ranks", RunMode = RunMode.Async)]
         [Summary("Displays information about the server's current ranks")]
@@ -146,6 +241,13 @@ namespace ELO.Modules
 
             //Return the updated start value and the list of player lines.
             return (startValue, sb.ToString());
+        }
+
+        private CommandInfo Command { get; set; }
+        protected override void BeforeExecute(CommandInfo command)
+        {
+            Command = command;
+            base.BeforeExecute(command);
         }
     }
 }

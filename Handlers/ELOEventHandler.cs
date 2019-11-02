@@ -91,10 +91,6 @@ namespace ELO.Handlers
             var result = await CommandService.ExecuteAsync(context, argPos, Provider);
         }
 
-        public override async Task RegisterModulesAsync()
-        {
-            await CommandService.AddModulesAsync(Assembly.GetEntryAssembly(), Provider);
-        }
-
     }
 }
+

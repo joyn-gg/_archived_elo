@@ -95,6 +95,7 @@ namespace ELO
                 .AddSingleton<ReactiveService>()
                 .AddSingleton<UserService>()
                 .AddSingleton<PremiumService>()
+                .AddSingleton<PermissionService>()
                 .AddSingleton<GameService>()
                 .BuildServiceProvider();
 
