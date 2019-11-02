@@ -42,6 +42,10 @@ namespace ELO.Services
             return comp;
         }
 
+        public GameResult GetLatestGame(Lobby lobby)
+        {
+            return GameResults.Where(x => x.LobbyId == lobby.ChannelId).OrderByDescending(x => x.GameId).FirstOrDefault();
+        }
         public TeamCaptain GetTeamCaptain(ulong guildId, ulong channelId, int gameNumber, int teamId)
         {
             return TeamCaptains.FirstOrDefault(x => x.GuildId == guildId && x.ChannelId == channelId && x.GameNumber == gameNumber && x.TeamNumber == teamId);
