@@ -258,7 +258,7 @@ namespace ELO.Modules
 
         public async Task UndoScoreUpdatesAsync(GameResult game, Competition competition, Database db)
         {
-            var scoreUpdates = db.GetScoreUpdates(game.GuildId, game.LobbyId, game.GameId);
+            var scoreUpdates = db.GetScoreUpdates(game.GuildId, game.LobbyId, game.GameId).ToArray();
             var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
             foreach (var score in scoreUpdates)
             {
@@ -284,7 +284,6 @@ namespace ELO.Modules
                 player.Points -= score.ModifyAmount;
                 if (!competition.AllowNegativeScore && player.Points < 0) player.Points = 0;
                 db.Update(player);
-                score.ModifyAmount = 0;
                 db.Remove(score);
 
                 var guildUser = Context.Guild.GetUser(player.UserId);
@@ -650,7 +649,8 @@ namespace ELO.Modules
                     UserId = x.Item1.UserId,
                     GuildId = Context.Guild.Id,
                     ChannelId = game.LobbyId,
-                    GameNumber = game.GameId
+                    GameNumber = game.GameId,
+                    ModifyAmount = x.Item2
                 }));
 
 
@@ -784,14 +784,16 @@ namespace ELO.Modules
                 }
 
                 updates.Add((player, updateVal, maxRank, state, newRank));
-                db.ScoreUpdates.Add(new ScoreUpdate
+                var update = new ScoreUpdate
                 {
                     GuildId = competition.GuildId,
                     ChannelId = game.LobbyId,
                     UserId = player.UserId,
                     GameNumber = game.GameId,
                     ModifyAmount = updateVal
-                });
+                };
+                db.ScoreUpdates.Add(update);
+                db.Entry(update).State = Microsoft.EntityFrameworkCore.EntityState.Detached;
                 db.Update(player);
             }
             db.SaveChanges();

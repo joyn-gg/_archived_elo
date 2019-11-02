@@ -11,18 +11,18 @@ namespace ELO.Services
 {
     public class GameService
     {
-        public string GetTeamInfo(TeamCaptain captain, IEnumerable<TeamPlayer> players)
+        public string GetTeamInfo(TeamCaptain captain, IEnumerable<ulong> players)
         {
             var resStr = "";
             if (captain != null)
             {
                 resStr += $"Captain: {MentionUtils.MentionUser(captain.UserId)}\n";
-                resStr += $"Players: {string.Join("\n", RavenBOT.Common.Extensions.GetUserMentionList(players.Where(x => x.UserId != captain.UserId).Select(x => x.UserId)))}";
+                resStr += $"Players: {string.Join("\n", RavenBOT.Common.Extensions.GetUserMentionList(players))}";
 
             }
             else
             {
-                resStr += $"Players: {string.Join("\n", RavenBOT.Common.Extensions.GetUserMentionList(players.Select(x => x.UserId)))}";
+                resStr += $"Players: {string.Join("\n", RavenBOT.Common.Extensions.GetUserMentionList(players))}";
             }
 
             return resStr;
@@ -45,10 +45,11 @@ namespace ELO.Services
 
             using (var db = new Database())
             {
-                var queue = db.GetQueuedPlayers(game.GuildId, game.LobbyId);
+                var queue = db.GetQueuedPlayers(game.GuildId, game.LobbyId).Select(x => x.UserId);
+                var team1p = db.GetTeamFull(game, 1);
+                var team2p = db.GetTeamFull(game, 2);
 
-
-                var message = usermentions ? string.Join(" ", queue.Select(x => MentionUtils.MentionUser(x.UserId))) : "";
+                var message = usermentions ? string.Join(" ", queue.Union(team1p).Union(team2p).Distinct().Select(x => MentionUtils.MentionUser(x))) : "";
 
                 var embed = new EmbedBuilder
                 {
@@ -105,8 +106,6 @@ namespace ELO.Services
                     }
                 }
 
-                var team1p = db.GetTeamPlayers(game.GuildId, game.LobbyId, game.GameId, 1);
-                var team2p = db.GetTeamPlayers(game.GuildId, game.LobbyId, game.GameId, 2);
                 var cap1 = db.GetTeamCaptain(game.GuildId, game.LobbyId, game.GameId, 1);
                 var cap2 = db.GetTeamCaptain(game.GuildId, game.LobbyId, game.GameId, 2);
 
@@ -137,10 +136,10 @@ namespace ELO.Services
 
                 if (remainingPlayers)
                 {
-                    var remaining = queue.Where(x => team1p.All(y => y.UserId == x.UserId) && team2p.All(y => y.UserId == x.UserId));
+                    var remaining = queue.Where(x => team1p.All(y => y == x) && team2p.All(y => y == x));
                     if (remaining.Any())
                     {
-                        embed.AddField("Remaining Players", string.Join(" ", remaining.Select(x => MentionUtils.MentionUser(x.UserId))));
+                        embed.AddField("Remaining Players", string.Join(" ", remaining.Select(x => MentionUtils.MentionUser(x))));
                     }
                 }
 
@@ -204,11 +203,11 @@ namespace ELO.Services
                     $"{(game.Comment == null ? "" : $"**Comment:** {game.Comment}\n")}");
 
                 var queue = db.GetQueuedPlayers(game.GuildId, game.LobbyId);
-                var team1p = db.GetTeamPlayers(game.GuildId, game.LobbyId, game.GameId, 1);
-                var team2p = db.GetTeamPlayers(game.GuildId, game.LobbyId, game.GameId, 2);
+                var team1p = db.GetTeamFull(game, 1);
+                var team2p = db.GetTeamFull(game, 2);
                 var cap1 = db.GetTeamCaptain(game.GuildId, game.LobbyId, game.GameId, 1);
                 var cap2 = db.GetTeamCaptain(game.GuildId, game.LobbyId, game.GameId, 2);
-                var queueRemaining = queue.Where(x => team1p.All(y => y.UserId == x.UserId) && team2p.All(y => y.UserId == x.UserId));
+                var queueRemaining = queue.Where(x => team1p.All(y => y == x.UserId) && team2p.All(y => y == x.UserId));
 
                 var winningCap = game.WinningTeam == 1 ? cap1 : cap2;
                 var winningPlayers = game.WinningTeam == 1 ? team1p : team2p;
@@ -274,20 +273,20 @@ namespace ELO.Services
 
                     foreach (var player in winningPlayers)
                     {
-                        var eUser = db.Players.Find(game.GuildId, player.UserId);
+                        var eUser = db.Players.Find(game.GuildId, player);
                         if (eUser == null) continue;
 
-                        var pointUpdate = scoreUpdates.FirstOrDefault(x => x.UserId == player.UserId);
+                        var pointUpdate = scoreUpdates.FirstOrDefault(x => x.UserId == player);
                         pointsAwarded.Add($"{eUser.GetDisplayNameSafe()} - `+{pointUpdate.ModifyAmount}`");
                     }
 
                     pointsAwarded.Add($"**Team {(game.WinningTeam == 1 ? 2 : 1)}**");
                     foreach (var player in losingPlayers)
                     {
-                        var eUser = db.Players.Find(game.GuildId, player.UserId);
+                        var eUser = db.Players.Find(game.GuildId, player);
                         if (eUser == null) continue;
 
-                        var pointUpdate = scoreUpdates.FirstOrDefault(x => x.UserId == player.UserId);
+                        var pointUpdate = scoreUpdates.FirstOrDefault(x => x.UserId == player);
                         pointsAwarded.Add($"{eUser.GetDisplayNameSafe()} - `{pointUpdate.ModifyAmount}`");
                     }
                     embed.AddField($"Winning Team, Team {game.WinningTeam}", GetTeamInfo(winningCap, winningPlayers));

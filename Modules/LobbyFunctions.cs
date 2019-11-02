@@ -113,8 +113,8 @@ namespace ELO.Modules
                     lobby.TeamPickMode = PickMode.Random;
                 }
 
-                var team1 = db.GetTeam1(game).ToList();
-                var team2 = db.GetTeam2(game).ToList();
+                var team1 = db.GetTeamFull(game, 1).ToList();
+                var team2 = db.GetTeamFull(game, 1).ToList();
                 var queue = db.GetQueue(game).ToList();
 
                 //Set team players/captains based on the team pick mode
@@ -148,8 +148,8 @@ namespace ELO.Modules
                             Title = $"Current Teams."
                         };
 
-                        var t1Users = GetMentionList(GetUserList(Context.Guild, team1.Select(x => x.UserId)));
-                        var t2Users = GetMentionList(GetUserList(Context.Guild, team2.Select(x => x.UserId)));
+                        var t1Users = GetMentionList(GetUserList(Context.Guild, team1));
+                        var t2Users = GetMentionList(GetUserList(Context.Guild, team2));
                         var remainingPlayers = queue.Select(x => MentionUtils.MentionUser(x.UserId));
                         gameEmbed.AddField("Team 1", $"Captain: {MentionUtils.MentionUser(captains.Item1)}\n{string.Join("\n", t1Users)}");
                         gameEmbed.AddField("Team 2", $"Captain: {MentionUtils.MentionUser(captains.Item2)}\n{string.Join("\n", t2Users)}");
@@ -175,6 +175,8 @@ namespace ELO.Modules
                             GameNumber = game.GameId,
                             TeamNumber = 2
                         }));
+                        db.QueuedPlayers.RemoveRange(queue);
+
                         break;
                     case PickMode.TryBalance:
                         game.GameState = GameState.Undecided;
@@ -204,10 +206,12 @@ namespace ELO.Modules
                                 });
                             }
                         }
+                        db.QueuedPlayers.RemoveRange(queue);
+
                         break;
                 }
 
-                db.QueuedPlayers.RemoveRange(queue);
+                db.SaveChanges();
 
                 //TODO: Assign team members to specific roles and create a channel for chat within.
                 if (lobby.TeamPickMode == PickMode.TryBalance || lobby.TeamPickMode == PickMode.Random)
@@ -252,7 +256,7 @@ namespace ELO.Modules
 
         }
 
-        public Embed GetMsg(GameResult game, List<TeamPlayer> team1, ulong userid)
+        public Embed GetMsg(GameResult game, List<ulong> team1, ulong userid)
         {
             var msg2 = GameService.GetGameMessage(game, $"Game #{game.GameId} Started",
                 GameFlag.map,
@@ -260,7 +264,7 @@ namespace ELO.Modules
                 GameFlag.usermentions,
                 GameFlag.gamestate);
 
-            var t1 = team1.Any(u => u.UserId == userid);
+            var t1 = team1.Any(u => u == userid);
             var name = t1 ? "Team1" : "Team2";
 
 

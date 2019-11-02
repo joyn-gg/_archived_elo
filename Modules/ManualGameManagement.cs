@@ -65,10 +65,22 @@ namespace ELO.Modules
                 {
                     var player = db.Players.Find(Context.Guild.Id, scoreUpdate.UserId);
                     if (player == null) continue;
+                    if (game.GameState == ManualGameState.Win)
+                    {
+                        player.Wins--;
+                    }
+                    else if (game.GameState == ManualGameState.Lose)
+                    {
+                        player.Losses--;
+                    }
+                    else if (game.GameState == ManualGameState.Draw)
+                    {
+                        player.Draws--;
+                    }
                     player.Points -= scoreUpdate.ModifyAmount;
                     if (!competition.AllowNegativeScore && player.Points < 0) player.Points = 0;
                     db.ManualGameScoreUpdates.Remove(scoreUpdate);
-
+                    db.Players.Update(player);
 
                     var gUser = Context.Guild.GetUser(player.UserId);
                     if (gUser == null) continue;
