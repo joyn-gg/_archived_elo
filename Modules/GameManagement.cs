@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using ELO.Entities;
 using ELO.Models;
 using ELO.Services;
 using RavenBOT.Common;
@@ -222,7 +223,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                await UndoScoreUpdatesAsync(game, db);
+                await UndoScoreUpdatesAsync(game, competition, db);
                 await SimpleEmbedAsync($"Game #{gameNumber} in {MentionUtils.MentionChannel(lobbyChannel.Id)} Undone.");
             }
         }
@@ -255,7 +256,7 @@ namespace ELO.Modules
         }
 
 
-        public async Task UndoScoreUpdatesAsync(GameResult game, Database db)
+        public async Task UndoScoreUpdatesAsync(GameResult game, Competition competition, Database db)
         {
             var scoreUpdates = db.GetScoreUpdates(game.GuildId, game.LobbyId, game.GameId);
             var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
@@ -281,6 +282,7 @@ namespace ELO.Modules
                     player.Wins--;
                 }
                 player.Points -= score.ModifyAmount;
+                if (!competition.AllowNegativeScore && player.Points < 0) player.Points = 0;
                 db.Update(player);
                 score.ModifyAmount = 0;
                 db.Remove(score);
@@ -615,12 +617,8 @@ namespace ELO.Modules
 
                 List<(Player, int, Rank, RankChangeState, Rank)> winList;
                 List<(Player, int, Rank, RankChangeState, Rank)> loseList;
-                var team1 = db.GetTeam1(game).Select(x => x.UserId).ToHashSet();
-                var t1c = db.GetTeamCaptain(game, 1);
-                team1.Add(t1c.UserId);
-                var team2 = db.GetTeam2(game).Select(x => x.UserId).ToHashSet();
-                var t2c = db.GetTeamCaptain(game, 2);
-                team2.Add(t2c.UserId);
+                var team1 = db.GetTeamFull(game, 1);
+                var team2 = db.GetTeamFull(game, 2);
                 if (winning_team == TeamSelection.team1)
                 {
                     winList = UpdateTeamScoresAsync(competition, game, ranks, true, team1, db);
@@ -719,13 +717,6 @@ namespace ELO.Modules
             return sb.ToString();
         }
 
-        public enum RankChangeState
-        {
-            DeRank,
-            RankUp,
-            None
-        }
-
         //returns a list of userIds and the amount of points they received/lost for the win/loss, and if the user lost/gained a rank
         //UserId, Points added/removed, rank before, rank modify state, rank after
         /// <summary>
@@ -777,6 +768,7 @@ namespace ELO.Modules
                     //Loss modifiers are always positive values that are to be subtracted
                     updateVal = maxRank?.LossModifier ?? competition.DefaultLossModifier;
                     player.Points -= updateVal;
+                    if (!competition.AllowNegativeScore && player.Points < 0) player.Points = 0;
                     player.Losses++;
                     //Set the update value to a negative value for returning purposes.
                     updateVal = - Math.Abs(updateVal);

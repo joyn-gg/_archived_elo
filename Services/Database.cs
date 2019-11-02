@@ -201,7 +201,7 @@ namespace ELO.Services
 
             modelBuilder.Entity<TeamPlayer>(entity =>
             {
-                entity.HasKey(e => new { e.ChannelId, e.UserId, e.GameNumber });
+                entity.HasKey(e => new { e.ChannelId, e.UserId, e.GameNumber, e.TeamNumber });
             });
 
             modelBuilder.Entity<TeamCaptain>(entity =>
