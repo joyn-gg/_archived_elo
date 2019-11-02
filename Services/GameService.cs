@@ -169,13 +169,15 @@ namespace ELO.Services
                 embed.Title = "Legacy";
             }
 
-
-            embed.Description = $"**GameId:** {game.GameId}\n" +
-                                $"**Creation Time:** {game.CreationTime.ToString("dd MMM yyyy")} {game.CreationTime.ToShortTimeString()}\n" +
-                                $"**Comment:** {game.Comment ?? "N/A"}\n" +
-                                $"**Submitted By:** {MentionUtils.MentionUser(game.Submitter)}\n" +
-                                string.Join("\n", game.ScoreUpdates.Select(x => $"{MentionUtils.MentionUser(x.UserId)} {(x.ModifyAmount >= 0 ? $"`+{x.ModifyAmount}`" : $"`{x.ModifyAmount}`")}"));
-
+            using (var db = new Database())
+            {
+                var scoreUpdates = db.ManualGameScoreUpdates.Where(x => x.GuildId == game.GuildId && x.ManualGameId == game.GameId);
+                embed.Description = $"**GameId:** {game.GameId}\n" +
+                                    $"**Creation Time:** {game.CreationTime.ToString("dd MMM yyyy")} {game.CreationTime.ToShortTimeString()}\n" +
+                                    $"**Comment:** {game.Comment ?? "N/A"}\n" +
+                                    $"**Submitted By:** {MentionUtils.MentionUser(game.Submitter)}\n" +
+                                    string.Join("\n", scoreUpdates.Select(x => $"{MentionUtils.MentionUser(x.UserId)} {(x.ModifyAmount >= 0 ? $"`+{x.ModifyAmount}`" : $"`{x.ModifyAmount}`")}"));
+            }
             return embed;
         }
 

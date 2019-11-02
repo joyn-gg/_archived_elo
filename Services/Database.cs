@@ -24,6 +24,8 @@ namespace ELO.Services
         public DbSet<TeamCaptain> TeamCaptains { get; set; }
         public DbSet<TeamPlayer> TeamPlayers { get; set; }
         public DbSet<Token> LegacyTokens { get; set; }
+        public DbSet<ManualGameResult> ManualGameResults { get; set; }
+        public DbSet<ManualGameScoreUpdate> ManualGameScoreUpdates { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -61,6 +63,10 @@ namespace ELO.Services
         {
             return GameResults.Where(x => x.LobbyId == lobby.ChannelId).OrderByDescending(x => x.GameId).FirstOrDefault();
         }
+        public TeamCaptain GetTeamCaptain(GameResult game, int teamId)
+        {
+            return TeamCaptains.FirstOrDefault(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == teamId);
+        }
         public TeamCaptain GetTeamCaptain(ulong guildId, ulong channelId, int gameNumber, int teamId)
         {
             return TeamCaptains.FirstOrDefault(x => x.GuildId == guildId && x.ChannelId == channelId && x.GameNumber == gameNumber && x.TeamNumber == teamId);
@@ -72,6 +78,16 @@ namespace ELO.Services
         public IEnumerable<TeamPlayer> GetTeam1(GameResult game)
         {
             return TeamPlayers.Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == 1);
+        }
+        public HashSet<ulong> GetTeamFull(GameResult game, int teamNumber)
+        {
+            var cap = TeamCaptains.FirstOrDefault(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == x.GameNumber && x.TeamNumber == teamNumber);
+            var players = TeamPlayers.Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == 1).Select(x => x.UserId).ToHashSet();
+            if (cap != null)
+            {
+                players.Add(cap.UserId);
+            }
+            return players;
         }
         public IEnumerable<TeamPlayer> GetTeam2(GameResult game)
         {
@@ -206,7 +222,7 @@ namespace ELO.Services
             modelBuilder.Entity<ManualGameResult>(entity =>
             {
                 entity.HasKey(e => new { e.GuildId, e.GameId });
-                entity.HasMany(x => x.ScoreUpdates);
+                //entity.HasMany(x => x.ScoreUpdates);
             });
         }
     }

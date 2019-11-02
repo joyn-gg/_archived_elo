@@ -85,7 +85,7 @@ namespace ELO.Modules
         }
 
 
-        [Command("ReactOnJoinLeave", RunMode = RunMode.Sync)]
+        /*[Command("ReactOnJoinLeave", RunMode = RunMode.Sync)]
         [Summary("Sets whether the bot will react or send a message when users join or leave a lobby.")]
         public async Task ReactOnJoinLeaveAsync(bool react)
         {
@@ -103,7 +103,7 @@ namespace ELO.Modules
                 db.SaveChanges();
                 await SimpleEmbedAsync($"React on join/leave set.", Color.Green);
             }
-        }
+        }*/
 
         [Command("PickModes", RunMode = RunMode.Async)]
         [Summary("Displays all pick modes to use with the SetPickMode command")]

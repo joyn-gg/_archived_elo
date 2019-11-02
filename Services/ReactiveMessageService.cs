@@ -78,6 +78,6 @@ namespace ELO.Services
         public PremiumService Premium { get; }
         public UserService UserService { get; }
 
-        public readonly Emoji registrationConfirmEmoji = new Emoji("✅");
+        public static readonly Emoji registrationConfirmEmoji = new Emoji("✅");
     }
 }

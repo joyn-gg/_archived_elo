@@ -26,8 +26,7 @@ namespace ELO.Models
 
         public ulong Submitter { get; set; }
 
-        public ManualGameState GameState { get; set; } = ManualGameState.Legacy;
+        public ManualGameState GameState { get; set; }
 
-        public ICollection<ManualGameScoreUpdate> ScoreUpdates { get; set; }
     }
 }

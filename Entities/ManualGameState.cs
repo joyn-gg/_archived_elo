@@ -4,7 +4,6 @@
     {
         Win,
         Lose,
-        Draw,
-        Legacy
+        Draw
     }
 }

@@ -22,12 +22,14 @@ namespace ELO.Modules
         public HttpClient HttpClient { get; }
         public CommandService CommandService { get; }
         public HelpService HelpService { get; }
+        public GameService GameService { get; }
 
-        public Info(HttpClient httpClient, CommandService commandService, HelpService helpService)
+        public Info(HttpClient httpClient, CommandService commandService, HelpService helpService, GameService gameService)
         {
             HttpClient = httpClient;
             CommandService = commandService;
             HelpService = helpService;
+            GameService = gameService;
         }
 
         [Command("Invite")]

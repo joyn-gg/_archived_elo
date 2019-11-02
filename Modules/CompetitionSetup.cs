@@ -597,7 +597,7 @@ namespace ELO.Modules
                 competition.ReactiveMessage = response.Id;
                 db.Update(competition);
                 db.SaveChanges();
-                await response.AddReactionAsync(Service.registrationConfirmEmoji);
+                await response.AddReactionAsync(ReactiveMessageService.registrationConfirmEmoji);
             }
         }
 
