@@ -2,10 +2,14 @@
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using ELO.EF;
 using ELO.Handlers;
+using ELO.Models;
+using ELO.Services;
 using Microsoft.Extensions.DependencyInjection;
 using RavenBOT.Common;
 using System;
+using System.Data.SqlClient;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -54,35 +58,46 @@ namespace ELO
             {
                 localManagement.LastConfig.AdditionalConfigs.Add("CommandConfig", new CscSerializable());
                 localManagement.SaveConfig(localManagement.LastConfig);
-            }            
+            }
+
+            var dbConfig = localManagement.LastConfig.GetConfig<DatabaseConfig>("DatabaseConfig");
+            if (dbConfig == null)
+            {
+                var config = new DatabaseConfig();
+                Console.WriteLine("Input SQL Server name");
+                config.Server = Console.ReadLine();
+                Console.WriteLine("Input SQL Database name");
+                config.DatabaseName = Console.ReadLine();
+                Console.WriteLine("Input SQL Username");
+                config.Username = Console.ReadLine();
+                Console.WriteLine("Input SQL Password");
+                config.Password = Console.ReadLine();
+                Console.WriteLine("Input SQL Server Version");
+                config.Version = new Version(Console.ReadLine());
+                localManagement.LastConfig.AdditionalConfigs.Add("DatabaseConfig", config);
+                localManagement.SaveConfig(localManagement.LastConfig);
+                dbConfig = localManagement.LastConfig.GetConfig<DatabaseConfig>("DatabaseConfig");
+            }                
+            Database.Config = dbConfig;
+
+            using (var db = new Database())
+            {
+                db.Database.EnsureCreated();
+                db.SaveChanges();
+            }
 
             //Configure the service provider with all relevant and required services to be injected into other classes.
             Provider = new ServiceCollection()
-                .AddSingleton(x => new DiscordShardedClient(localManagement.LastConfig.GetConfig<DscSerializable>("SocketConfig")?.ToConfig() ?? new DiscordSocketConfig
-                {
-                    AlwaysDownloadUsers = false,
-                    MessageCacheSize = 50,
-                    LogLevel = LogSeverity.Info,
-                    ExclusiveBulkDelete = true,
-
-                    //You may want to edit the shard count as the bot grows more and more popular.
-                    //Discord will block single shards that try to connect to more than 2500 servers
-                    //May be advisable to fetch from a config file OR default to 1
-                    TotalShards = 1
-                }))
+                .AddSingleton(x => new DiscordShardedClient(localManagement.LastConfig.GetConfig<DscSerializable>("SocketConfig").ToConfig()))
                 .AddSingleton(localManagement)
                 .AddSingleton<HelpService>()
-                .AddSingleton(new CommandService(localManagement.LastConfig.GetConfig<CscSerializable>("CommandConfig")?.ToConfig() ?? new CommandServiceConfig
-                {
-                    ThrowOnError = false,
-                    CaseSensitiveCommands = false,
-                    IgnoreExtraArgs = false,
-                    DefaultRunMode = RunMode.Async,
-                    LogLevel = LogSeverity.Info
-                }))
+                .AddSingleton(new CommandService(localManagement.LastConfig.GetConfig<CscSerializable>("CommandConfig").ToConfig()))
                 .AddSingleton<ELOEventHandler>()
                 .AddSingleton<Random>()
                 .AddSingleton<HttpClient>()
+                .AddSingleton<ReactiveService>()
+                .AddSingleton<UserService>()
+                .AddSingleton<PremiumService>()
                 .BuildServiceProvider();
 
             try

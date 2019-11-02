@@ -1,10 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace ELO
+namespace ELO.Models
 {
     public class CscSerializable
     {
