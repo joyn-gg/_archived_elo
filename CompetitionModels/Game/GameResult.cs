@@ -11,7 +11,7 @@ namespace ELO.Models
         public GameResult() { }
 
         /*
-        public GameResult(int gameId, ulong lobbyId, ulong guildId, Lobby.PickMode lobbyPickMode)
+        public GameResult(int gameId, ulong lobbyId, ulong guildId, PickMode lobbyPickMode)
         {
             GameId = gameId;
             LobbyId = lobbyId;
@@ -69,7 +69,25 @@ namespace ELO.Models
             }
             return guild.GetTextChannel(LobbyId);
         }
+        public int Picks { get; set; } = 0;
 
-        public ICollection<ScoreUpdate> ScoreUpdates { get; set; }
+        /*
+        public virtual ICollection<ScoreUpdate> ScoreUpdates { get; set; }
+
+        public virtual ICollection<QueuedPlayer> Queue { get; set; }
+        public virtual ICollection<TeamPlayer> Team1 { get; set; }
+        public virtual ICollection<TeamPlayer> Team2 { get; set; }
+        public virtual TeamCaptain TeamCaptain1 { get; set; }
+        public virtual TeamCaptain TeamCaptain2 { get; set; }
+
+        public ICollection<TeamPlayer> GetTeam()
+        {
+            return Picks % 2 == 0 ? Team1 : Team2;
+        }
+
+        public ICollection<TeamPlayer> GetOffTeam()
+        {
+            return Picks % 2 == 0 ? Team2 : Team1;
+        }*/
     }
 }

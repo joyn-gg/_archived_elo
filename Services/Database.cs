@@ -1,6 +1,8 @@
 ﻿using ELO.Models;
 using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ELO.Services
 {
@@ -15,6 +17,10 @@ namespace ELO.Services
         public DbSet<QueuedPlayer> QueuedPlayers { get; set; }
         public DbSet<Player> Players { get; set; }
         public DbSet<Ban> Bans { get; set; }
+        public DbSet<GameResult> GameResults { get; set; }
+        public DbSet<ScoreUpdate> ScoreUpdates { get; set; }
+        public DbSet<TeamCaptain> TeamCaptains { get; set; }
+        public DbSet<TeamPlayer> TeamPlayers { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -34,6 +40,39 @@ namespace ELO.Services
             }
 
             return comp;
+        }
+
+        public TeamCaptain GetTeamCaptain(ulong guildId, ulong channelId, int gameNumber, int teamId)
+        {
+            return TeamCaptains.FirstOrDefault(x => x.GuildId == guildId && x.ChannelId == channelId && x.GameNumber == gameNumber && x.TeamNumber == teamId);
+        }
+        public IEnumerable<TeamPlayer> GetTeamPlayers(ulong guildId, ulong channelId, int gameNumber, int teamId)
+        {
+            return TeamPlayers.Where(x => x.GuildId == guildId && x.ChannelId == channelId && x.GameNumber == gameNumber && x.TeamNumber == teamId);
+        }
+        public IEnumerable<TeamPlayer> GetTeam1(GameResult game)
+        {
+            return TeamPlayers.Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == 1);
+        }
+        public IEnumerable<TeamPlayer> GetTeam2(GameResult game)
+        {
+            return TeamPlayers.Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == 2);
+        }
+        public IEnumerable<QueuedPlayer> GetQueuedPlayers(ulong guildId, ulong channelId)
+        {
+            return QueuedPlayers.Where(x => x.GuildId == guildId && x.ChannelId == channelId);
+        }
+        public IEnumerable<QueuedPlayer> GetQueue(GameResult game)
+        {
+            return QueuedPlayers.Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId);
+        }
+        public IEnumerable<QueuedPlayer> GetQueue(Lobby lobby)
+        {
+            return QueuedPlayers.Where(x => x.GuildId == lobby.GuildId && x.ChannelId == lobby.ChannelId);
+        }
+        public IEnumerable<ScoreUpdate> GetScoreUpdates(ulong guildId, ulong channelId, int gameNumber)
+        {
+            return ScoreUpdates.Where(x => x.GuildId == guildId && x.ChannelId == channelId && x.GameNumber == gameNumber);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -104,12 +143,19 @@ namespace ELO.Services
 
                 entity.Property(e => e.TeamPickMode).IsRequired();
                 entity.Property(e => e.CaptainPickOrder).IsRequired();*/
+                //entity.HasMany(x => x.Queue);
             });
 
             modelBuilder.Entity<GameResult>(entity =>
             {
                 entity.HasAlternateKey(e => new { e.LobbyId, e.GameId });
+                /*
                 entity.HasMany(x => x.ScoreUpdates);
+                entity.HasMany(x => x.Queue);
+                entity.HasMany(x => x.Team1);
+                entity.HasMany(x => x.Team2);
+                entity.HasOne(x => x.TeamCaptain1);
+                entity.HasOne(x => x.TeamCaptain2);*/
             });
 
             modelBuilder.Entity<QueuedPlayer>(entity =>
@@ -120,7 +166,7 @@ namespace ELO.Services
 
             modelBuilder.Entity<TeamPlayer>(entity =>
             {
-                entity.HasKey(e => new { e.ChannelId, e.UserId });
+                entity.HasKey(e => new { e.ChannelId, e.UserId, e.GameNumber });
             });
 
             modelBuilder.Entity<TeamCaptain>(entity =>

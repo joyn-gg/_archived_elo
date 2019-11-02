@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ELO.Models
 {
@@ -56,5 +57,7 @@ namespace ELO.Models
 
             return true;
         }
+
+        //public ICollection<QueuedPlayer> Queue { get; set; }
     }
 }

@@ -10,7 +10,7 @@ namespace ELO.Modules
 {
     [RavenRequireContext(ContextType.Guild)]
     //TODO: Potential different permissions for creating lobby
-    [Preconditions.RequirePermission(CompetitionConfig.PermissionLevel.ELOAdmin)]
+    [Preconditions.RequirePermission(PermissionLevel.ELOAdmin)]
     public class LobbySetup : ReactiveBase
     {
         [Command("CreateLobby", RunMode = RunMode.Sync)]
@@ -430,6 +430,7 @@ namespace ELO.Modules
             }
         }
 
+        /*
         [Command("DeleteLobby", RunMode = RunMode.Sync)]
         [Summary("Deletes the current lobby and all game played in it.")]
         public async Task DeleteLobbyAsync()
@@ -447,7 +448,7 @@ namespace ELO.Modules
                 await SimpleEmbedAsync("Lobby and all games played in it have been removed.", Color.Green);
             }
         }
-
+        */
         [Command("HideQueue", RunMode = RunMode.Sync)]
         [Summary("Sets whether players in queue are shown.")]
         [RavenRequireBotPermission(GuildPermission.ManageMessages)]
