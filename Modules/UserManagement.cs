@@ -32,7 +32,6 @@ namespace ELO.Modules
             using (var db = new Database())
             {
                 var bans = db.Bans.Where(x => x.GuildId == Context.Guild.Id).ToList();
-
                 if (bans.Count == 0)
                 {
                     await SimpleEmbedAsync("There aren't any banned players.", Color.Blue);

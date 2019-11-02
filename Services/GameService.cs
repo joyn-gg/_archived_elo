@@ -14,8 +14,16 @@ namespace ELO.Services
         public string GetTeamInfo(TeamCaptain captain, IEnumerable<TeamPlayer> players)
         {
             var resStr = "";
-            resStr += $"Captain: {MentionUtils.MentionUser(captain.UserId)}\n";
-            resStr += $"Players: {string.Join("\n", RavenBOT.Common.Extensions.GetUserMentionList(players.Where(x => x.UserId != captain.UserId).Select(x => x.UserId)))}";
+            if (captain != null)
+            {
+                resStr += $"Captain: {MentionUtils.MentionUser(captain.UserId)}\n";
+                resStr += $"Players: {string.Join("\n", RavenBOT.Common.Extensions.GetUserMentionList(players.Where(x => x.UserId != captain.UserId).Select(x => x.UserId)))}";
+
+            }
+            else
+            {
+                resStr += $"Players: {string.Join("\n", RavenBOT.Common.Extensions.GetUserMentionList(players.Select(x => x.UserId)))}";
+            }
 
             return resStr;
         }

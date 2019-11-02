@@ -73,6 +73,9 @@ namespace ELO.Modules
                     GuildId = lobby.GuildId,
                     GamePickMode = lobby.TeamPickMode
                 };
+                db.GameResults.Add(game);
+                db.SaveChanges();
+                game = db.GetLatestGame(lobby);
                 /*
                 if (lobby.MapSelector != null && lobby.MapSelector.Maps.Count > 0)
                 {

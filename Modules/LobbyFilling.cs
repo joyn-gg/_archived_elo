@@ -37,7 +37,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var bans = db.Bans.Where(x => x.UserId == Context.User.Id && !x.IsExpired).OrderByDescending(x => x.ExpiryTime).ToArray();
+                var bans = db.Bans.Where(x => x.UserId == Context.User.Id).ToArray().Where(x => !x.IsExpired).OrderByDescending(x => x.ExpiryTime).ToArray();
                 if (bans.Length != 0)
                 {
                     var latest = bans.First();

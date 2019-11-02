@@ -20,6 +20,8 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
+                //Required for foreign key check
+                var competition = db.GetOrCreateCompetition(Context.Guild.Id);
                 var lobby = db.Lobbies.Find(Context.Channel.Id);
                 if (lobby != null)
                 {
