@@ -11,5 +11,6 @@ namespace ELO.Models
         public Version Version { get; set; } = new Version(8, 0, 18);
 
         public string ConnectionString() => $"server={Server};database={DatabaseName};user={Username};password={Password};";
+        public string PostgresConnectionString() => $"Host={Server};Database={DatabaseName};Username={Username};Password={Password};";
     }
 }

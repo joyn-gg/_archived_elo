@@ -29,10 +29,11 @@ namespace ELO.Services
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseMySql(Config.ConnectionString(), mySqlOptions =>
+            optionsBuilder.UseNpgsql(Config.PostgresConnectionString());
+                /*.UseMySql(Config.ConnectionString(), mySqlOptions =>
                 {
                     mySqlOptions.ServerVersion(Config.Version, ServerType.MySql);
-                });
+                });*/
         }
 
         public Competition GetOrCreateCompetition(ulong guildId)

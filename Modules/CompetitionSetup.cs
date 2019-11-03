@@ -132,9 +132,9 @@ namespace ELO.Modules
                     Color = Color.Blue
                 };
                 embed.AddField("Roles",
-                            $"**Register Role:** {(comp.RegisteredRankId == 0 ? "N/A" : MentionUtils.MentionRole(comp.RegisteredRankId))}\n" +
-                            $"**Admin Role:** {(comp.AdminRole == 0 ? "N/A" : MentionUtils.MentionRole(comp.AdminRole.Value))}\n" +
-                            $"**Moderator Role:** {(comp.ModeratorRole == 0 ? "N/A" : MentionUtils.MentionRole(comp.ModeratorRole.Value))}");
+                            $"**Register Role:** {(comp.RegisteredRankId == null ? "N/A" : MentionUtils.MentionRole(comp.RegisteredRankId.Value))}\n" +
+                            $"**Admin Role:** {(comp.AdminRole == null ? "N/A" : MentionUtils.MentionRole(comp.AdminRole.Value))}\n" +
+                            $"**Moderator Role:** {(comp.ModeratorRole == null ? "N/A" : MentionUtils.MentionRole(comp.ModeratorRole.Value))}");
                 embed.AddField("Options",
                             $"**Allow Multiqueuing:** {comp.AllowMultiQueueing}\n" +
                             $"**Allow Negative Score:** {comp.AllowNegativeScore}\n" +

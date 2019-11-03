@@ -19,7 +19,7 @@ namespace ELO.Models
         public ulong? AdminRole { get; set; }
         public ulong? ModeratorRole { get; set; }
         public TimeSpan? RequeueDelay { get; set; } = null;
-        public ulong RegisteredRankId { get; set; } = 0;
+        public ulong? RegisteredRankId { get; set; } = null;
         public int ManualGameCounter { get; set; } = 0;
         public string RegisterMessageTemplate { get; set; } = "You have registered as `{name}`, all roles/name updates have been applied if applicable.";
 
