@@ -26,6 +26,7 @@ namespace ELO.Services
         public DbSet<Token> LegacyTokens { get; set; }
         public DbSet<ManualGameResult> ManualGameResults { get; set; }
         public DbSet<ManualGameScoreUpdate> ManualGameScoreUpdates { get; set; }
+        public DbSet<Map> Maps { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -154,7 +155,10 @@ namespace ELO.Services
                 entity.Property(e => e.PremiumRedeemer);
             });
 
-            
+            modelBuilder.Entity<Map>(entity =>
+            {
+                entity.HasKey(e => new { e.ChannelId, e.MapName });
+            });
 
 
             modelBuilder.Entity<CommandPermission>(entity =>
@@ -187,7 +191,7 @@ namespace ELO.Services
 
             modelBuilder.Entity<GameResult>(entity =>
             {
-                entity.HasAlternateKey(e => new { e.LobbyId, e.GameId });
+                entity.HasKey(e => new { e.LobbyId, e.GameId });
             });
 
             modelBuilder.Entity<QueuedPlayer>(entity =>

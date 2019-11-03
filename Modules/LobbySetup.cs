@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using ELO.Models;
 using ELO.Services;
 using RavenBOT.Common;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ELO.Modules
@@ -312,28 +313,26 @@ namespace ELO.Modules
         public async Task MapModes()
         {
             await SimpleEmbedAsync(string.Join(", ", Extensions.EnumNames<MapSelector.MapMode>()), Color.Blue);
-        }
+        }*/
 
         [Command("ClearMaps", RunMode = RunMode.Sync)]
         [Summary("Removes all maps set for the current lobby.")]
         public async Task MapClear()
         {
-            var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
-            if (lobby == null)
+            using (var db = new Database())
             {
-                await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
-                return;
-            }
+                var lobby = db.GetLobby(Context.Channel);
+                if (lobby == null)
+                {
+                    await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
+                    return;
+                }
 
-            if (lobby.MapSelector == null)
-            {
-                await SimpleEmbedAsync("There are no maps to clear.", Color.DarkBlue);
-                return;
+                var maps = db.Maps.Where(x => x.ChannelId == Context.Channel.Id);
+                db.RemoveRange(maps);
+                db.SaveChanges();
+                await SimpleEmbedAsync("Maps cleared.", Color.Green);
             }
-
-            lobby.MapSelector.Maps.Clear();
-            Service.SaveLobby(lobby);
-            await SimpleEmbedAsync("Map added.", Color.Green);
         }
 
 
@@ -346,53 +345,61 @@ namespace ELO.Modules
             var mapNames = commaSeparatedMapNames.Split(',');
             if (!mapNames.Any()) return;
 
-            var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
-            if (lobby == null)
+            using (var db = new Database())
             {
-                await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
-                return;
-            }
+                var lobby = db.GetLobby(Context.Channel);
+                if (lobby == null)
+                {
+                    await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
+                    return;
+                }
 
-            if (lobby.MapSelector == null)
-            {
-                lobby.MapSelector = new MapSelector();
+                foreach (var map in mapNames)
+                {
+                    db.Maps.Add(new Map
+                    {
+                        ChannelId = Context.Channel.Id,
+                        MapName = map
+                    });
+                }
+                db.SaveChanges();
+                await SimpleEmbedAsync("Map(s) added.", Color.Green);
             }
-
-            foreach (var map in mapNames)
-            {
-                lobby.MapSelector.Maps.Add(map);
-            }
-            Service.SaveLobby(lobby);
-            await SimpleEmbedAsync("Map(s) added.", Color.Green);
         }
 
         [Command("DelMap", RunMode = RunMode.Sync)]
         [Summary("Removes the specified map from the map list.")]
         public async Task RemoveMapAsync([Remainder]string mapName)
         {
-            var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
-            if (lobby == null)
+            using (var db = new Database())
             {
-                await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
-                return;
-            }
+                var lobby = db.GetLobby(Context.Channel);
+                if (lobby == null)
+                {
+                    await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
+                    return;
+                }
 
-            if (lobby.MapSelector == null)
-            {
-                await SimpleEmbedAsync("There are no maps to remove.", Color.DarkBlue);
-                return;
-            }
+                var maps = db.Maps.Where(x => x.ChannelId == Context.Channel.Id).ToArray();
+                if (maps.Length == 0)
+                {
+                    await SimpleEmbedAsync("There are no maps to remove.", Color.DarkBlue);
+                    return;
+                }
 
-            if (lobby.MapSelector.Maps.Remove(mapName))
-            {
-                Service.SaveLobby(lobby);
-                await SimpleEmbedAsync("Map removed.", Color.Green);
+                var match = maps.SingleOrDefault(x => x.MapName.Equals(mapName, System.StringComparison.OrdinalIgnoreCase));
+                if (match != null)
+                {
+                    db.Maps.Remove(match);
+                    db.SaveChanges();
+                    await SimpleEmbedAsync("Map removed.", Color.Green);
+                }
+                else
+                {
+                    await SimpleEmbedAsync("There was no map matching that name found.", Color.DarkBlue);
+                }
             }
-            else
-            {
-                await SimpleEmbedAsync("There was no map matching that name found.", Color.DarkBlue);
-            }
-        }*/
+        }
 
         [Command("ToggleDms", RunMode = RunMode.Sync)]
         [Summary("Sets whether the bot will dm players when a game is ready.")]

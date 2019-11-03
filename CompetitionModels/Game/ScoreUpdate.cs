@@ -17,7 +17,6 @@ namespace ELO.Models
         public ulong ChannelId { get; set; }
 
 
-        public GameResult Game { get; set; }
         public int GameNumber { get; set; }
 
 

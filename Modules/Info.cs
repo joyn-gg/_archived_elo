@@ -80,6 +80,7 @@ namespace ELO.Modules
         }
 
         [Command("FullHelp")]
+        [RequirePermission(PermissionLevel.Moderator)]
         [Summary("Displays all commands without checking permissions")]
         public async Task FullHelpAsync()
         {

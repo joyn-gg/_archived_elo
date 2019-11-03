@@ -71,11 +71,19 @@ namespace ELO.Modules
                 {
                     LobbyId = lobby.ChannelId,
                     GuildId = lobby.GuildId,
-                    GamePickMode = lobby.TeamPickMode
+                    GamePickMode = lobby.TeamPickMode,
+                    GameId = lobby.CurrentGameCount
                 };
+
+                var maps = db.Maps.Where(x => x.ChannelId == lobby.ChannelId).ToArray();
+                if (maps.Length  != 0)
+                {
+                    var map = maps.OrderByDescending(x => Random.Next()).First();
+                    game.MapName = map.MapName;
+                }
+
                 db.GameResults.Add(game);
                 db.SaveChanges();
-                game = db.GetLatestGame(lobby);
                 /*
                 if (lobby.MapSelector != null && lobby.MapSelector.Maps.Count > 0)
                 {

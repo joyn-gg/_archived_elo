@@ -20,9 +20,6 @@ namespace ELO.Models
         }
         */
 
-        //NOTE : Needs to be set based on auto-incrementing game ID for the entire bot.
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int GameId { get; set; }
 
 

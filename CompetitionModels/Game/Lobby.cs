@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ELO.Models
@@ -17,7 +18,7 @@ namespace ELO.Models
         public Competition Competition { get; set; }
         public ulong GuildId { get; set; }
 
-
+        [Key]
         public ulong ChannelId { get; set; }
         public string Description { get; set; } = null;
 
