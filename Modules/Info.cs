@@ -23,13 +23,15 @@ namespace ELO.Modules
         public CommandService CommandService { get; }
         public HelpService HelpService { get; }
         public GameService GameService { get; }
+        public PermissionService PermissionService { get; }
 
-        public Info(HttpClient httpClient, CommandService commandService, HelpService helpService, GameService gameService)
+        public Info(HttpClient httpClient, CommandService commandService, HelpService helpService, GameService gameService, PermissionService permissionService)
         {
             HttpClient = httpClient;
             CommandService = commandService;
             HelpService = helpService;
             GameService = gameService;
+            PermissionService = permissionService;
         }
 
         [Command("Invite")]
@@ -43,6 +45,37 @@ namespace ELO.Modules
         [Summary("Shows available commands based on the current user permissions")]
         public async Task HelpAsync()
         {
+            using (var db = new Database())
+            {
+                if (!PermissionService.PermissionCache.ContainsKey(Context.Guild.Id))
+                {
+                    var comp = db.GetOrCreateCompetition(Context.Guild.Id);
+                    var guildModel = new PermissionService.CachedPermissions
+                    {
+                        GuildId = Context.Guild.Id, AdminId = comp.AdminRole, ModId = comp.ModeratorRole
+                    };
+
+                    var permissions = db.Permissions.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                    foreach (var commandGroup in CommandService.Commands.GroupBy(x => x.Name.ToLower()))
+                    {
+                        var match = permissions.SingleOrDefault(x => x.CommandName.Equals(commandGroup.Key, StringComparison.OrdinalIgnoreCase));
+                        if (match == null)
+                        {
+                            guildModel.Cache.Add(commandGroup.Key.ToLower(), null);
+                        }
+                        else
+                        {
+                            guildModel.Cache.Add(commandGroup.Key.ToLower(), new PermissionService.CachedPermissions.CachedPermission
+                            {
+                                CommandName = commandGroup.Key.ToLower(),
+                                Level = match.Level
+                            });
+                        }
+                    }
+
+                    PermissionService.PermissionCache[Context.Guild.Id] = guildModel;
+                }
+            }
             await GenerateHelpAsync();
         }
 
