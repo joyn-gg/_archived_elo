@@ -119,7 +119,7 @@ namespace ELO.Modules
                     queueCount++;
                 }
                 db.SaveChanges();
-                await SimpleEmbedAsync($"{string.Join("", userIds.Select(MentionUtils.MentionUser))} - added to queue.", Color.Green);
+                await SimpleEmbedAsync($"{string.Join("", added.Select(MentionUtils.MentionUser))} - added to queue.", Color.Green);
 
                 if (queueCount >= lobby.PlayersPerTeam * 2)
                 {
@@ -189,8 +189,12 @@ namespace ELO.Modules
                     if (current != null)
                     {
                         db.QueuedPlayers.Remove(current);
-                        current.UserId = replacedWith.Id;
-                        db.QueuedPlayers.Add(current);
+                        db.QueuedPlayers.Add(new QueuedPlayer
+                        {
+                            GuildId = Context.Guild.Id,
+                            ChannelId = lobby.ChannelId,
+                            UserId = replacedWith.Id                           
+                        });
                         db.SaveChanges();
                     }
                 }

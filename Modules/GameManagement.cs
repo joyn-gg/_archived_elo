@@ -386,7 +386,7 @@ namespace ELO.Modules
 
             using (var db = new Database())
             {
-                var lobby = db.GetLobby(lobbyChannel);
+                var lobby = db.GetLobbyWithQueue(lobbyChannel);
                 if (lobby == null)
                 {
                     //Reply error not a lobby.
@@ -402,16 +402,22 @@ namespace ELO.Modules
                     return;
                 }
 
+                
                 if (game.GameState != GameState.Undecided && game.GameState != GameState.Picking)
                 {
                     await SimpleEmbedAsync($"Only games that are undecided or being picked can be cancelled.");
                     return;
                 }
 
+
+
+                if (game.GameState == GameState.Picking)
+                {
+                    db.RemoveRange(lobby.Queue);
+                }
                 game.GameState = GameState.Canceled;
                 game.Submitter = Context.User.Id;
                 game.Comment = comment;
-
                 db.Update(game);
                 db.SaveChanges();
 

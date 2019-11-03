@@ -154,14 +154,14 @@ namespace ELO.Modules
                         //TODO: Timer from when captains are mentioned to first pick time. Cancel game if command is not run.
                         var gameEmbed = new EmbedBuilder
                         {
-                            Title = $"Current Teams."
+                            Title = $"Game #{game.GameId} - Current Teams."
                         };
 
                         var t1Users = GetMentionList(GetUserList(Context.Guild, team1));
                         var t2Users = GetMentionList(GetUserList(Context.Guild, team2));
-                        var remainingPlayers = queue.Select(x => MentionUtils.MentionUser(x.UserId));
-                        gameEmbed.AddField("Team 1", $"Captain: {MentionUtils.MentionUser(captains.Item1)}\n{string.Join("\n", t1Users)}");
-                        gameEmbed.AddField("Team 2", $"Captain: {MentionUtils.MentionUser(captains.Item2)}\n{string.Join("\n", t2Users)}");
+                        var remainingPlayers = queue.Where(x => x.UserId != captains.Item1 && x.UserId != captains.Item2).Select(x => MentionUtils.MentionUser(x.UserId));
+                        gameEmbed.AddField("Team 1", $"Captain: {MentionUtils.MentionUser(captains.Item1)}");
+                        gameEmbed.AddField("Team 2", $"Captain: {MentionUtils.MentionUser(captains.Item2)}");
                         gameEmbed.AddField("Remaining Players", string.Join("\n", remainingPlayers));
                         await ReplyAsync($"Captains have been picked. Use the `pick` or `p` command to choose your players.\nCaptain 1: {MentionUtils.MentionUser(captains.Item1)}\nCaptain 2: {MentionUtils.MentionUser(captains.Item2)}", false, gameEmbed.Build());
                         break;
