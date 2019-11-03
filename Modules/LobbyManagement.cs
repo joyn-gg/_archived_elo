@@ -132,6 +132,7 @@ namespace ELO.Modules
         }
 
         [Command("ForceJoin", RunMode = RunMode.Sync)]
+        [Alias("FJ")]
         [Summary("Forcefully adds a user to queue, bypasses minimum points")]
         [Preconditions.RequirePermission(PermissionLevel.Moderator)]
         public async Task ForceJoinAsync(SocketGuildUser user)
@@ -140,6 +141,7 @@ namespace ELO.Modules
         }
 
         [Command("ForceRemove", RunMode = RunMode.Sync)]
+        [Alias("FR")]
         [Summary("Forcefully removes a player for the queue")]
         [Preconditions.RequirePermission(PermissionLevel.Moderator)]
         public async Task ForceRemoveAsync(SocketGuildUser user)
