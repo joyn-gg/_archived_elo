@@ -14,7 +14,6 @@ namespace ELO.Models
 
         [Key]
         public ulong GuildId { get; set; }
-
         public string Prefix { get; set; } = null;
         public ulong? AdminRole { get; set; }
         public ulong? ModeratorRole { get; set; }
@@ -58,7 +57,6 @@ namespace ELO.Models
 
         //TODO: Consider adding a setter to ensure value is always positive.
         public int DefaultWinModifier { get; set; } = 10;
-
         private int _DefaultLossModifier;
 
         public int DefaultLossModifier
@@ -76,7 +74,6 @@ namespace ELO.Models
         }
 
         public ulong? PremiumRedeemer { get; set; }
-
         public DateTime? LegacyPremiumExpiry { get; set; }
         public ulong? ReactiveMessage { get; set; }
     }
