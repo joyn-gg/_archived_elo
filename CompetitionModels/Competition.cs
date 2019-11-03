@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using RavenBOT.Common;
 
 namespace ELO.Models
 {
@@ -34,8 +35,8 @@ namespace ELO.Models
                     .Replace("{wins}", player.Wins.ToString(), StringComparison.InvariantCultureIgnoreCase)
                     .Replace("{losses}", player.Losses.ToString(), StringComparison.InvariantCultureIgnoreCase)
                     .Replace("{draws}", player.Draws.ToString(), StringComparison.InvariantCultureIgnoreCase)
-                    .Replace("{games}", player.Games.ToString(), StringComparison.InvariantCultureIgnoreCase);
-            //TODO: Fix length to max of 1023
+                    .Replace("{games}", player.Games.ToString(), StringComparison.InvariantCultureIgnoreCase)
+                    .FixLength(1023);
         }
 
         public string GetNickname(Player player)
@@ -46,8 +47,8 @@ namespace ELO.Models
                     .Replace("{wins}", player.Wins.ToString(), StringComparison.InvariantCultureIgnoreCase)
                     .Replace("{losses}", player.Losses.ToString(), StringComparison.InvariantCultureIgnoreCase)
                     .Replace("{draws}", player.Draws.ToString(), StringComparison.InvariantCultureIgnoreCase)
-                    .Replace("{games}", player.Games.ToString(), StringComparison.InvariantCultureIgnoreCase);
-            //TODO: Max length 31
+                    .Replace("{games}", player.Games.ToString(), StringComparison.InvariantCultureIgnoreCase)
+                    .FixLength(31);
         }
 
         public bool AllowMultiQueueing { get; set; } = true;
@@ -55,6 +56,8 @@ namespace ELO.Models
 
         public bool AllowReRegister { get; set; } = true;
         public bool AllowSelfRename { get; set; } = true;
+
+        public int DefaultRegisterScore { get; set; } = 0;
 
         //TODO: Consider adding a setter to ensure value is always positive.
         public int DefaultWinModifier { get; set; } = 10;

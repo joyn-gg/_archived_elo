@@ -1,9 +1,11 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using ELO.Preconditions;
 using ELO.Services;
 using RavenBOT.Common;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -178,6 +180,83 @@ namespace ELO.Modules
                 db.UpdateRange(players);
                 db.SaveChanges();
                 await SimpleEmbedAsync(responseString, Color.Blue);
+            }
+        }
+
+        public static List<ulong> RenameTasks { get; set; } = new List<ulong>();
+        [Command("ResetLeaderboard", RunMode = RunMode.Sync)]
+        [Summary("Resets the leaderboard")]
+        [RequirePermission(PermissionLevel.ELOAdmin)]
+        public async Task ResetLeaderboard()
+        {
+            using (var db = new Database())
+            {
+                await SimpleEmbedAsync($"Resetting leaderboard...", Color.Green);
+                var comp = db.GetOrCreateCompetition(Context.Guild.Id);
+                var players = db.Players.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                foreach (var player in players)
+                {
+                    player.Points = comp.DefaultRegisterScore;
+                    player.Draws = 0;
+                    player.Wins = 0;
+                    player.Losses = 0;
+                }
+                db.UpdateRange(players);
+                db.SaveChanges();
+                await SimpleEmbedAsync($"Leaderboard reset complete.", Color.Green);
+            }
+        }
+
+        [Command("RefreshNames", RunMode = RunMode.Async)]
+        [Summary("Resets the leaderboard")]
+        [RequirePermission(PermissionLevel.ELOAdmin)]
+        [RequireBotPermission(GuildPermission.ManageNicknames)]
+        public async Task RefreshNamesAsync()
+        {
+            using (var db = new Database())
+            {
+                try
+                {
+                    if (RenameTasks.Contains(Context.Guild.Id))
+                    {
+                        await SimpleEmbedAsync($"There is currently a rename task for this server running.", Color.Red);
+                        return;
+                    }
+                    RenameTasks.Add(Context.Guild.Id);
+
+                    await SimpleEmbedAsync($"Running rename task... Estimated time: {TimeSpan.FromSeconds(Context.Guild.MemberCount * 2).GetReadableLength()}", Color.Green);
+                    var comp = db.GetOrCreateCompetition(Context.Guild.Id);
+                    var players = db.Players.Where(x => x.GuildId == Context.Guild.Id).ToArray();                    
+
+                    foreach (var player in players)
+                    {                        
+                        var user = Context.Guild.GetUser(player.UserId);
+                        if (user != null)
+                        {
+                            //skip this because the bot will not be able to edit the users name.
+                            if (user.Hierarchy > Context.Guild.CurrentUser.Hierarchy)
+                            {
+                                continue;
+                            }
+
+                            var newName = comp.GetNickname(player);
+                            if (!user.Nickname.Equals(newName))
+                            {
+                                var _ = Task.Run(async () =>
+                                {
+                                    await user.ModifyAsync(x => x.Nickname = newName);                                
+                                });
+                            }
+                            //2 sec per rename? should be fine
+                            await Task.Delay(2000);
+                        }
+                    }
+                    await SimpleEmbedAsync($"Rename task complete.", Color.Green);
+                }
+                finally
+                {
+                    RenameTasks.Remove(Context.Guild.Id);
+                }
             }
         }
     }
