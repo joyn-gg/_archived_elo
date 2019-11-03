@@ -118,7 +118,7 @@ namespace ELO.Modules
                     });
                     queueCount++;
                 }
-
+                db.SaveChanges();
                 await SimpleEmbedAsync($"{string.Join("", userIds.Select(MentionUtils.MentionUser))} - added to queue.", Color.Green);
 
                 if (queueCount >= lobby.PlayersPerTeam * 2)
@@ -127,6 +127,93 @@ namespace ELO.Modules
 
                     await LobbyFullAsync(lobby);
                     return;
+                }
+            }
+        }
+
+        [Command("Sub")]
+        [Summary("Replace a user in the specified game with another.")]
+        [Preconditions.RequirePermission(PermissionLevel.Moderator)]
+        public async Task SubUserAsync(int gameNumber, SocketGuildUser user, SocketGuildUser replacedWith)
+        {
+            using (var db = new Database())
+            {
+                var lobby = db.GetLobby(Context.Channel);
+                if (lobby == null)
+                {
+                    await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
+                    return;
+                }
+
+                var game = db.GameResults.SingleOrDefault(x => x.GameId == gameNumber && x.LobbyId == lobby.ChannelId);
+                if (game == null)
+                {
+                    await SimpleEmbedAsync("Invalid game number.", Color.Red);
+                    return;
+                }
+
+                if (game.GameState != GameState.Undecided && game.GameState != GameState.Picking)
+                {
+                    await SimpleEmbedAsync("This command can only be used with undecided games.", Color.Red);
+                    return;
+                }
+
+                var replaceUser = db.GetUser(replacedWith);
+                if (replaceUser == null)
+                {
+                    await SimpleEmbedAsync($"{replacedWith.Mention} is not registered.");
+                    return;
+                }
+
+                var team1 = db.GetTeam1(game).ToArray();
+                var team2 = db.GetTeam2(game).ToArray();
+                var t1c = db.GetTeamCaptain(game, 1);
+                var t2c = db.GetTeamCaptain(game, 2);
+                if (team1.Any(x => x.UserId == replacedWith.Id) || team2.Any(x => x.UserId == replacedWith.Id) || t1c?.UserId == replacedWith.Id || t2c?.UserId == replacedWith.Id)
+                {
+                    await SimpleEmbedAsync($"{replacedWith.Mention} is already in this game.");
+                    return;
+                }
+
+                var player = team1.SingleOrDefault(x => x.UserId == user.Id);
+                if (player == null)
+                {
+                    player = team2.SingleOrDefault(x => x.UserId == user.Id);
+                }
+
+                if (player != null)
+                {
+                    db.TeamPlayers.Remove(player);
+                    player.UserId = replacedWith.Id;
+                    db.TeamPlayers.Add(player);
+                    db.SaveChanges();
+
+                    await SimpleEmbedAsync($"Team player {user.Mention} was replaced with {replacedWith.Mention}");
+                }
+                else
+                {
+                    //Check team captains
+                    if (t1c != null && t1c.UserId == user.Id)
+                    {
+                        db.TeamCaptains.Remove(t1c);
+                        t1c.UserId = replacedWith.Id;
+                        db.TeamCaptains.Add(t1c);
+                        db.SaveChanges();
+                    }
+                    else if (t2c != null && t2c.UserId == user.Id)
+                    {
+                        db.TeamCaptains.Remove(t2c);
+                        t2c.UserId = replacedWith.Id;
+                        db.TeamCaptains.Add(t2c);
+                        db.SaveChanges();
+                    }
+                    else
+                    {
+                        await SimpleEmbedAsync($"{user.Mention} is not a member in the current game.");
+                        return;
+                    }
+
+                    await SimpleEmbedAsync($"{user.Mention} as a team captain was replaced with {replacedWith.Mention}");
                 }
             }
         }

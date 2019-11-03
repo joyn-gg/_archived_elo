@@ -22,21 +22,33 @@ namespace ELO.Modules
         public PremiumService Premium { get; }
         public UserService UserService { get; }
 
+        [Command("ForceRegister", RunMode = RunMode.Sync)]
+        [RavenRequireOwner]
+        public async Task ForceRegisterAsync(SocketGuildUser regUser, [Remainder]string name = null)
+        {
+            await RegisterAsync(regUser, name);
+        }
+
         [Command("Register", RunMode = RunMode.Sync)]
         [Alias("reg")]
         [Summary("Register for the ELO competition.")]
         public async Task RegisterAsync([Remainder]string name = null)
         {
+            await RegisterAsync(Context.User as SocketGuildUser, name);
+        }
+
+        public async Task RegisterAsync(SocketGuildUser regUser, [Remainder]string name = null)
+        {
             if (name == null)
             {
-                name = Context.User.Username;
+                name = regUser.Username;
             }
 
             using (var db = new Database())
             {
                 var comp = db.GetOrCreateCompetition(Context.Guild.Id);
 
-                if (!(Context.User as SocketGuildUser).IsRegistered(out var user))
+                if (!(regUser as SocketGuildUser).IsRegistered(out var user))
                 {
                     var registered = ((IQueryable<Player>)db.Players).Count(x => x.GuildId == Context.Guild.Id);
                     var limit = Premium.GetRegistrationLimit(Context.Guild.Id);
@@ -46,7 +58,7 @@ namespace ELO.Modules
                         return;
                     }
 
-                    user = new Player(Context.User.Id, Context.Guild.Id, name);
+                    user = new Player(regUser.Id, Context.Guild.Id, name);
                     db.Players.Add(user);
                     db.SaveChanges();
                 }
@@ -63,7 +75,7 @@ namespace ELO.Modules
                 }
 
                 var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
-                var responses = await UserService.UpdateUserAsync(comp, user, ranks, Context.User as SocketGuildUser);
+                var responses = await UserService.UpdateUserAsync(comp, user, ranks, regUser);
 
                 await SimpleEmbedAsync(comp.FormatRegisterMessage(user), Color.Blue);
                 if (responses.Count > 0)
