@@ -71,7 +71,7 @@ namespace ELO.Modules
                 db.Permissions.Add(permission);
                 if (Permissions.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
                 {
-                    cache.Cache.Clear();
+                    cache.Cache.Remove(match.Name.ToLower());
                 }
                 db.SaveChanges();
                 await SimpleEmbedAsync($"{match.Name} permission level set to: {level}", Color.Blue);
@@ -98,7 +98,7 @@ namespace ELO.Modules
                 db.Permissions.Remove(permission);
                 if (Permissions.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
                 {
-                    cache.Cache.Clear();
+                    cache.Cache.Remove(match.Name.ToLower());
                 }
                 await SimpleEmbedAsync($"{match.Name} permission set back to default.", Color.Blue);
             }
@@ -116,7 +116,7 @@ namespace ELO.Modules
                 competition.ModeratorRole = modRole?.Id;
                 if (Permissions.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
                 {
-                    cache.Cache.Clear();
+                    cache.ModId = modRole?.Id;
                 }
                 db.SaveChanges();
                 if (modRole != null)
@@ -141,7 +141,7 @@ namespace ELO.Modules
                 competition.AdminRole = adminRole?.Id;
                 if (Permissions.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
                 {
-                    cache.Cache.Clear();
+                    cache.AdminId = adminRole?.Id;
                 }
                 db.SaveChanges();
                 if (adminRole != null)
