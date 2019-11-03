@@ -68,6 +68,8 @@ namespace ELO.Models
         }
         public int Picks { get; set; } = 0;
 
+        public bool VoteComplete { get; set; } = false;
+
         //public ulong? VoterMessageId { get; set; } = null;
 
         /*

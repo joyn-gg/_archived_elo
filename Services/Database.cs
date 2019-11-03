@@ -27,6 +27,7 @@ namespace ELO.Services
         public DbSet<ManualGameResult> ManualGameResults { get; set; }
         public DbSet<ManualGameScoreUpdate> ManualGameScoreUpdates { get; set; }
         public DbSet<Map> Maps { get; set; }
+        public DbSet<GameVote> Votes { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -122,6 +123,12 @@ namespace ELO.Services
                 entity.Property(e => e.Points).IsRequired();
                 entity.Property(e => e.WinModifier);
                 entity.Property(e => e.LossModifier);
+            });
+
+            modelBuilder.Entity<GameVote>(entity =>
+            {
+                //As users can only have one vote, the team # is not part of the key
+                entity.HasKey(e => new { e.GuildId, e.ChannelId, e.UserId });
             });
 
             modelBuilder.Entity<Player>(entity =>

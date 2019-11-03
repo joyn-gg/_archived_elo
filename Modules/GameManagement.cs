@@ -26,12 +26,12 @@ namespace ELO.Modules
         }
         //TODO: Ensure correct commands require mod/admin perms
 
-        /*[Command("VoteTypes", RunMode = RunMode.Async)]
+        [Command("VoteTypes", RunMode = RunMode.Async)]
         [Alias("Results")]
         [Summary("Shows possible vote options for the Result command")]
         public async Task ShowResultsAsync()
         {
-            await SimpleEmbedAsync(string.Join("\n", RavenBOT.Common.Extensions.EnumNames<GameResult.Vote.VoteState>()), Color.Blue);
+            await SimpleEmbedAsync(string.Join("\n", RavenBOT.Common.Extensions.EnumNames<VoteState>()), Color.Blue);
         }
 
 
@@ -62,117 +62,133 @@ namespace ELO.Modules
                 return;
             }
 
-            if (!Enum.TryParse(voteState, true, out GameResult.Vote.VoteState vote))
+            if (!Enum.TryParse(voteState, true, out VoteState vote))
             {
                 await SimpleEmbedAsync("Your vote was invalid. Please choose a result relevant to you. ie. Win (if you won the game) or Lose (if you lost the game)\nYou can view all possible results using the `Results` command.", Color.Red);
                 return;
             }
 
-            var game = Service.GetGame(Context.Guild.Id, lobbyChannel.Id, gameNumber);
-            if (game == null)
+            using (var db = new Database())
             {
-                await SimpleEmbedAsync("Game not found.", Color.Red);
-                return;
-            }
-
-            if (game.GameState != GameState.Undecided)
-            {
-                await SimpleEmbedAsync("You can only vote on the result of undecided games.", Color.Red);
-                return;
-            }
-            else if (game.VoteComplete)
-            {
-                //Result is undecided but vote has taken place, therefore it wasn't unanimous
-                await SimpleEmbedAsync("Vote has already been taken on this game but wasn't unanimous, ask an admin to submit the result.", Color.DarkBlue);
-                return;
-            }
-
-            if (!game.Team1.Players.Contains(Context.User.Id) && !game.Team2.Players.Contains(Context.User.Id))
-            {
-                await SimpleEmbedAsync("You are not a player in this game and cannot vote on it's result.", Color.Red);
-                return;
-            }
-
-            if (game.Votes.ContainsKey(Context.User.Id))
-            {
-                await SimpleEmbedAsync("You already submitted your vote for this game.", Color.DarkBlue);
-                return;
-            }
-
-            var userVote = new Vote()
-            {
-                UserId = Context.User.Id,
-                UserVote = vote
-            };
-
-            game.Votes.Add(Context.User.Id, userVote);
-
-            //Ensure votes is greater than half the amount of players.
-            if (game.Votes.Count * 2 > game.Team1.Players.Count + game.Team2.Players.Count)
-            {
-                var drawCount = game.Votes.Count(x => x.Value.UserVote == Vote.VoteState.Draw);
-                var cancelCount = game.Votes.Count(x => x.Value.UserVote == Vote.VoteState.Cancel);
-
-                var team1WinCount = game.Votes
-                                        //Get players in team 1 and count wins
-                                        .Where(x => game.Team1.Players.Contains(x.Key))
-                                        .Count(x => x.Value.UserVote == Vote.VoteState.Win)
-                                    +
-                                    game.Votes
-                                        //Get players in team 2 and count losses
-                                        .Where(x => game.Team2.Players.Contains(x.Key))
-                                        .Count(x => x.Value.UserVote == Vote.VoteState.Lose);
-
-                var team2WinCount = game.Votes
-                                        //Get players in team 2 and count wins
-                                        .Where(x => game.Team2.Players.Contains(x.Key))
-                                        .Count(x => x.Value.UserVote == Vote.VoteState.Win)
-                                    +
-                                    game.Votes
-                                        //Get players in team 1 and count losses
-                                        .Where(x => game.Team1.Players.Contains(x.Key))
-                                        .Count(x => x.Value.UserVote == Vote.VoteState.Lose);
-
-                if (team1WinCount == game.Votes.Count)
+                var lobby = db.GetLobby(lobbyChannel);
+                if (lobby == null)
                 {
-                    //team1 win
-                    Service.SaveGame(game);
-                    await GameVoteAsync(gameNumber, TeamSelection.team1, lobbyChannel, "Decided by vote.");
+                    await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
+                    return;
                 }
-                else if (team2WinCount == game.Votes.Count)
+
+                var game = db.GameResults.SingleOrDefault(x => x.LobbyId == lobby.ChannelId && x.GameId == gameNumber);
+                if (game == null)
                 {
-                    //team2 win
-                    Service.SaveGame(game);
-                    await GameVoteAsync(gameNumber, TeamSelection.team2, lobbyChannel, "Decided by vote.");
+                    await SimpleEmbedAsync("Game not found.", Color.Red);
+                    return;
                 }
-                else if (drawCount == game.Votes.Count)
+
+                if (game.GameState != GameState.Undecided)
                 {
-                    //draw
-                    Service.SaveGame(game);
-                    await DrawAsync(gameNumber, lobbyChannel, "Decided by vote.");
+                    await SimpleEmbedAsync("You can only vote on the result of undecided games.", Color.Red);
+                    return;
                 }
-                else if (cancelCount == game.Votes.Count)
+                else if (game.VoteComplete)
                 {
-                    //cancel
-                    Service.SaveGame(game);
-                    await CancelAsync(gameNumber, lobbyChannel, "Decided by vote.");
+                    //Result is undecided but vote has taken place, therefore it wasn't unanimous
+                    await SimpleEmbedAsync("Vote has already been taken on this game but wasn't unanimous, ask an admin to submit the result.", Color.DarkBlue);
+                    return;
+                }
+
+                var team1 = db.GetTeamFull(game, 1);
+                var team2 = db.GetTeamFull(game, 2);
+
+                //TODO: Automatically submit if vote is from an admin.
+                if (team1.All(x => x != Context.User.Id) && team2.All(x => x != Context.User.Id))
+                {
+                    await SimpleEmbedAsync("You are not a player in this game and cannot vote on it's result.", Color.Red);
+                    return;
+                }
+
+                var votes = db.Votes.Where(x => x.ChannelId == lobby.ChannelId && x.GameId == gameNumber).ToList();
+                if (votes.Any(x => x.UserId == Context.User.Id))
+                {
+                    await SimpleEmbedAsync("You already submitted your vote for this game.", Color.DarkBlue);
+                    return;
+                }
+
+                var userVote = new GameVote()
+                {
+                    UserId = Context.User.Id,
+                    GameId = gameNumber,
+                    ChannelId = lobby.ChannelId,
+                    GuildId = Context.Guild.Id,
+                    UserVote = vote
+                };
+
+                db.Votes.Add(userVote);
+                votes.Add(userVote);
+                db.SaveChanges();
+
+                //Ensure votes is greater than half the amount of players.
+                if (votes.Count * 2 > team1.Count + team2.Count)
+                {
+                    var drawCount = votes.Count(x => x.UserVote == VoteState.Draw);
+                    var cancelCount = votes.Count(x => x.UserVote == VoteState.Cancel);
+
+                    var team1WinCount = votes
+                                            //Get players in team 1 and count wins
+                                            .Where(x => team1.Contains(x.UserId))
+                                            .Count(x => x.UserVote == VoteState.Win)
+                                        +
+                                        votes
+                                            //Get players in team 2 and count losses
+                                            .Where(x => team2.Contains(x.UserId))
+                                            .Count(x => x.UserVote == VoteState.Lose);
+
+                    var team2WinCount = votes
+                                            //Get players in team 2 and count wins
+                                            .Where(x => team2.Contains(x.UserId))
+                                            .Count(x => x.UserVote == VoteState.Win)
+                                        +
+                                        votes
+                                            //Get players in team 1 and count losses
+                                            .Where(x => team1.Contains(x.UserId))
+                                            .Count(x => x.UserVote == VoteState.Lose);
+
+                    if (team1WinCount == votes.Count)
+                    {
+                        //team1 win
+                        await GameVoteAsync(db, lobby, game, gameNumber, TeamSelection.team1, team1.ToHashSet(), team2.ToHashSet(), "Decided by vote.");
+                    }
+                    else if (team2WinCount == votes.Count)
+                    {
+                        //team2 win
+                        await GameVoteAsync(db, lobby, game, gameNumber, TeamSelection.team2, team1.ToHashSet(), team2.ToHashSet(), "Decided by vote.");
+                    }
+                    else if (drawCount == votes.Count)
+                    {
+                        //draw
+                        await DrawAsync(gameNumber, lobbyChannel, "Decided by vote.");
+                    }
+                    else if (cancelCount == votes.Count)
+                    {
+                        //cancel
+                        await CancelAsync(gameNumber, lobbyChannel, "Decided by vote.");
+                    }
+                    else
+                    {
+                        //Lock game votes and require admin to decide.
+                        //TODO: Show votes by whoever
+                        await SimpleEmbedAsync("Vote was not unanimous, game result must be decided by a moderator.", Color.DarkBlue);
+                        game.VoteComplete = true;
+                        db.Update(game);
+                        db.SaveChanges();
+                        return;
+                    }
                 }
                 else
                 {
-                    //Lock game votes and require admin to decide.
-                    //TODO: Show votes by whoever
-                    await SimpleEmbedAsync("Vote was not unanimous, game result must be decided by a moderator.", Color.DarkBlue);
-                    game.VoteComplete = true;
-                    Service.SaveGame(game);
-                    return;
+                    await SimpleEmbedAsync($"Vote counted as: {vote.ToString()}", Color.Green);
                 }
             }
-            else
-            {
-                Service.SaveGame(game);
-                await SimpleEmbedAsync($"Vote counted as: {vote.ToString()}", Color.Green);
-            }
-        }*/
+        }
 
         [Command("UndoGame", RunMode = RunMode.Sync)]
         [Alias("Undo Game")]
@@ -475,50 +491,29 @@ namespace ELO.Modules
             return Task.CompletedTask;
         }
 
-        /*
-        private async Task GameVoteAsync(int gameNumber, TeamSelection winning_team, SocketTextChannel lobbyChannel = null, [Remainder]string comment = null)
+
+        private async Task GameVoteAsync(Database db, Lobby lobby, GameResult game, int gameNumber, TeamSelection winning_team, HashSet<ulong> team1, HashSet<ulong> team2, [Remainder]string comment = null)
         {
-            if (lobbyChannel == null)
-            {
-                //If no lobby is provided, assume that it is the current channel.
-                lobbyChannel = Context.Channel as SocketTextChannel;
-            }
-
-            var lobby = Service.GetLobby(Context.Guild.Id, lobbyChannel.Id);
-            if (lobby == null)
-            {
-                //Reply error not a lobby.
-                await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
-                return;
-            }
-
-            var game = Service.GetGame(Context.Guild.Id, lobby.ChannelId, gameNumber);
-            if (game == null)
-            {
-                //Reply not valid game number.
-                await SimpleEmbedAsync($"Game not found. Most recent game is {lobby.CurrentGameCount}", Color.DarkBlue);
-                return;
-            }
-
             if (game.GameState == GameState.Decided || game.GameState == GameState.Draw)
             {
                 await SimpleEmbedAsync("Game results cannot currently be overwritten without first running the `undogame` command.", Color.Red);
                 return;
             }
 
-            var competition = Service.GetOrCreateCompetition(Context.Guild.Id);
+            var competition = db.GetOrCreateCompetition(Context.Guild.Id);
+            var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
 
             List<(Player, int, Rank, RankChangeState, Rank)> winList;
             List<(Player, int, Rank, RankChangeState, Rank)> loseList;
             if (winning_team == TeamSelection.team1)
             {
-                winList = UpdateTeamScoresAsync(competition, true, game.Team1.Players);
-                loseList = UpdateTeamScoresAsync(competition, false, game.Team2.Players);
+                winList = UpdateTeamScoresAsync(competition, lobby, game, ranks, true, team1, db);
+                loseList = UpdateTeamScoresAsync(competition, lobby, game, ranks, false, team2, db);
             }
             else
             {
-                loseList = UpdateTeamScoresAsync(competition, false, game.Team1.Players);
-                winList = UpdateTeamScoresAsync(competition, true, game.Team2.Players);
+                loseList = UpdateTeamScoresAsync(competition, lobby, game, ranks, false, team1, db);
+                winList = UpdateTeamScoresAsync(competition, lobby, game, ranks, true, team2, db);
             }
 
             var allUsers = new List<(Player, int, Rank, RankChangeState, Rank)>();
@@ -531,15 +526,15 @@ namespace ELO.Modules
                 var gUser = Context.Guild.GetUser(user.Item1.UserId);
                 if (gUser == null) continue;
 
-                await Service.UpdateUserAsync(competition, user.Item1, gUser);
+                await UserService.UpdateUserAsync(competition, user.Item1, ranks, gUser);
             }
 
             game.GameState = GameState.Decided;
-            game.ScoreUpdates = allUsers.ToDictionary(x => x.Item1.UserId, y => y.Item2);
             game.WinningTeam = (int)winning_team;
             game.Comment = comment;
             game.Submitter = Context.User.Id;
-            Service.SaveGame(game);
+            db.Update(game);
+            db.SaveChanges();
 
             var winField = new EmbedFieldBuilder
             {
@@ -565,7 +560,7 @@ namespace ELO.Modules
             }
 
             await AnnounceResultAsync(lobby, response);
-        }*/
+        }
 
 
         [Command("Game", RunMode = RunMode.Sync)]
@@ -781,7 +776,7 @@ namespace ELO.Modules
                     if (!competition.AllowNegativeScore && player.Points < 0) player.Points = 0;
                     player.Losses++;
                     //Set the update value to a negative value for returning purposes.
-                    updateVal = - Math.Abs(updateVal);
+                    updateVal = -Math.Abs(updateVal);
 
                     if (maxRank != null)
                     {
