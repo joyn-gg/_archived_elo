@@ -59,11 +59,11 @@ namespace ELO.Services
                     }
 
                     //Ensure the user has the registerd role if it exists.
-                    if (comp.RegisteredRankId != 0)
+                    if (comp.RegisteredRankId != null)
                     {
                         if (!user.Roles.Any(x => x.Id == comp.RegisteredRankId))
                         {
-                            var role = user.Guild.GetRole(comp.RegisteredRankId);
+                            var role = user.Guild.GetRole(comp.RegisteredRankId.Value);
                             if (role != null)
                             {
                                 if (role.Position < user.Guild.CurrentUser.Hierarchy)

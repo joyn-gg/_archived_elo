@@ -165,14 +165,14 @@ namespace ELO.Modules
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);
                 if (role == null)
                 {
-                    if (competition.RegisteredRankId != 0)
+                    if (competition.RegisteredRankId != null)
                     {
-                        var gRole = Context.Guild.GetRole(competition.RegisteredRankId);
+                        var gRole = Context.Guild.GetRole(competition.RegisteredRankId.Value);
                         if (gRole == null)
                         {
                             //Rank previously set but can no longer be found (deleted)
                             //May as well reset it.
-                            competition.RegisteredRankId = 0;
+                            competition.RegisteredRankId = null;
                             db.Update(competition);
                             db.SaveChanges();
                             await SimpleEmbedAsync("Register role had previously been set but can no longer be found in the server. It has been reset.", Color.DarkBlue);
