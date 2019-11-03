@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using ELO.Models;
 using ELO.Services;
+using Microsoft.EntityFrameworkCore;
 using RavenBOT.Common;
 using System;
 using System.Collections.Generic;
@@ -122,7 +123,7 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                var games = db.ManualGameResults.Where(x => x.GuildId == Context.Guild.Id).OrderByDescending(x => x.GuildId).Take(100).ToList();
+                var games = db.ManualGameResults.AsNoTracking().Where(x => x.GuildId == Context.Guild.Id).OrderByDescending(x => x.GuildId).Take(100).ToList();
 
                 if (games.Count == 0)
                 {
@@ -136,7 +137,7 @@ namespace ELO.Modules
                 {
                     var content = page.Select(x =>
                     {
-                        var scoreUpdates = db.ManualGameScoreUpdates.Where(y => y.GuildId == Context.Guild.Id && y.ManualGameId == x.GameId).ToArray();
+                        var scoreUpdates = db.ManualGameScoreUpdates.AsNoTracking().Where(y => y.GuildId == Context.Guild.Id && y.ManualGameId == x.GameId).ToArray();
                         if (scoreUpdates.Length == 0) return null;
 
                         var scoreInfos = scoreUpdates.Select(s =>
@@ -186,7 +187,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var games = db.GameResults.Where(x => x.GuildId == Context.Guild.Id && x.LobbyId == lobbyChannel.Id).OrderByDescending(x => x.GameId).Take(100);
+                var games = db.GameResults.AsNoTracking().Where(x => x.GuildId == Context.Guild.Id && x.LobbyId == lobbyChannel.Id).OrderByDescending(x => x.GameId).Take(100);
                 if (games.Count() == 0)
                 {
                     await SimpleEmbedAsync("There aren't any games in history for the specified lobby.", Color.Blue);

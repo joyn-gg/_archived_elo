@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using ELO.Models;
 using ELO.Preconditions;
 using ELO.Services;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 using RavenBOT.Common;
 using System;
@@ -233,7 +234,7 @@ namespace ELO.Modules
                 //TODO: Implement sort modes
 
                 //Retrieve players in the current guild from database
-                var users = db.Players.Where(x => x.GuildId == Context.Guild.Id);
+                var users = db.Players.AsNoTracking().Where(x => x.GuildId == Context.Guild.Id);
 
                 //Order players by score and then split them into groups of 20 for pagination
                 var userGroups = users.OrderByDescending(x => x.Points).SplitList(20).ToArray();

@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using ELO.Services;
+using Microsoft.EntityFrameworkCore;
 using RavenBOT.Common;
 using System;
 using System.Collections.Generic;
@@ -169,7 +170,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var updates = db.ScoreUpdates.Where(x => x.ChannelId == channel.Id).GroupBy(x => x.UserId);
+                var updates = db.ScoreUpdates.AsNoTracking().Where(x => x.ChannelId == channel.Id).GroupBy(x => x.UserId);
                 var infos = new Dictionary<ulong, int>();
                 foreach (var group in updates)
                 {
