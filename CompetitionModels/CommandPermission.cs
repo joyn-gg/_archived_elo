@@ -7,7 +7,7 @@ namespace ELO.Models
         [ForeignKey("GuildId")]
         public Competition Competition { get; set; }
         public ulong GuildId { get; set; }
-        public string ComandName { get; set; }
+        public string CommandName { get; set; }
         public PermissionLevel Level { get; set; }
     }
 }

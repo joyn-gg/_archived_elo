@@ -36,7 +36,7 @@ namespace ELO.Modules
             using (var db = new Database())
             {
                 var permissions = db.Permissions.Where(x => x.GuildId == Context.Guild.Id);
-                await SimpleEmbedAsync($"Custom Permissions:\n{string.Join("\n", permissions.Select(x => $"{x.ComandName} - {x.Level}"))}", Color.Blue);
+                await SimpleEmbedAsync($"Custom Permissions:\n{string.Join("\n", permissions.Select(x => $"{x.CommandName} - {x.Level}"))}", Color.Blue);
             }
         }
 
@@ -63,7 +63,7 @@ namespace ELO.Modules
                 var permission = new CommandPermission
                 {
                     GuildId = Context.Guild.Id,
-                    ComandName = match.Name.ToLower(),
+                    CommandName = match.Name.ToLower(),
                     Level = level
                 };
                 db.Permissions.Add(permission);

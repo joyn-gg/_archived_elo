@@ -5,6 +5,7 @@ using ELO.Services;
 using Microsoft.Extensions.DependencyInjection;
 using RavenBOT.Common;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -54,12 +55,12 @@ namespace ELO.Preconditions
                 }
             }
 
-            var result = permissionService.EvaluatePermission(command.Name, gUser, out var level);
-            if (result == true)
+            var result = permissionService.EvaluateCustomPermission(command.Name, gUser, out var level);
+            if (result.Item1 == true)
             {
                 return PreconditionResult.FromSuccess();
             }
-            else if (result == false)
+            else if (result.Item1 == false)
             {
                 return PreconditionResult.FromError($"You do not have permission to use this command Level: {level}");
             }
@@ -79,46 +80,21 @@ namespace ELO.Preconditions
 
                 if (Level == PermissionLevel.Moderator)
                 {
-                    using (var db = new Database())
+                    if (gUser.Roles.Any(x => x.Id == result.Item2.ModId || x.Id == result.Item2.AdminId || x.Permissions.Administrator))
                     {
-                        var comp = db.Competitions.Find(gUser.Guild.Id);
-                        bool pass;
-                        if (comp == null)
-                        {
-                            pass = gUser.Roles.Any(x => x.Permissions.Administrator);
-                        }
-                        else
-                        {
-                            pass = gUser.Roles.Any(x => x.Id == comp.ModeratorRole || x.Id == comp.AdminRole || x.Permissions.Administrator);
-                        }
-
-                        if (pass)
-                        {
-                            return PreconditionResult.FromSuccess();
-                        }
-                        else
-                        {
-                            return PreconditionResult.FromError("You must be a moderator in order to run this command.");
-                        }
+                        return PreconditionResult.FromSuccess();
                     }
-
+                    else
+                    {
+                        return PreconditionResult.FromError("You must be a moderator in order to run this command.");
+                    }
                 }
 
                 if (Level == PermissionLevel.ELOAdmin)
                 {
                     using (var db = new Database())
                     {
-                        var comp = db.Competitions.Find(gUser.Guild.Id);
-                        bool pass;
-                        if (comp == null)
-                        {
-                            pass = gUser.GuildPermissions.AddReactions;
-                        }
-                        else
-                        {
-                            pass = gUser.Roles.Any(x => x.Id == comp.AdminRole || x.Permissions.Administrator);
-                        }
-                        if (pass)
+                        if (gUser.Roles.Any(x => x.Id == result.Item2.AdminId || x.Permissions.Administrator))
                         {
                             return PreconditionResult.FromSuccess();
                         }

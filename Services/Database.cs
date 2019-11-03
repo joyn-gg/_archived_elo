@@ -141,6 +141,7 @@ namespace ELO.Services
                 entity.Property(e => e.RegisteredRankId);
                 entity.Property(e => e.RegisterMessageTemplate);
                 entity.Property(e => e.NameFormat);
+                entity.Property(e => e.Prefix);
                 //entity.Property(e => e.RegistrationCount).IsRequired();
                 entity.Property(e => e.AllowMultiQueueing).IsRequired();
                 entity.Property(e => e.AllowNegativeScore).IsRequired();
@@ -152,10 +153,12 @@ namespace ELO.Services
                 entity.Property(e => e.PremiumRedeemer);
             });
 
+            
+
 
             modelBuilder.Entity<CommandPermission>(entity =>
             {
-                entity.HasKey(e => new { e.GuildId, e.ComandName });
+                entity.HasKey(e => new { e.GuildId, e.CommandName });
             });
 
             modelBuilder.Entity<Ban>(entity =>

@@ -21,6 +21,20 @@ namespace ELO.Modules
             Premium = premium;
         }
 
+        [Command("SetPrefix", RunMode = RunMode.Sync)]
+        [Summary("Set the server's prefix")]
+        public async Task SetPrefixAsync([Remainder]string prefix = null)
+        {
+            using (var db = new Database())
+            {
+                var comp = db.GetOrCreateCompetition(Context.Guild.Id);
+                comp.Prefix = prefix;
+                db.Update(comp);
+                db.SaveChanges();
+                await SimpleEmbedAsync($"Prefix has been set to `{prefix ?? "Default"}`");
+            }
+        }
+
         [Command("ClaimPremium", RunMode = RunMode.Sync)]
         [Summary("Claim a patreon premium subscription")]
         public async Task ClaimPremiumAsync()

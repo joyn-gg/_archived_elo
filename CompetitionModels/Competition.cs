@@ -14,6 +14,8 @@ namespace ELO.Models
 
         [Key]
         public ulong GuildId { get; set; }
+
+        public string Prefix { get; set; } = null;
         public ulong? AdminRole { get; set; }
         public ulong? ModeratorRole { get; set; }
         public TimeSpan? RequeueDelay { get; set; } = null;

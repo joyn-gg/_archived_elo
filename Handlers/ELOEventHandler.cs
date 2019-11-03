@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using ELO.Services;
 using Microsoft.Extensions.DependencyInjection;
 using RavenBOT.Common;
 using System;
@@ -82,12 +83,26 @@ namespace ELO.Handlers
             var argPos = 0;
 
             //TODO: Add support for Custom prefixes.
-            if (!message.HasStringPrefix(ConfigManager.LastConfig.Developer ? ConfigManager.LastConfig.DeveloperPrefix : ConfigManager.LastConfig.Prefix, ref argPos, StringComparison.InvariantCultureIgnoreCase))
+            if (guildId != 0 && !ConfigManager.LastConfig.Developer)
             {
-                return;
+                using (var db = new Database())
+                {
+                    var comp = db.GetOrCreateCompetition(guildId);
+                    var prefix = comp.Prefix ?? ConfigManager.LastConfig.Prefix;
+                    if (!message.HasStringPrefix(prefix, ref argPos, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        return;
+                    }
+                }
             }
-
-
+            else
+            {
+                if (!message.HasStringPrefix(ConfigManager.LastConfig.Developer ? ConfigManager.LastConfig.DeveloperPrefix : ConfigManager.LastConfig.Prefix, ref argPos, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return;
+                }
+            }
+            
             var result = await CommandService.ExecuteAsync(context, argPos, Provider);
         }
 
