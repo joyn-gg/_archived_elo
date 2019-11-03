@@ -58,12 +58,20 @@ namespace ELO.Services
                 else
                 {
                     var dbPermission = db.Permissions.Find(guildId, commandName);
-                    permission = new CachedPermissions.CachedPermission
+                    if (dbPermission == null)
                     {
-                        CommandName = commandName.ToLower(),
-                        Level = dbPermission.Level
-                    };
-                    guildCache.Cache.Add(commandName.ToLower(), permission);
+                        permission = null;
+                        guildCache.Cache.Add(commandName.ToLower(), null);
+                    }
+                    else
+                    {
+                        permission = new CachedPermissions.CachedPermission
+                        {
+                            CommandName = commandName.ToLower(),
+                            Level = dbPermission.Level
+                        };
+                        guildCache.Cache.Add(permission.CommandName, permission);
+                    }
                 }
             }
             else
@@ -77,12 +85,20 @@ namespace ELO.Services
                 };
 
                 var dbPermission = db.Permissions.Find(guildId, commandName);
-                permission = new CachedPermissions.CachedPermission
+                if (dbPermission == null)
                 {
-                    CommandName = commandName.ToLower(),
-                    Level = dbPermission.Level
-                };
-                guildCache.Cache.Add(permission.CommandName, permission);
+                    permission = null;
+                    guildCache.Cache.Add(commandName.ToLower(), null);
+                }
+                else
+                {
+                    permission = new CachedPermissions.CachedPermission
+                    {
+                        CommandName = commandName.ToLower(),
+                        Level = dbPermission.Level
+                    };
+                    guildCache.Cache.Add(permission.CommandName, permission);
+                }
                 PermissionCache.Add(guildId, guildCache);
             }
 

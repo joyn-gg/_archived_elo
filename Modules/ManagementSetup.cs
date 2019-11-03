@@ -15,10 +15,12 @@ namespace ELO.Modules
     public class ManagementSetup : ReactiveBase
     {
         public CommandService CommandService { get; }
+        public PermissionService Permissions { get; }
 
-        public ManagementSetup(CommandService commandService)
+        public ManagementSetup(CommandService commandService, PermissionService permissions)
         {
             CommandService = commandService;
+            Permissions = permissions;
         }
 
         [Command("PermissionLevels", RunMode = RunMode.Async)]
@@ -67,6 +69,10 @@ namespace ELO.Modules
                     Level = level
                 };
                 db.Permissions.Add(permission);
+                if (Permissions.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
+                {
+                    cache.Cache.Clear();
+                }
                 db.SaveChanges();
                 await SimpleEmbedAsync($"{match.Name} permission level set to: {level}", Color.Blue);
             }
@@ -90,6 +96,10 @@ namespace ELO.Modules
                 var permission = db.Permissions.Find(Context.Guild.Id, match.Name.ToLower());
                 //TODO: Is null check required?
                 db.Permissions.Remove(permission);
+                if (Permissions.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
+                {
+                    cache.Cache.Clear();
+                }
                 await SimpleEmbedAsync($"{match.Name} permission set back to default.", Color.Blue);
             }
 
@@ -104,6 +114,10 @@ namespace ELO.Modules
             {
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);
                 competition.ModeratorRole = modRole?.Id;
+                if (Permissions.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
+                {
+                    cache.Cache.Clear();
+                }
                 db.SaveChanges();
                 if (modRole != null)
                 {
@@ -125,6 +139,10 @@ namespace ELO.Modules
             {
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);
                 competition.AdminRole = adminRole?.Id;
+                if (Permissions.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
+                {
+                    cache.Cache.Clear();
+                }
                 db.SaveChanges();
                 if (adminRole != null)
                 {
