@@ -2,7 +2,6 @@
 using ELO.CompetitionModels.Legacy;
 using ELO.Models;
 using Microsoft.EntityFrameworkCore;
-using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -123,48 +122,39 @@ namespace ELO.Services
                 entity.Property(e => e.Points).IsRequired();
                 entity.Property(e => e.WinModifier);
                 entity.Property(e => e.LossModifier);
+                entity.HasOne(e => e.Competition)
+                    .WithMany(e => e.Ranks)
+                    .HasForeignKey(e => e.GuildId);
             });
 
             modelBuilder.Entity<GameVote>(entity =>
             {
                 //As users can only have one vote, the team # is not part of the key
                 entity.HasKey(e => new { e.GuildId, e.ChannelId, e.UserId });
+                entity.HasOne(e => e.Game)
+                    .WithMany(e => e.Votes)
+                    .HasForeignKey(e => new { e.ChannelId, e.GameId });
             });
 
             modelBuilder.Entity<Player>(entity =>
             {
                 entity.HasKey(e => new { e.GuildId, e.UserId });
-                entity.Property(e => e.Points).IsRequired();
-                entity.Property(e => e.Wins).IsRequired();
-                entity.Property(e => e.Losses).IsRequired();
-                entity.Property(e => e.Draws).IsRequired();
-                entity.Property(e => e.DisplayName).IsRequired();
-                entity.Property(e => e.RegistrationDate).IsRequired();
+                entity.HasOne(e => e.Competition)
+                    .WithMany(e => e.Players)
+                    .HasForeignKey(e => e.GuildId);
             });
 
             modelBuilder.Entity<Competition>(entity =>
             {
-                entity.Property(e => e.AdminRole);
-                entity.Property(e => e.ModeratorRole);
-                entity.Property(e => e.RequeueDelay);
-                entity.Property(e => e.RegisteredRankId);
-                entity.Property(e => e.RegisterMessageTemplate);
-                entity.Property(e => e.NameFormat);
-                entity.Property(e => e.Prefix);
-                //entity.Property(e => e.RegistrationCount).IsRequired();
-                entity.Property(e => e.AllowMultiQueueing).IsRequired();
-                entity.Property(e => e.AllowNegativeScore).IsRequired();
-                entity.Property(e => e.AllowReRegister).IsRequired();
-
-                entity.Property(e => e.AllowSelfRename).IsRequired();
-                entity.Property(e => e.DefaultWinModifier).IsRequired();
-                entity.Property(e => e.DefaultLossModifier).IsRequired();
-                entity.Property(e => e.PremiumRedeemer);
+                entity.HasKey(e => e.GuildId);
             });
 
             modelBuilder.Entity<Map>(entity =>
             {
                 entity.HasKey(e => new { e.ChannelId, e.MapName });
+                entity.HasOne(e => e.Lobby)
+                    .WithMany(e => e.Maps)
+                    .HasForeignKey(e => e.ChannelId);
             });
 
 
@@ -173,63 +163,72 @@ namespace ELO.Services
                 entity.HasKey(e => new { e.GuildId, e.CommandName });
             });
 
-            modelBuilder.Entity<Ban>(entity =>
-            {
-            });
+            modelBuilder.Entity<Ban>();
 
-            // Game Setup
+
             modelBuilder.Entity<Lobby>(entity =>
             {
                 entity.HasKey(e => e.ChannelId);
-                /*entity.Property(e => e.Description);
-                entity.Property(e => e.GameReadyAnnouncementChannel);
-                entity.Property(e => e.MentionUsersInReadyAnnouncement).IsRequired();
-                entity.Property(e => e.GameResultAnnouncementChannel);
-                entity.Property(e => e.MinimumPoints);
-                entity.Property(e => e.DmUsersOnGameReady).IsRequired();
-                //entity.Property(e => e.ReactOnJoinLeave).IsRequired();
-                entity.Property(e => e.HideQueue).IsRequired();
-                entity.Property(e => e.PlayersPerTeam).IsRequired();
-
-                entity.Property(e => e.TeamPickMode).IsRequired();
-                entity.Property(e => e.CaptainPickOrder).IsRequired();*/
-                //entity.HasMany(x => x.Queue);
+                entity.HasOne(e => e.Competition)
+                    .WithMany(e => e.Lobbies)
+                    .HasForeignKey(e => e.GuildId);
             });
 
             modelBuilder.Entity<GameResult>(entity =>
             {
                 entity.HasKey(e => new { e.LobbyId, e.GameId });
+                entity.HasOne(e => e.Lobby)
+                    .WithMany(e => e.GameResults)
+                    .HasForeignKey(e => e.LobbyId);
+
             });
 
             modelBuilder.Entity<QueuedPlayer>(entity =>
             {
                 entity.HasKey(e => new { e.ChannelId, e.UserId });
-
+                entity.HasOne(e => e.Lobby)
+                    .WithMany(e => e.Queue)
+                    .HasForeignKey(e => e.ChannelId);
             });
 
             modelBuilder.Entity<TeamPlayer>(entity =>
             {
                 entity.HasKey(e => new { e.ChannelId, e.UserId, e.GameNumber, e.TeamNumber });
+                entity.HasOne(e => e.Game)
+                    .WithMany(e => e.TeamPlayers)
+                    .HasForeignKey(e => new { e.ChannelId, e.GameNumber });
             });
 
             modelBuilder.Entity<TeamCaptain>(entity =>
             {
                 entity.HasKey(e => new { e.ChannelId, e.GameNumber, e.TeamNumber });
+                entity.HasOne(e => e.Game)
+                    .WithMany(e => e.Captains)
+                    .HasForeignKey(e => new { e.ChannelId, e.GameNumber });
             });
 
             modelBuilder.Entity<ScoreUpdate>(entity =>
             {
                 entity.HasKey(e => new { e.ChannelId, e.UserId, e.GameNumber });
+                entity.HasOne(e => e.Game)
+                    .WithMany(e => e.ScoreUpdates)
+                    .HasForeignKey(e => new { e.ChannelId, e.GameNumber });
             });
 
             modelBuilder.Entity<ManualGameScoreUpdate>(entity =>
             {
                 entity.HasKey(e => new { e.GuildId, e.ManualGameId, e.UserId });
+                entity.HasOne(e => e.Game)
+                    .WithMany(e => e.ScoreUpdates)
+                    .HasForeignKey(e => new { e.GuildId, e.ManualGameId });
             });
 
             modelBuilder.Entity<ManualGameResult>(entity =>
             {
                 entity.HasKey(e => new { e.GuildId, e.GameId });
+                entity.HasOne(e => e.Comp)
+                    .WithMany(e => e.ManualGames)
+                    .HasForeignKey(e => e.GuildId);
             });
         }
     }

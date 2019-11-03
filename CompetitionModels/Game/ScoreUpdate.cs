@@ -16,6 +16,7 @@ namespace ELO.Models
         public Lobby Lobby { get; set; }
         public ulong ChannelId { get; set; }
 
+        public GameResult Game { get; set; }
 
         public int GameNumber { get; set; }
 

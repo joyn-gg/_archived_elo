@@ -175,6 +175,26 @@ namespace ELO.Modules
                     return;
                 }
 
+                if (game.GameState == GameState.Picking)
+                {
+                    var queuedUsers = db.QueuedPlayers.Where(x => x.ChannelId == Context.Channel.Id);
+                    var current = queuedUsers.SingleOrDefault(x => x.UserId == user.Id);
+                    var replacer = queuedUsers.SingleOrDefault(x => x.UserId == replacedWith.Id);
+                    if (replacer != null)
+                    {
+                        await SimpleEmbedAsync($"{replacedWith.Mention} is already queued for this game.");
+                        return;
+                    }
+
+                    if (current != null)
+                    {
+                        db.QueuedPlayers.Remove(current);
+                        current.UserId = replacedWith.Id;
+                        db.QueuedPlayers.Add(current);
+                        db.SaveChanges();
+                    }
+                }
+
                 var player = team1.SingleOrDefault(x => x.UserId == user.Id);
                 if (player == null)
                 {
@@ -195,16 +215,14 @@ namespace ELO.Modules
                     //Check team captains
                     if (t1c != null && t1c.UserId == user.Id)
                     {
-                        db.TeamCaptains.Remove(t1c);
                         t1c.UserId = replacedWith.Id;
-                        db.TeamCaptains.Add(t1c);
+                        db.TeamCaptains.Update(t1c);
                         db.SaveChanges();
                     }
                     else if (t2c != null && t2c.UserId == user.Id)
                     {
-                        db.TeamCaptains.Remove(t2c);
                         t2c.UserId = replacedWith.Id;
-                        db.TeamCaptains.Add(t2c);
+                        db.TeamCaptains.Update(t2c);
                         db.SaveChanges();
                     }
                     else

@@ -22,6 +22,17 @@ namespace ELO.Modules
         public PremiumService Premium { get; }
         public UserService UserService { get; }
 
+
+        [Command("ForceRegisterUsers", RunMode = RunMode.Sync)]
+        [RavenRequireOwner]
+        public async Task ForceRegisterAsync(params SocketGuildUser[] users)
+        {
+            foreach (var user in users)
+            {
+                await RegisterAsync(user);
+            }
+        }
+
         [Command("ForceRegister", RunMode = RunMode.Sync)]
         [RavenRequireOwner]
         public async Task ForceRegisterAsync(SocketGuildUser regUser, [Remainder]string name = null)

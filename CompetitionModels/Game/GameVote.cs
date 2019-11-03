@@ -17,5 +17,7 @@ namespace ELO.Models
         public ulong UserId { get; set; }
 
         public VoteState UserVote { get; set; }
+
+        public GameResult Game { get; set; }
     }
 }

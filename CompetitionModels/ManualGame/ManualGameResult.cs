@@ -28,5 +28,7 @@ namespace ELO.Models
 
         public ManualGameState GameState { get; set; }
 
+        public virtual ICollection<ManualGameScoreUpdate> ScoreUpdates { get; set; }
+
     }
 }

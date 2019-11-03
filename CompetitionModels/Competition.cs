@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace ELO.Models
@@ -76,5 +77,10 @@ namespace ELO.Models
         public ulong? PremiumRedeemer { get; set; }
         public DateTime? LegacyPremiumExpiry { get; set; }
         public ulong? ReactiveMessage { get; set; }
+
+        public virtual ICollection<Lobby> Lobbies { get; set; }
+        public virtual ICollection<Player> Players { get; set; }
+        public virtual ICollection<Rank> Ranks { get; set; }
+        public virtual ICollection<ManualGameResult> ManualGames { get; set; }
     }
 }

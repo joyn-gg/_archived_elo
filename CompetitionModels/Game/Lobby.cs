@@ -65,6 +65,8 @@ namespace ELO.Models
             return true;
         }
 
-        //public ICollection<QueuedPlayer> Queue { get; set; }
+        public virtual ICollection<QueuedPlayer> Queue { get; set; }
+        public virtual ICollection<GameResult> GameResults { get; set; }
+        public virtual ICollection<Map> Maps { get; set; }
     }
 }

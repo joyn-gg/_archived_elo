@@ -13,5 +13,7 @@ namespace ELO.Models
         public int ManualGameId { get; set; }
 
         public int ModifyAmount { get; set; }
+
+        public ManualGameResult Game { get; set; }
     }
 }

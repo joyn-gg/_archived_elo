@@ -15,6 +15,9 @@ namespace ELO.Models
 
         public ulong UserId { get; set; }
 
+        public GameResult Game { get; set; }
+
+        [ForeignKey("Game"), Column(Order = 0)]
         public int GameNumber { get; set; }
         public int TeamNumber { get; set; }
     }

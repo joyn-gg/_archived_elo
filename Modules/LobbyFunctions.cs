@@ -82,6 +82,7 @@ namespace ELO.Modules
                     game.MapName = map.MapName;
                 }
 
+                db.Update(lobby);
                 db.GameResults.Add(game);
                 db.SaveChanges();
                 /*
