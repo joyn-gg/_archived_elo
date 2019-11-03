@@ -281,6 +281,8 @@ namespace ELO.Modules
                     //Points gained so remove them
                     player.Wins--;
                 }
+
+                //Dont modify for undoing
                 player.Points -= score.ModifyAmount;
                 if (!competition.AllowNegativeScore && player.Points < 0) player.Points = 0;
                 db.Update(player);
@@ -620,13 +622,13 @@ namespace ELO.Modules
                 var team2 = db.GetTeamFull(game, 2);
                 if (winning_team == TeamSelection.team1)
                 {
-                    winList = UpdateTeamScoresAsync(competition, game, ranks, true, team1, db);
-                    loseList = UpdateTeamScoresAsync(competition, game, ranks, false, team2, db);
+                    winList = UpdateTeamScoresAsync(competition, lobby, game, ranks, true, team1, db);
+                    loseList = UpdateTeamScoresAsync(competition, lobby, game, ranks, false, team2, db);
                 }
                 else
                 {
-                    loseList = UpdateTeamScoresAsync(competition, game, ranks, false, team1, db);
-                    winList = UpdateTeamScoresAsync(competition, game, ranks, true, team2, db);
+                    loseList = UpdateTeamScoresAsync(competition, lobby, game, ranks, false, team1, db);
+                    winList = UpdateTeamScoresAsync(competition, lobby, game, ranks, true, team2, db);
                 }
 
                 var allUsers = new List<(Player, int, Rank, RankChangeState, Rank)>();
@@ -730,7 +732,7 @@ namespace ELO.Modules
         /// The player's rank change state (rank up, derank, none)
         /// The players new rank (if changed)
         /// </returns>
-        public List<(Player, int, Rank, RankChangeState, Rank)> UpdateTeamScoresAsync(Competition competition, GameResult game, Rank[] ranks, bool win, HashSet<ulong> userIds, Database db)
+        public List<(Player, int, Rank, RankChangeState, Rank)> UpdateTeamScoresAsync(Competition competition, Lobby lobby, GameResult game, Rank[] ranks, bool win, HashSet<ulong> userIds, Database db)
         {
             var updates = new List<(Player, int, Rank, RankChangeState, Rank)>();
             foreach (var userId in userIds)
@@ -747,7 +749,14 @@ namespace ELO.Modules
 
                 if (win)
                 {
-                    updateVal = maxRank?.WinModifier ?? competition.DefaultWinModifier;
+                    updateVal = (int)((maxRank?.WinModifier ?? competition.DefaultWinModifier) * lobby.LobbyMultiplier);
+                    if (lobby.HighLimit != null)
+                    {
+                        if (player.Points > lobby.HighLimit)
+                        {
+                            updateVal = (int)(updateVal * lobby.ReductionPercent);
+                        }
+                    }
                     player.Points += updateVal;
                     player.Wins++;
                     newRank = ranks.Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
@@ -766,7 +775,8 @@ namespace ELO.Modules
                 else
                 {
                     //Loss modifiers are always positive values that are to be subtracted
-                    updateVal = maxRank?.LossModifier ?? competition.DefaultLossModifier;
+                    updateVal = (int)((maxRank?.LossModifier ?? competition.DefaultLossModifier) * lobby.LobbyMultiplier);
+
                     player.Points -= updateVal;
                     if (!competition.AllowNegativeScore && player.Points < 0) player.Points = 0;
                     player.Losses++;

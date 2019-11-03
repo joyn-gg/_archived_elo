@@ -71,6 +71,8 @@ namespace ELO.Models
         }
         public int Picks { get; set; } = 0;
 
+        //public ulong? VoterMessageId { get; set; } = null;
+
         /*
         public virtual ICollection<ScoreUpdate> ScoreUpdates { get; set; }
 

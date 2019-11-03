@@ -500,5 +500,65 @@ namespace ELO.Modules
                 await SimpleEmbedAsync($"Mention Users: {mentionUsers.Value}", Color.Green);
             }
         }
+
+        [Command("SetMultiplier", RunMode = RunMode.Sync)]
+        [Summary("Sets the lobby score multiplier.")]
+        public async Task SetLobbyMultiplier(double multiplier)
+        {
+            using (var db = new Database())
+            {
+                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                if (lobby == null)
+                {
+                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    return;
+                }
+
+                lobby.LobbyMultiplier = multiplier;
+                db.Lobbies.Update(lobby);
+                db.SaveChanges();
+                await SimpleEmbedAsync($"Multiplier set.", Color.Green);
+            }
+        }
+
+        [Command("SetReductionPercent", RunMode = RunMode.Sync)]
+        [Summary("Sets the lobby score multiplier.")]
+        public async Task SetReductionPercent(double percent = 0.5)
+        {
+            using (var db = new Database())
+            {
+                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                if (lobby == null)
+                {
+                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    return;
+                }
+
+                lobby.ReductionPercent = percent;
+                db.Lobbies.Update(lobby);
+                db.SaveChanges();
+                await SimpleEmbedAsync($"Reduction percent set.", Color.Green);
+            }
+        }
+
+        [Command("SetHighLimit", RunMode = RunMode.Sync)]
+        [Summary("Sets the lobby score multiplier.")]
+        public async Task SetReductionPercent(int? highLimit = null)
+        {
+            using (var db = new Database())
+            {
+                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                if (lobby == null)
+                {
+                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    return;
+                }
+
+                lobby.HighLimit = highLimit;
+                db.Lobbies.Update(lobby);
+                db.SaveChanges();
+                await SimpleEmbedAsync($"Max user points before point reduction set.", Color.Green);
+            }
+        }
     }
 }
