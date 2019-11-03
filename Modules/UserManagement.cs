@@ -72,7 +72,7 @@ namespace ELO.Modules
                 await PagedReplyAsync(pager2.ToCallBack().WithDefaultPagerCallbacks());
             }
         }
-        
+
         [Command("AllBans", RunMode = RunMode.Async)]
         [Summary("Shows all bans for the current server.")]
         public async Task AllBans()

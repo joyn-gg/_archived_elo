@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ELO.Entities
+﻿namespace ELO.Entities
 {
     public enum GameFlag
     {

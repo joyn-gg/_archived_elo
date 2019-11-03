@@ -53,7 +53,9 @@ namespace ELO.Modules
                     var comp = db.GetOrCreateCompetition(Context.Guild.Id);
                     var guildModel = new PermissionService.CachedPermissions
                     {
-                        GuildId = Context.Guild.Id, AdminId = comp.AdminRole, ModId = comp.ModeratorRole
+                        GuildId = Context.Guild.Id,
+                        AdminId = comp.AdminRole,
+                        ModId = comp.ModeratorRole
                     };
 
                     var permissions = db.Permissions.Where(x => x.GuildId == Context.Guild.Id).ToArray();

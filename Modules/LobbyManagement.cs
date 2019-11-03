@@ -8,7 +8,6 @@ using RavenBOT.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ELO.Modules
@@ -193,7 +192,7 @@ namespace ELO.Modules
                         {
                             GuildId = Context.Guild.Id,
                             ChannelId = lobby.ChannelId,
-                            UserId = replacedWith.Id                           
+                            UserId = replacedWith.Id
                         });
                         db.SaveChanges();
                     }
@@ -262,8 +261,8 @@ namespace ELO.Modules
                 {
                     await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
-                }                
-                
+                }
+
                 var latestGame = db.GameResults.Where(x => x.LobbyId == Context.Channel.Id).OrderByDescending(x => x.GameId).FirstOrDefault();
                 if (latestGame != null && latestGame.GameState == GameState.Picking)
                 {

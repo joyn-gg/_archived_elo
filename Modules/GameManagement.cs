@@ -402,7 +402,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                
+
                 if (game.GameState != GameState.Undecided && game.GameState != GameState.Picking)
                 {
                     await SimpleEmbedAsync($"Only games that are undecided or being picked can be cancelled.");

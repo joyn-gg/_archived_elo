@@ -186,7 +186,7 @@ namespace ELO.Modules
 
                 //Create new game info
                 var game = new ManualGameResult
-                { 
+                {
                     GuildId = Context.Guild.Id
                 };
                 game.Submitter = Context.User.Id;
@@ -198,7 +198,7 @@ namespace ELO.Modules
                 foreach (var upd in updates)
                 {
                     db.ManualGameScoreUpdates.Add(new ManualGameScoreUpdate
-                    { 
+                    {
                         GuildId = Context.Guild.Id,
                         ManualGameId = game.GameId,
                         ModifyAmount = upd.Item2,

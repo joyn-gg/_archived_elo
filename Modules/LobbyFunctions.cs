@@ -6,7 +6,6 @@ using ELO.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ELO.Modules
@@ -76,7 +75,7 @@ namespace ELO.Modules
                 };
 
                 var maps = db.Maps.Where(x => x.ChannelId == lobby.ChannelId).ToArray();
-                if (maps.Length  != 0)
+                if (maps.Length != 0)
                 {
                     var map = maps.OrderByDescending(x => Random.Next()).First();
                     game.MapName = map.MapName;
@@ -435,7 +434,7 @@ namespace ELO.Modules
                 return game;
             }
         }
-        
+
         public SocketGuildUser[] GetUserList(SocketGuild guild, IEnumerable<ulong> userIds)
         {
             return userIds.Select(x => guild.GetUser(x)).ToArray();

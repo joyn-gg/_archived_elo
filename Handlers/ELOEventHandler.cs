@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using RavenBOT.Common;
 using System;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 
 namespace ELO.Handlers
@@ -102,7 +101,7 @@ namespace ELO.Handlers
                     return;
                 }
             }
-            
+
             var result = await CommandService.ExecuteAsync(context, argPos, Provider);
         }
 

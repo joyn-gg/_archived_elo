@@ -226,10 +226,10 @@ namespace ELO.Modules
 
                     await SimpleEmbedAsync($"Running rename task... Estimated time: {TimeSpan.FromSeconds(Context.Guild.MemberCount * 2).GetReadableLength()}", Color.Green);
                     var comp = db.GetOrCreateCompetition(Context.Guild.Id);
-                    var players = db.Players.Where(x => x.GuildId == Context.Guild.Id).ToArray();                    
+                    var players = db.Players.Where(x => x.GuildId == Context.Guild.Id).ToArray();
 
                     foreach (var player in players)
-                    {                        
+                    {
                         var user = Context.Guild.GetUser(player.UserId);
                         if (user != null)
                         {
@@ -244,7 +244,7 @@ namespace ELO.Modules
                             {
                                 var _ = Task.Run(async () =>
                                 {
-                                    await user.ModifyAsync(x => x.Nickname = newName);                                
+                                    await user.ModifyAsync(x => x.Nickname = newName);
                                 });
                             }
                             //2 sec per rename? should be fine
