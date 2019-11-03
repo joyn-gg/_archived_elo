@@ -70,6 +70,7 @@ namespace ELO.Modules
                     }
 
                     user = new Player(regUser.Id, Context.Guild.Id, name);
+                    user.Points = comp.DefaultRegisterScore;
                     db.Players.Add(user);
                     db.SaveChanges();
                 }

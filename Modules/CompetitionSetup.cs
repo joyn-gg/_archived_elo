@@ -150,8 +150,23 @@ namespace ELO.Modules
                 embed.AddField("Rank Info",
                 $"**Default Loss Amount:** -{comp.DefaultLossModifier}\n" +
                 $"**Default Win Amount:** +{comp.DefaultWinModifier}\n" +
+                $"**Default Points On Register:** {comp.DefaultRegisterScore}\n" +
                 $"For rank info use the `ranks` command");
                 await ReplyAsync(embed);
+            }
+        }
+
+        [Command("SetRegisterScore", RunMode = RunMode.Sync)]
+        [Summary("Sets default points when registering")]
+        public async Task SetRegisterRole(int amount = 0)
+        {
+            using (var db = new Database())
+            {
+                var competition = db.GetOrCreateCompetition(Context.Guild.Id);
+                competition.DefaultRegisterScore = amount;
+                db.Update(competition);
+                db.SaveChanges();
+                await SimpleEmbedAsync($"When users register they will start with {amount} points", Color.Green);
             }
         }
 
