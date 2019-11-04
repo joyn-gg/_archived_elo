@@ -13,7 +13,7 @@ namespace ELO.Services
         public ELOJobs(DiscordShardedClient client)
         {
             Client = client;
-            CompetitionUpdateTimer = new Timer(RunQueueChecks, null, 0, 1000 * 30 * 1);
+            CompetitionUpdateTimer = new Timer(RunQueueChecks, null, 60000, 1000 * 60 * 5);
         }
 
         public DiscordShardedClient Client { get; }
