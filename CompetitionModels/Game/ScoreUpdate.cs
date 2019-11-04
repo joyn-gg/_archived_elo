@@ -6,17 +6,17 @@ namespace ELO.Models
     {
 
         [ForeignKey("GuildId")]
-        public Competition Comp { get; set; }
+        public virtual Competition Comp { get; set; }
         public ulong GuildId { get; set; }
 
         public ulong UserId { get; set; }
 
 
         [ForeignKey("ChannelId")]
-        public Lobby Lobby { get; set; }
+        public virtual Lobby Lobby { get; set; }
         public ulong ChannelId { get; set; }
 
-        public GameResult Game { get; set; }
+        public virtual GameResult Game { get; set; }
 
         public int GameNumber { get; set; }
 

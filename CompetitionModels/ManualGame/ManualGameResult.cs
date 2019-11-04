@@ -18,7 +18,7 @@ namespace ELO.Models
         public int GameId { get; set; }
 
         [ForeignKey("GuildId")]
-        public Competition Comp { get; set; }
+        public virtual Competition Comp { get; set; }
         public ulong GuildId { get; set; }
         public DateTime CreationTime { get; set; } = DateTime.UtcNow;
 

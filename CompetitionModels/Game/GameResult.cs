@@ -23,13 +23,13 @@ namespace ELO.Models
 
 
         [ForeignKey("LobbyId")]
-        public Lobby Lobby { get; set; }
+        public virtual Lobby Lobby { get; set; }
         public ulong LobbyId { get; set; }
 
 
 
         [ForeignKey("GuildId")]
-        public Competition Competition { get; set; }
+        public virtual Competition Competition { get; set; }
         public ulong GuildId { get; set; }
 
 

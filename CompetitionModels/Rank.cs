@@ -7,7 +7,7 @@ namespace ELO.Models
     public class Rank
     {
         [ForeignKey("GuildId")]
-        public Competition Competition { get; set; }
+        public virtual Competition Competition { get; set; }
         public ulong GuildId { get; set; }
 
         [Key]

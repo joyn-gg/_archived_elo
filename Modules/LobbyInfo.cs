@@ -7,7 +7,6 @@ using RavenBOT.Common;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using ELO.Services;
 
 namespace ELO.Modules
 {

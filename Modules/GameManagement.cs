@@ -313,7 +313,7 @@ namespace ELO.Modules
                     continue;
                 }
 
-                await UserService.UpdateUserAsync(game.Competition, player, ranks, guildUser);
+                await UserService.UpdateUserAsync(competition, player, ranks, guildUser);
             }
 
             game.GameState = GameState.Undecided;

@@ -2,13 +2,13 @@
 
 namespace ELO.Models
 {
-    public class Map
+    public class PartyMember
     {
-        public string MapName { get; set; }
-
-        public ulong ChannelId { get; set; }
+        public ulong PartyHost { get; set; }
 
         [ForeignKey("ChannelId")]
         public virtual Lobby Lobby { get; set; }
+        public ulong ChannelId { get; set; }
+        public ulong UserId { get; set; }
     }
 }

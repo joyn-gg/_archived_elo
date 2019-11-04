@@ -6,17 +6,15 @@ namespace ELO.Models
     public class QueuedPlayer
     {
         [ForeignKey("GuildId")]
-        public Competition Competition { get; set; }
+        public virtual Competition Competition { get; set; }
         public ulong GuildId { get; set; }
 
         public ulong UserId { get; set; }
 
         [ForeignKey("ChannelId")]
-        public Lobby Lobby { get; set; }
+        public virtual Lobby Lobby { get; set; }
         public ulong ChannelId { get; set; }
 
         public DateTime QueuedAt { get; set; } = DateTime.UtcNow;
-
-        public ulong? QueuedWith { get; set; } = null;
     }
 }

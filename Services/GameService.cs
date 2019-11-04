@@ -20,9 +20,13 @@ namespace ELO.Services
             }
             else
             {
-                resStr += $"Players: {string.Join("\n", RavenBOT.Common.Extensions.GetUserMentionList(players))}";
+                resStr += string.Join("\n", RavenBOT.Common.Extensions.GetUserMentionList(players));
             }
 
+            if (string.IsNullOrWhiteSpace(resStr))
+            {
+                resStr = "UwU";
+            }
             return resStr;
         }
 
@@ -147,6 +151,118 @@ namespace ELO.Services
 
                 return (message, embed);
             }
+        }
+        public (string, EmbedBuilder) GetGameMessage(GameResult game, HashSet<ulong> queue, HashSet<ulong> team1p, HashSet<ulong> team2p, string title = null, params GameFlag[] flags)
+        {
+            bool usermentions = flags.Contains(GameFlag.usermentions);
+
+            bool gamestate = flags.Contains(GameFlag.gamestate);
+            bool map = flags.Contains(GameFlag.map);
+            bool time = flags.Contains(GameFlag.time);
+            bool lobby = flags.Contains(GameFlag.lobby);
+            bool pickmode = flags.Contains(GameFlag.pickmode);
+            bool submitter = flags.Contains(GameFlag.submitter);
+            bool remainingPlayers = false;
+            bool winningteam = false;
+            bool team1 = false;
+            bool team2 = false;
+
+            var message = usermentions ? string.Join(" ", queue.Union(team1p).Union(team2p).Distinct().Select(x => MentionUtils.MentionUser(x))) : "";
+
+            var embed = new EmbedBuilder
+            {
+                Color = Color.Blue
+            };
+            embed.Title = title ?? $"Game #{game.GameId}";
+            var desc = "";
+
+            if (time)
+            {
+                desc += $"**Creation Time:** {game.CreationTime.ToLocalTime().ToString("dd MMM yyyy")} {game.CreationTime.ToLocalTime().ToShortTimeString()}\n";
+            }
+
+            if (pickmode)
+            {
+                desc += $"**Pick Mode:** {game.GamePickMode}\n";
+            }
+
+            if (lobby)
+            {
+                desc += $"**Lobby:** {MentionUtils.MentionChannel(game.LobbyId)}\n";
+            }
+
+            if (map && game.MapName != null)
+            {
+                desc += $"**Map:** {game.MapName}\n";
+            }
+
+            if (gamestate)
+            {
+                team1 = true;
+                team2 = true;
+
+                switch (game.GameState)
+                {
+                    case GameState.Canceled:
+                        desc += "**State:** Cancelled\n";
+                        embed.Color = Color.DarkOrange;
+                        break;
+                    case GameState.Draw:
+                        desc += "**State:** Draw\n";
+                        embed.Color = Color.Gold;
+                        break;
+                    case GameState.Picking:
+                        remainingPlayers = true;
+                        embed.Color = Color.Magenta;
+                        break;
+                    case GameState.Decided:
+                        winningteam = true;
+                        embed.Color = Color.Green;
+                        break;
+                    case GameState.Undecided:
+                        break;
+                }
+            }
+
+            if (winningteam)
+            {
+                var teamInfo = game.WinningTeam == 1 ? team1p : team2p;
+                embed.AddField($"Winning Team, Team #{game.WinningTeam}", GetTeamInfo(null, team1p));
+                if (game.WinningTeam == 1)
+                {
+                    team1 = false;
+                }
+                else if (game.WinningTeam == 2)
+                {
+                    team2 = false;
+                }
+            }
+
+            if (team1)
+            {
+                embed.AddField("Team 1", GetTeamInfo(null, team1p));
+            }
+
+            if (team2)
+            {
+                embed.AddField("Team 2", GetTeamInfo(null, team2p));
+            }
+
+            if (remainingPlayers)
+            {
+                var remaining = queue.Where(x => team1p.All(y => y == x) && team2p.All(y => y == x));
+                if (remaining.Any())
+                {
+                    embed.AddField("Remaining Players", string.Join(" ", remaining.Select(x => MentionUtils.MentionUser(x))));
+                }
+            }
+
+            embed.Description = desc;
+
+
+
+            return (message, embed);
+
         }
 
         public EmbedBuilder GetGameEmbed(ManualGameResult game)

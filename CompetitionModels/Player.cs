@@ -23,7 +23,7 @@ namespace ELO.Models
 
 
         [ForeignKey("GuildId")]
-        public Competition Competition { get; set; }
+        public virtual Competition Competition { get; set; }
         public ulong GuildId { get; set; }
 
         public int Points { get; set; } = 0;
