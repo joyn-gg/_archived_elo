@@ -39,7 +39,6 @@ namespace ELO.Services
             }
         }
 
-
         public (CachedPermissions, CachedPermissions.CachedPermission) GetCached(Database db, ulong guildId, string commandName)
         {
             CachedPermissions guildCache;

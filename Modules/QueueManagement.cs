@@ -3,18 +3,24 @@ using Discord.Commands;
 using Discord.WebSocket;
 using ELO.Extensions;
 using ELO.Services;
+using RavenBOT.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace ELO.Modules
 {
-    public partial class LobbyManagement
+    public class QueueManagement : ReactiveBase
     {
-        //This needs to be static as module contexts are disposed of between commands.
         public static Dictionary<ulong, Dictionary<ulong, DateTime>> QueueDelays = new Dictionary<ulong, Dictionary<ulong, DateTime>>();
+        public QueueManagement(LobbyService lobbyService)
+        {
+            LobbyService = lobbyService;
+        }
 
+        public LobbyService LobbyService { get; }
 
         [Command("Join", RunMode = RunMode.Sync)]
         [Alias("JoinLobby", "Join Lobby", "j", "sign", "play", "ready")]
@@ -174,7 +180,7 @@ namespace ELO.Modules
                 if (queue.Count + 1 >= lobby.PlayersPerTeam * 2)
                 {
                     db.SaveChanges();
-                    await LobbyFullAsync(lobby);
+                    await LobbyService.LobbyFullAsync(Context, lobby);
                     return;
                 }
                 else

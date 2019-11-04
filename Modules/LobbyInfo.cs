@@ -7,6 +7,7 @@ using RavenBOT.Common;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ELO.Services;
 
 namespace ELO.Modules
 {
@@ -103,12 +104,12 @@ namespace ELO.Modules
                             Title = $"Game: #{game.GameId} - Current Teams."
                         };
 
-                        var t1Users = GetMentionList(GetUserList(Context.Guild, team1.Select(x => x.UserId)));
-                        var t2Users = GetMentionList(GetUserList(Context.Guild, team2.Select(x => x.UserId)));
+                        var t1Users = LobbyService.GetMentionList(LobbyService.GetUserList(Context.Guild, team1.Select(x => x.UserId)));
+                        var t2Users = LobbyService.GetMentionList(LobbyService.GetUserList(Context.Guild, team2.Select(x => x.UserId)));
                         var t1c = db.GetTeamCaptain(Context.Guild.Id, Context.Channel.Id, game.GameId, 1);
                         var t2c = db.GetTeamCaptain(Context.Guild.Id, Context.Channel.Id, game.GameId, 2);
                         var queue = db.GetQueue(game);
-                        var remainingPlayers = GetMentionList(GetUserList(Context.Guild, queue.Where(x => !team1.Any(y => y.UserId == x.UserId) && !team2.Any(y => y.UserId == x.UserId)).Select(x => x.UserId)));
+                        var remainingPlayers = LobbyService.GetMentionList(LobbyService.GetUserList(Context.Guild, queue.Where(x => !team1.Any(y => y.UserId == x.UserId) && !team2.Any(y => y.UserId == x.UserId)).Select(x => x.UserId)));
                         gameEmbed.AddField("Team 1", $"Captain: {MentionUtils.MentionUser(t1c.UserId)}\n{string.Join("\n", t1Users)}");
                         gameEmbed.AddField("Team 2", $"Captain: {MentionUtils.MentionUser(t2c.UserId)}\n{string.Join("\n", t2Users)}");
                         gameEmbed.AddField("Remaining Players", string.Join("\n", remainingPlayers));

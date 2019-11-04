@@ -1,18 +1,26 @@
 ﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 using ELO.Entities;
 using ELO.Models;
-using ELO.Services;
+using RavenBOT.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
-namespace ELO.Modules
+namespace ELO.Services
 {
-    public partial class LobbyManagement
+    public class LobbyService
     {
-        public (ulong, ulong) GetCaptains(Lobby lobby, GameResult game, Random rnd)
+        public LobbyService(GameService gameService, Random random)
+        {
+            GameService = gameService;
+            Random = random;
+        }
+
+        public (ulong, ulong) GetCaptains(ShardedCommandContext context, Lobby lobby, GameResult game, Random rnd)
         {
             using (var db = new Database())
             {
@@ -24,7 +32,7 @@ namespace ELO.Modules
                     //Select randomly from the top 4 ranked players in the queue
                     if (queue.Count >= 4)
                     {
-                        var players = queue.Select(x => db.Players.Find(Context.Guild.Id, x.UserId)).Where(x => x != null).OrderByDescending(x => x.Points).Take(4).OrderBy(x => rnd.Next()).ToList();
+                        var players = queue.Select(x => db.Players.Find(context.Guild.Id, x.UserId)).Where(x => x != null).OrderByDescending(x => x.Points).Take(4).OrderBy(x => rnd.Next()).ToList();
                         cap1 = players[0].UserId;
                         cap2 = players[1].UserId;
                     }
@@ -46,7 +54,7 @@ namespace ELO.Modules
                 else if (lobby.TeamPickMode == PickMode.Captains_HighestRanked)
                 {
                     //Select top two players
-                    var players = queue.Select(x => db.Players.Find(Context.Guild.Id, x.UserId)).Where(x => x != null).OrderByDescending(x => x.Points).Take(2).ToList();
+                    var players = queue.Select(x => db.Players.Find(context.Guild.Id, x.UserId)).Where(x => x != null).OrderByDescending(x => x.Points).Take(2).ToList();
                     cap1 = players[0].UserId;
                     cap2 = players[1].UserId;
                 }
@@ -59,11 +67,11 @@ namespace ELO.Modules
             }
         }
 
-        public async Task LobbyFullAsync(Lobby lobby)
+        public async Task LobbyFullAsync(ShardedCommandContext context, Lobby lobby)
         {
             using (var db = new Database())
             {
-                await SimpleEmbedAsync("Queue is full. Picking teams...", Color.Blue);
+                await context.Channel.SendMessageAsync("", false, "Queue is full. Picking teams...".QuickEmbed(Color.Blue));
                 //Increment the game counter as there is now a new game.
                 lobby.CurrentGameCount++;
                 var game = new GameResult
@@ -84,32 +92,6 @@ namespace ELO.Modules
                 db.Update(lobby);
                 db.GameResults.Add(game);
                 db.SaveChanges();
-                /*
-                if (lobby.MapSelector != null && lobby.MapSelector.Maps.Count > 0)
-                {
-                    switch (lobby.MapSelector.Mode)
-                    {
-                        case MapSelector.MapMode.Random:
-                            game.MapName = lobby.MapSelector.RandomMap(Random, true);
-                            break;
-                        case MapSelector.MapMode.Cycle:
-                            game.MapName = lobby.MapSelector.NextMap(true);
-                            break;
-                        default:
-                            break;
-                    }
-                }*/
-
-                /*
-                foreach (var queueUser in queue)
-                {
-                    //TODO: Fetch and update players later as some could be retrieved later like in the captains function.
-                    var player = Service.GetPlayer(Context.Guild.Id, Context.User.Id);
-                    if (player == null) continue;
-                    player.AddGame(game.GameId);
-                    Service.SavePlayer(player);
-                }*/
-
 
                 if (lobby.PlayersPerTeam == 1 &&
                     (lobby.TeamPickMode == PickMode.Captains_HighestRanked ||
@@ -117,7 +99,7 @@ namespace ELO.Modules
                         lobby.TeamPickMode == PickMode.Captains_RandomHighestRanked))
                 {
                     //Ensure that there isnt a captain pick mode if the teams only consist of one player
-                    await SimpleEmbedAsync("Lobby sort mode was set to random, you cannot have a captain lobby for solo queues.", Color.DarkBlue);
+                    await context.Channel.SendMessageAsync("", false, "Lobby sort mode was set to random, you cannot have a captain lobby for solo queues.".QuickEmbed(Color.DarkBlue));
                     lobby.TeamPickMode = PickMode.Random;
                 }
 
@@ -132,12 +114,12 @@ namespace ELO.Modules
                     case PickMode.Captains_Random:
                     case PickMode.Captains_RandomHighestRanked:
                         game.GameState = GameState.Picking;
-                        var captains = GetCaptains(lobby, game, Random);
+                        var captains = GetCaptains(context, lobby, game, Random);
                         db.TeamCaptains.Add(new TeamCaptain
                         {
                             UserId = captains.Item1,
                             ChannelId = lobby.ChannelId,
-                            GuildId = Context.Guild.Id,
+                            GuildId = context.Guild.Id,
                             TeamNumber = 1,
                             GameNumber = game.GameId
                         });
@@ -145,7 +127,7 @@ namespace ELO.Modules
                         {
                             UserId = captains.Item2,
                             ChannelId = lobby.ChannelId,
-                            GuildId = Context.Guild.Id,
+                            GuildId = context.Guild.Id,
                             TeamNumber = 2,
                             GameNumber = game.GameId
                         });
@@ -156,20 +138,20 @@ namespace ELO.Modules
                             Title = $"Game #{game.GameId} - Current Teams."
                         };
 
-                        var t1Users = GetMentionList(GetUserList(Context.Guild, team1));
-                        var t2Users = GetMentionList(GetUserList(Context.Guild, team2));
+                        var t1Users = GetMentionList(GetUserList(context.Guild, team1));
+                        var t2Users = GetMentionList(GetUserList(context.Guild, team2));
                         var remainingPlayers = queue.Where(x => x.UserId != captains.Item1 && x.UserId != captains.Item2).Select(x => MentionUtils.MentionUser(x.UserId));
                         gameEmbed.AddField("Team 1", $"Captain: {MentionUtils.MentionUser(captains.Item1)}");
                         gameEmbed.AddField("Team 2", $"Captain: {MentionUtils.MentionUser(captains.Item2)}");
                         gameEmbed.AddField("Remaining Players", string.Join("\n", remainingPlayers));
-                        await ReplyAsync($"Captains have been picked. Use the `pick` or `p` command to choose your players.\nCaptain 1: {MentionUtils.MentionUser(captains.Item1)}\nCaptain 2: {MentionUtils.MentionUser(captains.Item2)}", false, gameEmbed.Build());
+                        await context.Channel.SendMessageAsync($"Captains have been picked. Use the `pick` or `p` command to choose your players.\nCaptain 1: {MentionUtils.MentionUser(captains.Item1)}\nCaptain 2: {MentionUtils.MentionUser(captains.Item2)}", false, gameEmbed.Build());
                         break;
                     case PickMode.Random:
                         game.GameState = GameState.Undecided;
                         var shuffled = queue.OrderBy(x => Random.Next()).ToList();
                         db.TeamPlayers.AddRange(shuffled.Take(lobby.PlayersPerTeam).Select(x => new TeamPlayer
                         {
-                            GuildId = Context.Guild.Id,
+                            GuildId = context.Guild.Id,
                             ChannelId = lobby.ChannelId,
                             UserId = x.UserId,
                             GameNumber = game.GameId,
@@ -177,7 +159,7 @@ namespace ELO.Modules
                         }));
                         db.TeamPlayers.AddRange(shuffled.Skip(lobby.PlayersPerTeam).Take(lobby.PlayersPerTeam).Select(x => new TeamPlayer
                         {
-                            GuildId = Context.Guild.Id,
+                            GuildId = context.Guild.Id,
                             ChannelId = lobby.ChannelId,
                             UserId = x.UserId,
                             GameNumber = game.GameId,
@@ -188,14 +170,14 @@ namespace ELO.Modules
                         break;
                     case PickMode.TryBalance:
                         game.GameState = GameState.Undecided;
-                        var ordered = queue.OrderByDescending(x => db.Players.Find(Context.Guild.Id, x.UserId).Points).ToList();
+                        var ordered = queue.OrderByDescending(x => db.Players.Find(context.Guild.Id, x.UserId).Points).ToList();
                         foreach (var user in ordered)
                         {
                             if (team1.Count > team2.Count)
                             {
                                 db.TeamPlayers.Add(new TeamPlayer
                                 {
-                                    GuildId = Context.Guild.Id,
+                                    GuildId = context.Guild.Id,
                                     ChannelId = lobby.ChannelId,
                                     UserId = user.UserId,
                                     GameNumber = game.GameId,
@@ -206,7 +188,7 @@ namespace ELO.Modules
                             {
                                 db.TeamPlayers.Add(new TeamPlayer
                                 {
-                                    GuildId = Context.Guild.Id,
+                                    GuildId = context.Guild.Id,
                                     ChannelId = lobby.ChannelId,
                                     UserId = user.UserId,
                                     GameNumber = game.GameId,
@@ -231,10 +213,10 @@ namespace ELO.Modules
                             GameFlag.usermentions,
                             GameFlag.gamestate);
 
-                    await ReplyAsync(res.Item1, false, res.Item2.Build());
+                    await context.Channel.SendMessageAsync(res.Item1, false, res.Item2.Build());
                     if (lobby.GameReadyAnnouncementChannel != null)
                     {
-                        var channel = Context.Guild.GetTextChannel(lobby.GameReadyAnnouncementChannel.Value);
+                        var channel = context.Guild.GetTextChannel(lobby.GameReadyAnnouncementChannel.Value);
                         if (channel != null)
                         {
                             if (lobby.MentionUsersInReadyAnnouncement)
@@ -255,7 +237,18 @@ namespace ELO.Modules
 
                     if (lobby.DmUsersOnGameReady)
                     {
-                        await MessageUsersAsync(queue.Select(x => x.UserId).ToArray(), x => MentionUtils.MentionUser(x), x => GetMsg(game, team1, x));
+                        foreach (var user in queue.Select(x => x.UserId).ToArray())
+                        {
+                            try
+                            {
+                                var u = context.Client.GetUser(user);
+                                await u.SendMessageAsync(MentionUtils.MentionUser(user), false, GetMsg(game, team1, user));
+                            }
+                            catch
+                            {
+                                //
+                            }
+                        }
                     }
                 }
 
@@ -280,7 +273,7 @@ namespace ELO.Modules
             return msg2.Item2.Build();
         }
 
-        public async Task<GameResult> PickOneAsync(GameResult game, SocketGuildUser[] users, TeamCaptain cap1, TeamCaptain cap2)
+        public async Task<(GameResult, string)> PickOneAsync(ShardedCommandContext context, GameResult game, SocketGuildUser[] users, TeamCaptain cap1, TeamCaptain cap2)
         {
             using (var db = new Database())
             {
@@ -288,32 +281,34 @@ namespace ELO.Modules
                 var teamCaptain = game.Picks % 2 == 0 ? cap1 : cap2;
                 var offTeamCaptain = game.Picks % 2 == 0 ? cap2 : cap2;
 
-                if (Context.User.Id != teamCaptain.UserId)
+                if (context.User.Id != teamCaptain.UserId)
                 {
-                    await SimpleEmbedAsync($"{Context.User.Mention} - It is currently the other captains turn to pick.", Color.Red);
-                    return null;
+                    await context.Channel.SendMessageAsync("", false, $"{context.User.Mention} - It is currently the other captains turn to pick.".QuickEmbed(Color.Red));
+                    return (null, null);
                 }
 
                 if (uc == 0)
                 {
-                    await SimpleEmbedAsync($"{Context.User.Mention} - You must specify a player to pick.", Color.Red);
-                    return null;
+                    await context.Channel.SendMessageAsync("", false, $"{context.User.Mention} - You must specify a player to pick.".QuickEmbed(Color.Red));
+                    return (null, null);
                 }
                 else if (uc != 1)
                 {
-                    await SimpleEmbedAsync($"{Context.User.Mention} - You can only specify one player for this pick.", Color.Red);
-                    return null;
+                    await context.Channel.SendMessageAsync("", false, $"{context.User.Mention} - You can only specify one player for this pick.".QuickEmbed(Color.Red));
+                    return (null, null);
                 }
 
                 db.TeamPlayers.Add(GetPlayer(game, users[0], game.Picks % 2 == 0 ? 1 : 2));
-                PickResponse = $"{MentionUtils.MentionUser(offTeamCaptain.UserId)} can select **1** player for the next pick.";
+                var pickResponse = $"{MentionUtils.MentionUser(offTeamCaptain.UserId)} can select **1** player for the next pick.";
                 game.Picks++;
 
-                return game;
+                return (game, pickResponse);
             }
         }
 
-        private string PickResponse = null;
+
+        public GameService GameService { get; }
+        public Random Random { get; }
 
         public TeamPlayer GetPlayer(GameResult game, SocketGuildUser user, int team)
         {
@@ -327,7 +322,7 @@ namespace ELO.Modules
             };
         }
 
-        public async Task<GameResult> PickTwoAsync(GameResult game, SocketGuildUser[] users, TeamCaptain cap1, TeamCaptain cap2)
+        public async Task<(GameResult, string)> PickTwoAsync(ShardedCommandContext context, GameResult game, SocketGuildUser[] users, TeamCaptain cap1, TeamCaptain cap2)
         {
             using (var db = new Database())
             {
@@ -336,114 +331,113 @@ namespace ELO.Modules
 
                 var teamCaptain = game.Picks % 2 == 0 ? cap1 : cap2;
                 var offTeamCaptain = game.Picks % 2 == 0 ? cap2 : cap2;
-
+                string pickResponse = null;
                 if (game.Picks == 0)
                 {
                     //captain 1 turn to pick.
-                    if (Context.User.Id != cap1.UserId)
+                    if (context.User.Id != cap1.UserId)
                     {
-                        await SimpleEmbedAndDeleteAsync("It is currently the team 1 captains turn to pick.", Color.Red);
-                        return null;
+                        await context.Channel.SendMessageAsync("", false, ("It is currently the team 1 captains turn to pick.".QuickEmbed(Color.Red)));
+                        return (null, null);
                     }
 
                     if (uc == 0)
                     {
-                        await SimpleEmbedAndDeleteAsync("You must specify a player to pick.", Color.Red);
-                        return null;
+                        await context.Channel.SendMessageAsync("", false, ("You must specify a player to pick.".QuickEmbed(Color.Red)));
+                        return (null, null);
                     }
                     else if (uc != 1)
                     {
-                        await SimpleEmbedAndDeleteAsync("You can only specify one player for the initial pick.", Color.Red);
-                        return null;
+                        await context.Channel.SendMessageAsync("", false, ("You can only specify one player for the initial pick.".QuickEmbed(Color.Red)));
+                        return (null, null);
                     }
 
                     db.TeamPlayers.Add(GetPlayer(game, users[0], 1));
                     game.Picks++;
-                    PickResponse = $"{MentionUtils.MentionUser(offTeamCaptain.UserId)} can select **2** players for the next pick.";
+                    pickResponse = $"{MentionUtils.MentionUser(offTeamCaptain.UserId)} can select **2** players for the next pick.";
                 }
                 else if (game.Picks == 1)
                 {
                     //cap 2 turn to pick. they get to pick 2 people.
-                    if (Context.User.Id != cap2.UserId)
+                    if (context.User.Id != cap2.UserId)
                     {
-                        await SimpleEmbedAndDeleteAsync("It is currently the other captains turn to pick.", Color.Red);
-                        return null;
+                        await context.Channel.SendMessageAsync("", false, ("It is currently the other captains turn to pick.".QuickEmbed(Color.Red)));
+                        return (null, null);
                     }
 
                     if (uc != 2)
                     {
-                        await SimpleEmbedAndDeleteAsync("You must specify 2 players for this pick.", Color.Red);
-                        return null;
+                        await context.Channel.SendMessageAsync("", false, ("You must specify 2 players for this pick.".QuickEmbed(Color.Red)));
+                        return (null, null);
                     }
 
                     //Note adding a player multiple times (ie team captain to team 1) will not affect it because the players are a hashset.
                     db.TeamPlayers.Add(GetPlayer(game, users[0], 2));
                     db.TeamPlayers.Add(GetPlayer(game, users[1], 2));
                     game.Picks++;
-                    PickResponse = $"{MentionUtils.MentionUser(offTeamCaptain.UserId)} can select **2** players for the next pick.";
+                    pickResponse = $"{MentionUtils.MentionUser(offTeamCaptain.UserId)} can select **2** players for the next pick.";
                     game.Picks++;
                 }
                 else if (game.Picks == 2)
                 {
                     //cap 2 turn to pick. they get to pick 2 people.
-                    if (Context.User.Id != cap1.UserId)
+                    if (context.User.Id != cap1.UserId)
                     {
-                        await SimpleEmbedAndDeleteAsync("It is currently the other captains turn to pick.", Color.Red);
-                        return null;
+                        await context.Channel.SendMessageAsync("", false, ("It is currently the other captains turn to pick.".QuickEmbed(Color.Red)));
+                        return (null, null);
                     }
 
                     if (uc != 2)
                     {
-                        await SimpleEmbedAndDeleteAsync("You must specify 2 players for this pick.", Color.Red);
-                        return null;
+                        await context.Channel.SendMessageAsync("", false, ("You must specify 2 players for this pick.".QuickEmbed(Color.Red)));
+                        return (null, null);
                     }
 
                     //Note adding a player multiple times (ie team captain to team 1) will not affect it because the players are a hashset.
                     db.TeamPlayers.Add(GetPlayer(game, users[0], 1));
                     db.TeamPlayers.Add(GetPlayer(game, users[1], 1));
                     game.Picks++;
-                    PickResponse = $"{MentionUtils.MentionUser(offTeamCaptain.UserId)} can select **1** player for the next pick.";
+                    pickResponse = $"{MentionUtils.MentionUser(offTeamCaptain.UserId)} can select **1** player for the next pick.";
                     game.Picks++;
                 }
                 else
                 {
-                    if (Context.User.Id != teamCaptain.UserId)
+                    if (context.User.Id != teamCaptain.UserId)
                     {
-                        await SimpleEmbedAndDeleteAsync("It is currently the other captains turn to pick.", Color.Red);
-                        return null;
+                        await context.Channel.SendMessageAsync("", false, ("It is currently the other captains turn to pick.".QuickEmbed(Color.Red)));
+                        return (null, null);
                     }
 
                     if (uc == 0)
                     {
-                        await SimpleEmbedAndDeleteAsync("You must specify a player to pick.", Color.Red);
-                        return null;
+                        await context.Channel.SendMessageAsync("", false, ("You must specify a player to pick.".QuickEmbed(Color.Red)));
+                        return (null, null);
                     }
                     else if (uc != 1)
                     {
-                        await SimpleEmbedAndDeleteAsync("You can only specify one player for this pick.", Color.Red);
-                        return null;
+                        await context.Channel.SendMessageAsync("", false, ("You can only specify one player for this pick.".QuickEmbed(Color.Red)));
+                        return (null, null);
                     }
 
                     db.TeamPlayers.Add(GetPlayer(game, users[0], game.Picks % 2 == 0 ? 1 : 2));
                     game.Picks++;
-                    PickResponse = $"{MentionUtils.MentionUser(offTeamCaptain.UserId)} can select **1** player for the next pick.";
+                    pickResponse = $"{MentionUtils.MentionUser(offTeamCaptain.UserId)} can select **1** player for the next pick.";
                     game.Picks++;
                 }
 
                 db.SaveChanges();
-                return game;
+                return (game, pickResponse);
             }
         }
 
-        public SocketGuildUser[] GetUserList(SocketGuild guild, IEnumerable<ulong> userIds)
+        public static SocketGuildUser[] GetUserList(SocketGuild guild, IEnumerable<ulong> userIds)
         {
             return userIds.Select(x => guild.GetUser(x)).ToArray();
         }
 
-        public string[] GetMentionList(IEnumerable<SocketGuildUser> users)
+        public static string[] GetMentionList(IEnumerable<SocketGuildUser> users)
         {
             return users.Where(x => x != null).Select(x => x.Mention).ToArray();
         }
-
     }
 }

@@ -16,5 +16,7 @@ namespace ELO.Models
         public ulong ChannelId { get; set; }
 
         public DateTime QueuedAt { get; set; } = DateTime.UtcNow;
+
+        public ulong? QueuedWith { get; set; } = null;
     }
 }

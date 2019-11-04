@@ -15,16 +15,17 @@ namespace ELO.Modules
     [RavenRequireContext(ContextType.Guild)]
     public partial class LobbyManagement : ReactiveBase
     {
-        public LobbyManagement(Random random, GameService gameService)
+        public LobbyManagement(Random random, GameService gameService, LobbyService lobbyService)
         {
             Random = random;
             GameService = gameService;
+            LobbyService = lobbyService;
         }
 
         //TODO: Player queuing via reactions to a message.
-
         public Random Random { get; }
         public GameService GameService { get; }
+        public LobbyService LobbyService { get; }
 
         //TODO: Replace command
         //TODO: Map stuff
@@ -124,7 +125,7 @@ namespace ELO.Modules
                 {
                     db.SaveChanges();
 
-                    await LobbyFullAsync(lobby);
+                    await LobbyService.LobbyFullAsync(Context, lobby);
                     return;
                 }
             }
@@ -341,13 +342,18 @@ namespace ELO.Modules
                     return;
                 }
 
+                string pickResponse = null;
                 if (latestGame.PickOrder == CaptainPickOrder.PickTwo)
                 {
-                    latestGame = await PickTwoAsync(latestGame, users, cap1, cap2);
+                    var res = await LobbyService.PickTwoAsync(Context, latestGame, users, cap1, cap2);
+                    latestGame = res.Item1;
+                    pickResponse = res.Item2;
                 }
                 else if (latestGame.PickOrder == CaptainPickOrder.PickOne)
                 {
-                    latestGame = await PickOneAsync(latestGame, users, cap1, cap2);
+                    var res = await LobbyService.PickOneAsync(Context, latestGame, users, cap1, cap2);
+                    latestGame = res.Item1;
+                    pickResponse = res.Item2;
                 }
                 else
                 {
@@ -406,7 +412,7 @@ namespace ELO.Modules
                 {
                     var res = GameService.GetGameMessage(latestGame, "Player(s) picked.",
                             GameFlag.gamestate);
-                    await ReplyAsync(PickResponse ?? "", false, res.Item2.Build());
+                    await ReplyAsync(pickResponse ?? "", false, res.Item2.Build());
                 }
 
                 db.SaveChanges();
