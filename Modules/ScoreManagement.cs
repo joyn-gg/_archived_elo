@@ -218,8 +218,8 @@ namespace ELO.Modules
             }
         }
 
-        [Command("RefreshNames", RunMode = RunMode.Async)]
-        [Summary("Resets the leaderboard")]
+        [Command("RefreshUsers", RunMode = RunMode.Async)]
+        [Summary("Refreshes all user names and roles")]
         [RequirePermission(PermissionLevel.ELOAdmin)]
         [RequireBotPermission(GuildPermission.ManageNicknames)]
         public async Task RefreshNamesAsync()
@@ -230,39 +230,30 @@ namespace ELO.Modules
                 {
                     if (RenameTasks.Contains(Context.Guild.Id))
                     {
-                        await SimpleEmbedAsync($"There is currently a rename task for this server running.", Color.Red);
+                        await SimpleEmbedAsync($"There is currently a refresh task for this server running.", Color.Red);
                         return;
                     }
                     RenameTasks.Add(Context.Guild.Id);
 
-                    await SimpleEmbedAsync($"Running rename task... Estimated time: {TimeSpan.FromSeconds(Context.Guild.MemberCount * 2).GetReadableLength()}", Color.Green);
+                    await SimpleEmbedAsync($"Running refresh task... Estimated time: {TimeSpan.FromSeconds(Context.Guild.MemberCount * 2).GetReadableLength()}", Color.Green);
                     var comp = db.GetOrCreateCompetition(Context.Guild.Id);
                     var players = db.Players.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                    var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
 
                     foreach (var player in players)
                     {
                         var user = Context.Guild.GetUser(player.UserId);
                         if (user != null)
                         {
-                            //skip this because the bot will not be able to edit the users name.
-                            if (user.Hierarchy > Context.Guild.CurrentUser.Hierarchy)
+                            var _ = Task.Run(async () =>
                             {
-                                continue;
-                            }
-
-                            var newName = comp.GetNickname(player);
-                            if (!user.Nickname.Equals(newName))
-                            {
-                                var _ = Task.Run(async () =>
-                                {
-                                    await user.ModifyAsync(x => x.Nickname = newName);
-                                });
-                            }
+                                await UserService.UpdateUserAsync(comp, player, ranks, user);
+                            });
                             //2 sec per rename? should be fine
-                            await Task.Delay(2000);
+                            //await Task.Delay(2000);
                         }
                     }
-                    await SimpleEmbedAsync($"Rename task complete.", Color.Green);
+                    await SimpleEmbedAsync($"Refresh task complete.", Color.Green);
                 }
                 finally
                 {

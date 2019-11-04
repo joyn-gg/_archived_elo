@@ -58,6 +58,13 @@ namespace ELO.Services
                         }
                     }
 
+                    var removeRanks = ranks.Where(x => x.Points > player.Points).ToArray();
+                    if (removeRanks.Length > 0)
+                    {
+                        await user.RemoveRolesAsync(user.Guild.Roles.Where(x => removeRanks.Any(r => r.RoleId == x.Id) && x.Position < user.Guild.CurrentUser.Hierarchy).ToArray());
+                    }
+
+
                     //Ensure the user has the registerd role if it exists.
                     if (comp.RegisteredRankId != null)
                     {
