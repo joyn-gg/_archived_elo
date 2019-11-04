@@ -776,7 +776,11 @@ namespace ELO.Modules
                 else
                 {
                     //Loss modifiers are always positive values that are to be subtracted
-                    updateVal = (int)((maxRank?.LossModifier ?? competition.DefaultLossModifier) * lobby.LobbyMultiplier);
+                    updateVal = maxRank?.LossModifier ?? competition.DefaultLossModifier;
+                    if (lobby.MultiplyLossValue)
+                    {
+                        updateVal = (int)(updateVal * lobby.LobbyMultiplier);
+                    }
 
                     player.Points -= updateVal;
                     if (!competition.AllowNegativeScore && player.Points < 0) player.Points = 0;
