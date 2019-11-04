@@ -69,8 +69,8 @@ namespace ELO
                 config.Username = Console.ReadLine();
                 Console.WriteLine("Input SQL Password");
                 config.Password = Console.ReadLine();
-                Console.WriteLine("Input SQL Server Version");
-                config.Version = new Version(Console.ReadLine());
+                //Console.WriteLine("Input SQL Server Version");
+                //config.Version = new Version(Console.ReadLine());
                 localManagement.LastConfig.AdditionalConfigs.Add("DatabaseConfig", config);
                 localManagement.SaveConfig(localManagement.LastConfig);
                 dbConfig = localManagement.LastConfig.GetConfig<DatabaseConfig>("DatabaseConfig");
