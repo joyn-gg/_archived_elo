@@ -15,6 +15,11 @@ namespace ELO.Modules
     [Preconditions.RequirePermission(PermissionLevel.Moderator)]
     public class ScoreManagement : ReactiveBase
     {
+        public ScoreManagement(UserService userService)
+        {
+            UserService = userService;
+        }
+
         [Command("ModifyStates", RunMode = RunMode.Async)]
         [Summary("Shows modifier values for score management commands")]
         public async Task ModifyStatesAsync()
@@ -38,6 +43,8 @@ namespace ELO.Modules
             {
                 var userIds = users.Select(x => x.Id).ToArray();
                 var players = db.Players.Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId));
+                var comp = db.GetOrCreateCompetition(Context.Guild.Id);
+                var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
                 var responseString = "";
                 foreach (var player in players)
                 {
@@ -56,6 +63,8 @@ namespace ELO.Modules
                     }
 
                     responseString += $"{player.GetDisplayNameSafe()}: {original} => {player.Points}\n";
+                    var gUser = users.First(x => x.Id == player.UserId);
+                    await UserService.UpdateUserAsync(comp, player, ranks, gUser);
                 }
                 db.UpdateRange(players);
                 db.SaveChanges();
@@ -184,6 +193,8 @@ namespace ELO.Modules
         }
 
         public static List<ulong> RenameTasks { get; set; } = new List<ulong>();
+        public UserService UserService { get; }
+
         [Command("ResetLeaderboard", RunMode = RunMode.Sync)]
         [Summary("Resets the leaderboard")]
         [RequirePermission(PermissionLevel.ELOAdmin)]
