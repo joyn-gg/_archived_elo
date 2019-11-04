@@ -439,7 +439,7 @@ namespace ELO.Modules
             }
         }
 
-        /*
+        
         [Command("DeleteLobby", RunMode = RunMode.Sync)]
         [Summary("Deletes the current lobby and all game played in it.")]
         public async Task DeleteLobbyAsync()
@@ -453,11 +453,12 @@ namespace ELO.Modules
                     return;
                 }
 
-                Service.DeleteLobby(Context.Guild.Id, Context.Channel.Id);
+                db.Lobbies.Remove(lobby);
+                db.SaveChanges();
                 await SimpleEmbedAsync("Lobby and all games played in it have been removed.", Color.Green);
             }
         }
-        */
+        
         [Command("HideQueue", RunMode = RunMode.Sync)]
         [Summary("Sets whether players in queue are shown.")]
         [RavenRequireBotPermission(GuildPermission.ManageMessages)]
@@ -549,7 +550,7 @@ namespace ELO.Modules
         }
 
         [Command("SetHighLimit", RunMode = RunMode.Sync)]
-        [Summary("Sets the lobby score multiplier.")]
+        [Summary("Sets max user points before point reduction multiplier is applied.")]
         public async Task SetReductionPercent(int? highLimit = null)
         {
             using (var db = new Database())
