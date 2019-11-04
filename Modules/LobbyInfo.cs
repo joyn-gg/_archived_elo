@@ -62,21 +62,12 @@ namespace ELO.Modules
                     $"**Pick Mode:** {lobby.TeamPickMode}\n" +
                     $"{(lobby.MinimumPoints != null ? $"**Minimum Points to Queue:** {lobby.MinimumPoints}\n" : "")}");
 
-                /*
-                string maps;
-                if (CurrentLobby.MapSelector != null)
+                var maps = db.Maps.Where(x => x.ChannelId == Context.Channel.Id).AsNoTracking().ToArray();
+                if (maps.Length != 0)
                 {
-                    var history = CurrentLobby.MapSelector.GetHistory();
-                    maps = $"\n**Map Mode:** {CurrentLobby.MapSelector.Mode}\n" +
-                            $"**Maps:** {(CurrentLobby.MapSelector.Maps.Count == 0 ? "N/A" : string.Join(", ", CurrentLobby.MapSelector.Maps))}\n" +
-                            $"**Recent Maps:** {(history.Count == 0 ? "N/A" : string.Join(", ", history))}";
-                }
-                else
-                {
-                    maps = "N/A";
+                    embed.AddField("Maps", string.Join(", ", maps.Select(x => x.MapName)));
                 }
 
-                embed.AddField("Map Info", maps);*/
                 var maxGame = db.GetLatestGame(lobby);
 
                 embed.AddField("Info", $"**Games Played:** {maxGame?.GameId}\n" +
@@ -122,14 +113,21 @@ namespace ELO.Modules
                         gameEmbed.AddField("Team 2", $"Captain: {MentionUtils.MentionUser(t2c.UserId)}\n{string.Join("\n", t2Users)}");
                         gameEmbed.AddField("Remaining Players", string.Join("\n", remainingPlayers));
 
+                        var teamCaptain = game.Picks % 2 == 0 ? t1c : t2c;
                         if (game.PickOrder == CaptainPickOrder.PickOne)
                         {
-
-                            gameEmbed.AddField("Captain Currently Picking", );
+                            gameEmbed.AddField("Captain Currently Picking", $"{MentionUtils.MentionUser(teamCaptain.UserId)} can pick **1** player for this pick.");
                         }
                         else if (game.PickOrder == CaptainPickOrder.PickTwo)
                         {
-                            gameEmbed.AddField("Captain Currently Picking", );
+                            if (game.Picks == 1 || game.Picks == 2)
+                            {
+                                gameEmbed.AddField("Captain Currently Picking", $"{MentionUtils.MentionUser(teamCaptain.UserId)} can pick **2** players for this pick.");
+                            }
+                            else
+                            {
+                                gameEmbed.AddField("Captain Currently Picking", $"{MentionUtils.MentionUser(teamCaptain.UserId)} can pick **1** player for this pick.");
+                            }
                         }
 
                         await ReplyAsync(gameEmbed);
