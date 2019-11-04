@@ -98,6 +98,7 @@ namespace ELO
                 .AddSingleton<PermissionService>()
                 .AddSingleton<GameService>()
                 .AddSingleton<LobbyService>()
+                .AddSingleton<GameSubmissionService>()
                 .AddSingleton<ELOJobs>()
                 .BuildServiceProvider();
 
