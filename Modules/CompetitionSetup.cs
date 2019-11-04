@@ -4,6 +4,7 @@ using ELO.Models;
 using ELO.Services;
 using RavenBOT.Common;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ELO.Modules
@@ -407,6 +408,21 @@ namespace ELO.Modules
         public async Task AddRank(int points, IRole role)
         {
             await AddRank(role, points);
+        }
+
+        [Command("PurgeRanks", RunMode = RunMode.Sync)]
+        [Summary("Remove all ranks that no longer have a role")]
+        public async Task RemoveRank()
+        {
+            using (var db = new Database())
+            {
+                var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                var guildRoleIds = Context.Guild.Roles.Select(x => x.Id).ToArray();
+                var removed = ranks.Where(x => !guildRoleIds.Contains(x.RoleId)).ToArray();
+                db.Ranks.RemoveRange(removed);
+                db.SaveChanges();
+                await SimpleEmbedAsync("Ranks Removed.", Color.Green);
+            }
         }
 
         [Command("RemoveRank", RunMode = RunMode.Sync)]
