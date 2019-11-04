@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RavenBOT.Common", "..\..\..
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RavenBOT.Services.HelpService", "..\..\..\RavenBOT-Libraries\RavenBOT.Services.HelpService\RavenBOT.Services.HelpService.csproj", "{765E89E7-DDBB-4E45-8C35-99E1813F50A4}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RavenBOT.Services.ConfigManager", "..\..\..\RavenBOT-Libraries\RavenBOT.Services.ConfigManager\RavenBOT.Services.ConfigManager.csproj", "{DDFD0C55-1A66-4776-9295-D563C3DE71FF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{765E89E7-DDBB-4E45-8C35-99E1813F50A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{765E89E7-DDBB-4E45-8C35-99E1813F50A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{765E89E7-DDBB-4E45-8C35-99E1813F50A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDFD0C55-1A66-4776-9295-D563C3DE71FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDFD0C55-1A66-4776-9295-D563C3DE71FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDFD0C55-1A66-4776-9295-D563C3DE71FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDFD0C55-1A66-4776-9295-D563C3DE71FF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
