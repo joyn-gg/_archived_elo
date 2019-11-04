@@ -159,6 +159,7 @@ namespace ELO.Modules
 
         [Command("Ranks", RunMode = RunMode.Async)]
         [Summary("Displays information about the server's current ranks")]
+        [RequirePermission(PermissionLevel.Registered)]
         public async Task ShowRanksAsync()
         {
             using (var db = new Database())
@@ -179,6 +180,7 @@ namespace ELO.Modules
         [Command("Profile", RunMode = RunMode.Async)] // Please make default command name "Stats"
         [Alias("Info", "GetUser")]
         [Summary("Displays information about you or the specified user.")]
+        [RequirePermission(PermissionLevel.Registered)]
         public async Task InfoAsync(SocketGuildUser user = null)
         {
             if (user == null)
@@ -228,6 +230,7 @@ namespace ELO.Modules
         [Command("Leaderboard", RunMode = RunMode.Async)]
         [Alias("lb", "top20")]
         [Summary("Shows the current server-wide leaderboard.")]
+        [RequirePermission(PermissionLevel.Registered)]
         //TODO: Ratelimiting as this is a data heavy command.
         public async Task LeaderboardAsync()
         {

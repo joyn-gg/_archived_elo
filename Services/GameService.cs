@@ -187,7 +187,7 @@ namespace ELO.Services
             return embed;
         }
 
-        public EmbedBuilder GetGameEmbed(SocketCommandContext context, GameResult game)
+        public EmbedBuilder GetGameEmbed(GameResult game)
         {
             var embed = new EmbedBuilder();
 

@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using ELO.Models;
+using ELO.Preconditions;
 using ELO.Services;
 using Microsoft.EntityFrameworkCore;
 using RavenBOT.Common;
@@ -11,8 +12,17 @@ using System.Threading.Tasks;
 
 namespace ELO.Modules
 {
-    public partial class Info
+    [RequireContext(ContextType.Guild)]
+    [RequirePermission(PermissionLevel.Registered)]
+    public class GameInfo : ReactiveBase
     {
+        public GameService GameService { get; }
+
+        public GameInfo(GameService gameService)
+        {
+            GameService = gameService;
+        }
+
         [Command("LastGame", RunMode = RunMode.Async)]
         [Alias("Last Game", "Latest Game", "LatestGame", "lg")]
         [Summary("Shows information about the most recent game in the current (or specified) lobby")]
@@ -53,7 +63,7 @@ namespace ELO.Modules
 
         public async Task DisplayGameAsync(GameResult game)
         {
-            var embed = GameService.GetGameEmbed(Context, game);
+            var embed = GameService.GetGameEmbed(game);
             await ReplyAsync(embed);
         }
 

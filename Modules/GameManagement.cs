@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using ELO.Entities;
 using ELO.Models;
+using ELO.Preconditions;
 using ELO.Services;
 using RavenBOT.Common;
 using System;
@@ -29,6 +30,7 @@ namespace ELO.Modules
         [Command("VoteTypes", RunMode = RunMode.Async)]
         [Alias("Results")]
         [Summary("Shows possible vote options for the Result command")]
+        [RequirePermission(PermissionLevel.Registered)]
         public async Task ShowResultsAsync()
         {
             await SimpleEmbedAsync(string.Join("\n", RavenBOT.Common.Extensions.EnumNames<VoteState>()), Color.Blue);
@@ -38,7 +40,7 @@ namespace ELO.Modules
         [Command("Vote", RunMode = RunMode.Sync)]
         [Alias("GameResult", "Result")]
         [Summary("Vote on the specified game's outcome in the specified lobby")]
-        [Preconditions.RequirePermission(PermissionLevel.Registered)]
+        [RequirePermission(PermissionLevel.Registered)]
         public async Task GameResultAsync(SocketTextChannel lobbyChannel, int gameNumber, string voteState)
         {
             await GameResultAsync(gameNumber, voteState, lobbyChannel);
@@ -47,7 +49,7 @@ namespace ELO.Modules
         [Command("Vote", RunMode = RunMode.Sync)]
         [Alias("GameResult", "Result")]
         [Summary("Vote on the specified game's outcome in the current (or specified) lobby")]
-        [Preconditions.RequirePermission(PermissionLevel.Registered)]
+        [RequirePermission(PermissionLevel.Registered)]
         public async Task GameResultAsync(int gameNumber, string voteState, SocketTextChannel lobbyChannel = null)
         {
             if (lobbyChannel == null)
@@ -193,7 +195,7 @@ namespace ELO.Modules
         [Command("UndoGame", RunMode = RunMode.Sync)]
         [Alias("Undo Game")]
         [Summary("Undoes the specified game in the specified lobby")]
-        [Preconditions.RequirePermission(PermissionLevel.Moderator)]
+        [RequirePermission(PermissionLevel.Moderator)]
         public async Task UndoGameAsync(SocketTextChannel lobbyChannel, int gameNumber)
         {
             await UndoGameAsync(gameNumber, lobbyChannel);
@@ -202,7 +204,7 @@ namespace ELO.Modules
         [Command("UndoGame", RunMode = RunMode.Sync)]
         [Alias("Undo Game")]
         [Summary("Undoes the specified game in the current (or specified) lobby")]
-        [Preconditions.RequirePermission(PermissionLevel.Moderator)]
+        [RequirePermission(PermissionLevel.Moderator)]
         public async Task UndoGameAsync(int gameNumber, ISocketMessageChannel lobbyChannel = null)
         {
             if (lobbyChannel == null)
@@ -267,7 +269,7 @@ namespace ELO.Modules
 
         public async Task AnnounceResultAsync(Lobby lobby, GameResult game)
         {
-            var embed = GameService.GetGameEmbed(Context, game);
+            var embed = GameService.GetGameEmbed(game);
             await AnnounceResultAsync(lobby, embed);
         }
 
@@ -320,11 +322,10 @@ namespace ELO.Modules
         }
 
 
-        /*
         [Command("DeleteGame", RunMode = RunMode.Sync)]
         [Alias("Delete Game", "DelGame")]
         [Summary("Deletes the specified game from history")]
-        [Preconditions.RequireAdmin]
+        [RequirePermission(PermissionLevel.ELOAdmin)]
         //TODO: Explain that this does not affect the users who were in the game if it had a result. this is only for removing the game log from the database
         public async Task DelGame(SocketTextChannel lobbyChannel, int gameNumber)
         {
@@ -334,7 +335,7 @@ namespace ELO.Modules
         [Command("DeleteGame", RunMode = RunMode.Sync)]
         [Alias("Delete Game", "DelGame")]
         [Summary("Deletes the specified game from history")]
-        [Preconditions.RequireAdmin]
+        [RequirePermission(PermissionLevel.ELOAdmin)]
         //TODO: Explain that this does not affect the users who were in the game if it had a result. this is only for removing the game log from the database
         public async Task DelGame(int gameNumber, SocketTextChannel lobbyChannel = null)
         {
@@ -343,25 +344,28 @@ namespace ELO.Modules
                 lobbyChannel = Context.Channel as SocketTextChannel;
             }
 
-            var lobby = Service.GetLobby(Context.Guild.Id, lobbyChannel.Id);
-            if (lobby == null)
+            using (var db = new Database())
             {
-                //Reply error not a lobby.
-                await ReplyAsync("Channel is not a lobby.");
-                return;
-            }
+                var lobby = db.GetLobby(lobbyChannel);
+                if (lobby == null)
+                {
+                    //Reply error not a lobby.
+                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    return;
+                }
 
-            var game = Service.GetGame(Context.Guild.Id, lobbyChannel.Id, gameNumber);
-            if (game == null)
-            {
-                await ReplyAsync("Invalid GameID.");
-                return;
+                var game = db.GameResults.SingleOrDefault(x => x.GuildId == Context.Guild.Id && x.LobbyId == lobby.ChannelId && x.GameId == gameNumber);
+                if (game == null)
+                {
+                    await SimpleEmbedAsync("Invalid Game number.", Color.Red);
+                    return;
+                }
+                var info = GameService.GetGameEmbed(game);
+                db.GameResults.Remove(game);
+                db.SaveChanges();
+                await ReplyAsync("Game deleted.", info.Build());
             }
-
-            Service.RemoveGame(game);
-            await ReplyAsync("Game Deleted.", false, JsonConvert.SerializeObject(game, Formatting.Indented).FixLength(2047).QuickEmbed());
         }
-        */
 
         [Command("Cancel", RunMode = RunMode.Sync)]
         [Alias("CancelGame")]
@@ -572,7 +576,7 @@ namespace ELO.Modules
         [Command("Game", RunMode = RunMode.Sync)]
         [Alias("g")]
         [Summary("Calls a win for the specified team in the specified game and lobby with an optional comment")]
-        [Preconditions.RequirePermission(PermissionLevel.Moderator)]
+        [RequirePermission(PermissionLevel.Moderator)]
         public async Task GameAsync(SocketTextChannel lobbyChannel, int gameNumber, TeamSelection winning_team, [Remainder]string comment = null)
         {
             await GameAsync(gameNumber, winning_team, lobbyChannel, comment);
@@ -581,7 +585,7 @@ namespace ELO.Modules
         [Command("Game", RunMode = RunMode.Sync)]
         [Alias("g")]
         [Summary("Calls a win for the specified team in the specified game and current (or specified) lobby with an optional comment")]
-        [Preconditions.RequirePermission(PermissionLevel.Moderator)]
+        [RequirePermission(PermissionLevel.Moderator)]
         public async Task GameAsync(int gameNumber, TeamSelection winning_team, SocketTextChannel lobbyChannel = null, [Remainder]string comment = null)
         {
             if (lobbyChannel == null)
