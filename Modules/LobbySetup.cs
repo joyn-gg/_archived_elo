@@ -149,8 +149,8 @@ namespace ELO.Modules
             await SimpleEmbedAsync(res, Color.Blue);
         }
 
-        [Command("SetGameReadyAnnouncementChannel", RunMode = RunMode.Sync)]
-        [Alias("GameReadyAnnouncementsChannel", "GameReadyAnnouncements", "ReadyAnnouncements", "SetReadyAnnouncements")]
+        [Command("SetReadyChannel", RunMode = RunMode.Sync)]
+        [Alias("SetGameReadyAnnouncementChannel", "GameReadyAnnouncementsChannel", "GameReadyAnnouncements", "ReadyAnnouncements", "SetReadyAnnouncements")]
         [Summary("Set a channel to send game ready announcements for the current lobby to.")]
         public async Task GameReadyAnnouncementChannel(SocketTextChannel destinationChannel = null)
         {
@@ -181,8 +181,8 @@ namespace ELO.Modules
             }
         }
 
-        [Command("SetGameResultAnnouncementChannel", RunMode = RunMode.Sync)]
-        [Alias("SetGameResultAnnouncements", "GameResultAnnouncements")]
+        [Command("SetResultChannel", RunMode = RunMode.Sync)]
+        [Alias("SetGameResultAnnouncementChannel", "SetGameResultAnnouncements", "GameResultAnnouncements")]
         [Summary("Set a channel to send game result announcements for the current lobby to.")]
         public async Task GameResultAnnouncementChannel(SocketTextChannel destinationChannel = null)
         {
