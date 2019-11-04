@@ -168,7 +168,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var updates = db.ScoreUpdates.AsNoTracking().Where(x => x.ChannelId == channel.Id).GroupBy(x => x.UserId);
+                var updates = db.ScoreUpdates.AsNoTracking().Where(x => x.ChannelId == channel.Id).ToArray().GroupBy(x => x.UserId);
                 var infos = new Dictionary<ulong, int>();
                 foreach (var group in updates)
                 {
