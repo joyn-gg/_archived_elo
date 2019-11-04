@@ -345,7 +345,7 @@ namespace ELO.Services
         }
 
 
-        private async Task GameVoteAsync(ShardedCommandContext context, Database db, Lobby lobby, GameResult game, int gameNumber, TeamSelection winning_team, HashSet<ulong> team1, HashSet<ulong> team2, [Remainder]string comment = null)
+        public async Task GameVoteAsync(ShardedCommandContext context, Database db, Lobby lobby, GameResult game, int gameNumber, TeamSelection winning_team, HashSet<ulong> team1, HashSet<ulong> team2, [Remainder]string comment = null)
         {
             if (game.GameState == GameState.Decided || game.GameState == GameState.Draw)
             {

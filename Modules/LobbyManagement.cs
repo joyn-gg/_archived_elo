@@ -134,6 +134,21 @@ namespace ELO.Modules
         [Command("Sub")]
         [Summary("Replace a user in the specified game with another.")]
         [Preconditions.RequirePermission(PermissionLevel.Moderator)]
+        public async Task SubUserAsync(SocketGuildUser user, SocketGuildUser replacedWith)
+        {
+            using (var db = new Database())
+            {
+                var game = db.GameResults.Where(x => x.LobbyId == Context.Channel.Id).OrderByDescending(x => x.GameId).FirstOrDefault();
+                if (game != null)
+                {
+                    await SubUserAsync(game.GameId, user, replacedWith);
+                }
+            }
+        }
+
+        [Command("Sub")]
+        [Summary("Replace a user in the specified game with another.")]
+        [Preconditions.RequirePermission(PermissionLevel.Moderator)]
         public async Task SubUserAsync(int gameNumber, SocketGuildUser user, SocketGuildUser replacedWith)
         {
             using (var db = new Database())
@@ -208,11 +223,17 @@ namespace ELO.Modules
                 if (player != null)
                 {
                     db.TeamPlayers.Remove(player);
-                    player.UserId = replacedWith.Id;
-                    db.TeamPlayers.Add(player);
+                    db.TeamPlayers.Add(new TeamPlayer
+                    {
+                        ChannelId = game.LobbyId,
+                        GameNumber = game.GameId,
+                        UserId = replacedWith.Id,
+                        TeamNumber = player.TeamNumber,
+                        GuildId = Context.Guild.Id
+                    });
                     db.SaveChanges();
 
-                    await SimpleEmbedAsync($"Team player {user.Mention} was replaced with {replacedWith.Mention}");
+                    await SimpleEmbedAsync($"Player {user.Mention} was replaced with {replacedWith.Mention}");
                 }
                 else
                 {

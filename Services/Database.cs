@@ -136,7 +136,7 @@ namespace ELO.Services
             modelBuilder.Entity<GameVote>(entity =>
             {
                 //As users can only have one vote, the team # is not part of the key
-                entity.HasKey(e => new { e.GuildId, e.ChannelId, e.UserId });
+                entity.HasKey(e => new { e.GuildId, e.ChannelId, e.UserId, e.GameId });
                 entity.HasOne(e => e.Game)
                     .WithMany(e => e.Votes)
                     .HasForeignKey(e => new { e.ChannelId, e.GameId });
