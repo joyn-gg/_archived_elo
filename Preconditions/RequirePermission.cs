@@ -79,7 +79,7 @@ namespace ELO.Preconditions
 
                 if (Level == PermissionLevel.Moderator)
                 {
-                    if (gUser.Roles.Any(x => x.Id == result.Item2.ModId || x.Id == result.Item2.AdminId || x.Permissions.Administrator))
+                    if (gUser.GuildPermissions.Administrator || gUser.Roles.Any(x => x.Id == result.Item2.ModId || x.Id == result.Item2.AdminId || x.Permissions.Administrator))
                     {
                         return PreconditionResult.FromSuccess();
                     }
@@ -93,7 +93,7 @@ namespace ELO.Preconditions
                 {
                     using (var db = new Database())
                     {
-                        if (gUser.Roles.Any(x => x.Id == result.Item2.AdminId || x.Permissions.Administrator))
+                        if (gUser.GuildPermissions.Administrator || gUser.Roles.Any(x => x.Id == result.Item2.AdminId || x.Permissions.Administrator))
                         {
                             return PreconditionResult.FromSuccess();
                         }
@@ -134,12 +134,12 @@ namespace ELO.Preconditions
 
         public override string Name()
         {
-            return "Moderator Command";
+            return "Custom Permission";
         }
 
         public override string PreviewText()
         {
-            return "Requires the user has an elo moderator role, elo admin role or server admin role";
+            return $"Requires the user the specified permission level of: {Level}, NOTE: This may be overridden by the server";
         }
     }
 }

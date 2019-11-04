@@ -126,11 +126,11 @@ namespace ELO.Services
             }
             if (permission.Level == PermissionLevel.Moderator)
             {
-                return (user.Roles.Any(x => x.Id == guildCache.ModId || x.Id == guildCache.AdminId || x.Permissions.Administrator), guildCache, permission);
+                return (user.GuildPermissions.Administrator || user.Roles.Any(x => x.Id == guildCache.ModId || x.Id == guildCache.AdminId || x.Permissions.Administrator), guildCache, permission);
             }
             if (permission.Level == PermissionLevel.ELOAdmin)
             {
-                return (user.Roles.Any(x => x.Id == guildCache.AdminId || x.Permissions.Administrator), guildCache, permission);
+                return (user.GuildPermissions.Administrator || user.Roles.Any(x => x.Id == guildCache.AdminId || x.Permissions.Administrator), guildCache, permission);
             }
             if (permission.Level == PermissionLevel.ServerAdmin)
             {
