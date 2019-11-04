@@ -97,6 +97,7 @@ namespace ELO
                 .AddSingleton<PremiumService>()
                 .AddSingleton<PermissionService>()
                 .AddSingleton<GameService>()
+                .AddSingleton<ELOJobs>()
                 .BuildServiceProvider();
 
             try

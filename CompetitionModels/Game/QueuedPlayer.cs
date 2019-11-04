@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ELO.Models
 {
@@ -13,5 +14,7 @@ namespace ELO.Models
         [ForeignKey("ChannelId")]
         public Lobby Lobby { get; set; }
         public ulong ChannelId { get; set; }
+
+        public DateTime QueuedAt { get; set; } = DateTime.UtcNow;
     }
 }

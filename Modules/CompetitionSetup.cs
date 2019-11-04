@@ -14,7 +14,7 @@ namespace ELO.Modules
     {
         public PremiumService Premium { get; }
 
-        public CompetitionSetup(PremiumService premium)
+        public CompetitionSetup(PremiumService premium, ELOJobs job)
         {
             Premium = premium;
         }
@@ -662,6 +662,46 @@ namespace ELO.Modules
                 db.Update(competition);
                 db.SaveChanges();
                 await SimpleEmbedAsync($"Requeue Delay Removed.", Color.Green);
+            }
+        }
+
+        [Command("SetQueueTimeout", RunMode = RunMode.Sync)]
+        [Summary("Set an automated queue timeout value.")]
+        public async Task SetQueueTimeout(TimeSpan? timeout = null)
+        {
+            if (timeout.HasValue && timeout < TimeSpan.FromMinutes(10))
+            {
+                await SimpleEmbedAsync("Minimum timeout legth is 10 minutes.");
+                return;
+            }
+
+            using (var db = new Database())
+            {
+                var competition = db.GetOrCreateCompetition(Context.Guild.Id);
+                if (timeout == null)
+                {
+                    await SimpleEmbedAsync($"Current Queue Timeout Setting: {(competition.QueueTimeout.HasValue ? competition.QueueTimeout.Value.GetReadableLength() : "None")}", Color.Blue);
+                    return;
+                }
+
+                competition.QueueTimeout = timeout;
+                db.Update(competition);
+                db.SaveChanges();
+                await SimpleEmbedAsync($"Queue Timeout Set to {competition.QueueTimeout.Value.GetReadableLength()}", Color.Green);
+            }
+        }
+
+        [Command("ResetQueueTimeout", RunMode = RunMode.Sync)]
+        [Summary("Remove the queue timeout.")]
+        public async Task ResetQueueTimeout()
+        {
+            using (var db = new Database())
+            {
+                var competition = db.GetOrCreateCompetition(Context.Guild.Id);
+                competition.QueueTimeout = null;
+                db.Update(competition);
+                db.SaveChanges();
+                await SimpleEmbedAsync($"Queue Timeout Removed.", Color.Green);
             }
         }
     }

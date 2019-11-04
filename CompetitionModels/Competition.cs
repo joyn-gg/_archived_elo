@@ -59,6 +59,8 @@ namespace ELO.Models
 
         public int DefaultRegisterScore { get; set; } = 0;
 
+        public TimeSpan? QueueTimeout { get; set; } = null;
+
         //TODO: Consider adding a setter to ensure value is always positive.
         public int DefaultWinModifier { get; set; } = 10;
         private int _DefaultLossModifier;
