@@ -45,6 +45,7 @@ namespace ELO.Services
             {
                 comp = new Competition(guildId);
                 Competitions.Add(comp);
+                SaveChanges();
             }
 
             return comp;
