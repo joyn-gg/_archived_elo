@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Commands;
 using ELO.Entities;
 using ELO.Models;
 using System;

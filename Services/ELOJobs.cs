@@ -1,12 +1,10 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
+using RavenBOT.Common;
 using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Linq;
-using RavenBOT.Common;
-using Discord;
 
 namespace ELO.Services
 {
@@ -30,7 +28,7 @@ namespace ELO.Services
                     var now = DateTime.UtcNow;
                     var queuedPlayers = db.QueuedPlayers.ToArray();
                     var guildGroups = queuedPlayers.GroupBy(x => x.GuildId);
-                    foreach  (var group in guildGroups)
+                    foreach (var group in guildGroups)
                     {
                         var comp = db.GetOrCreateCompetition(group.Key);
                         if (comp.QueueTimeout == null) continue;
