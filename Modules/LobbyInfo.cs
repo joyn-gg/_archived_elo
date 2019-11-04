@@ -12,30 +12,32 @@ namespace ELO.Modules
 {
     public partial class LobbyManagement
     {
-        /*
+        
         [Command("Maps", RunMode = RunMode.Async)]
         [Alias("MapList")]
         [Summary("Displays map information")]
         public async Task MapsAsync()
         {
-            if (!await CheckLobbyAsync())
+            using (var db = new Database())
             {
-                return;
-            }
-            string maps;
-            if (CurrentLobby.MapSelector != null)
-            {
-                maps = $"\n**Map Mode:** {CurrentLobby.MapSelector.Mode}\n" +
-                        $"**Maps:** {string.Join(", ", CurrentLobby.MapSelector.Maps)}\n" +
-                        $"**Recent Maps:** {string.Join(", ", CurrentLobby.MapSelector.GetHistory())}";
-            }
-            else
-            {
-                maps = "N/A";
-            }
+                var lobby = db.GetLobby(Context.Channel);
+                if (lobby == null)
+                {
+                    await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
+                    return;
+                }
 
-            await SimpleEmbedAsync(maps);
-        }*/
+                var maps = db.Maps.Where(x => x.ChannelId == Context.Channel.Id).AsNoTracking().ToArray();
+                if (maps.Length != 0)
+                {
+                    await SimpleEmbedAsync($"**Maps:** {string.Join(", ", maps.Select(x => x.MapName))}");
+                }
+                else
+                {
+                    await SimpleEmbedAsync("N/A");
+                }
+            }
+        }
 
         [Command("Lobby", RunMode = RunMode.Async)]
         [Summary("Displays information about the current lobby.")]
@@ -119,6 +121,17 @@ namespace ELO.Modules
                         gameEmbed.AddField("Team 1", $"Captain: {MentionUtils.MentionUser(t1c.UserId)}\n{string.Join("\n", t1Users)}");
                         gameEmbed.AddField("Team 2", $"Captain: {MentionUtils.MentionUser(t2c.UserId)}\n{string.Join("\n", t2Users)}");
                         gameEmbed.AddField("Remaining Players", string.Join("\n", remainingPlayers));
+
+                        if (game.PickOrder == CaptainPickOrder.PickOne)
+                        {
+
+                            gameEmbed.AddField("Captain Currently Picking", );
+                        }
+                        else if (game.PickOrder == CaptainPickOrder.PickTwo)
+                        {
+                            gameEmbed.AddField("Captain Currently Picking", );
+                        }
+
                         await ReplyAsync(gameEmbed);
                         return;
                     }
