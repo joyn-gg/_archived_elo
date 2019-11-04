@@ -87,7 +87,7 @@ namespace ELO.Services
         }
         public HashSet<ulong> GetTeamFull(GameResult game, int teamNumber)
         {
-            var cap = TeamCaptains.FirstOrDefault(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == x.GameNumber && x.TeamNumber == teamNumber);
+            var cap = TeamCaptains.SingleOrDefault(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == x.GameNumber && x.TeamNumber == teamNumber);
             var players = TeamPlayers.Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == teamNumber).Select(x => x.UserId).ToHashSet();
             if (cap != null)
             {
