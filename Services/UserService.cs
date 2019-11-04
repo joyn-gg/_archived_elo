@@ -14,6 +14,7 @@ namespace ELO.Services
             var noted = new List<string>();
             try
             {
+                var userRoles = user.Roles.Where(x => !x.IsEveryone && !x.IsManaged).Select(x => x.Id).ToList();
                 if (user.Guild.CurrentUser.GuildPermissions.ManageRoles)
                 {
                     var rankMatches = ranks.Where(x => x.Points <= player.Points);
@@ -35,8 +36,8 @@ namespace ELO.Services
                             {
                                 if (role.Position < user.Guild.CurrentUser.Hierarchy)
                                 {
-                                    await user.RemoveRolesAsync(gRoles);
-                                    await user.AddRoleAsync(role);
+                                    userRoles.RemoveAll(x => gRoles.Any(g => g.Id == x));
+                                    userRoles.Add(role.Id);
 
                                     noted.Add($"{user.Mention} received the {(role.IsMentionable ? role.Mention : role.Name)} rank");
                                 }
@@ -61,7 +62,7 @@ namespace ELO.Services
                     var removeRanks = ranks.Where(x => x.Points > player.Points).ToArray();
                     if (removeRanks.Length > 0)
                     {
-                        await user.RemoveRolesAsync(user.Guild.Roles.Where(x => removeRanks.Any(r => r.RoleId == x.Id) && x.Position < user.Guild.CurrentUser.Hierarchy).ToArray());
+                        userRoles.RemoveAll(x => removeRanks.Any(g => g.RoleId == x));
                     }
 
 
@@ -75,7 +76,7 @@ namespace ELO.Services
                             {
                                 if (role.Position < user.Guild.CurrentUser.Hierarchy)
                                 {
-                                    await user.AddRoleAsync(role);
+                                    userRoles.Add(role.Id);
                                 }
                             }
                         }
@@ -86,6 +87,8 @@ namespace ELO.Services
                     noted.Add("The bot requires manage roles permissions in order to modify user roles.");
                 }
 
+
+                string replacementName = null;
                 if (comp.UpdateNames)
                 {
                     var newName = comp.GetNickname(player);
@@ -99,7 +102,7 @@ namespace ELO.Services
                         {
                             if (user.Hierarchy < user.Guild.CurrentUser.Hierarchy)
                             {
-                                await user.ModifyAsync(x => x.Nickname = newName);
+                                replacementName = newName;
                             }
                             else
                             {
@@ -112,6 +115,15 @@ namespace ELO.Services
                         }
                     }
                 }
+
+                await user.ModifyAsync(x =>
+                {
+                    x.RoleIds = userRoles;
+                    if (replacementName != null)
+                    {
+                        x.Nickname = replacementName;
+                    }
+                });
             }
             catch (Exception e)
             {

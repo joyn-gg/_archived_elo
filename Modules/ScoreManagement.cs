@@ -250,7 +250,7 @@ namespace ELO.Modules
                                 await UserService.UpdateUserAsync(comp, player, ranks, user);
                             });
                             //2 sec per rename? should be fine
-                            //await Task.Delay(2000);
+                            await Task.Delay(2000);
                         }
                     }
                     await SimpleEmbedAsync($"Refresh task complete.", Color.Green);
