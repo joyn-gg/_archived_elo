@@ -509,6 +509,31 @@ namespace ELO.Modules
             }
         }
 
+        [Command("SelectHost", RunMode = RunMode.Sync)]
+        [Summary("Sets whether the bot will automatically select a host.")]
+        [RavenRequireBotPermission(GuildPermission.ManageMessages)]
+        public async Task SelectHostAsync(bool? selectHost = null)
+        {
+            using (var db = new Database())
+            {
+                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                if (lobby == null)
+                {
+                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    return;
+                }
+                if (selectHost == null)
+                {
+                    await SimpleEmbedAsync($"Current Select Host Setting: {lobby.SelectHost}", Color.Blue);
+                    return;
+                }
+                lobby.SelectHost = selectHost.Value;
+                db.Lobbies.Update(lobby);
+                db.SaveChanges();
+                await SimpleEmbedAsync($"Select Host: {selectHost.Value}", Color.Green);
+            }
+        }
+
         [Command("SetMultiplier", RunMode = RunMode.Sync)]
         [Summary("Sets the lobby score multiplier.")]
         public async Task SetLobbyMultiplier(double multiplier)

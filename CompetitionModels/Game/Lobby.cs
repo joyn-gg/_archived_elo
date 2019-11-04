@@ -39,6 +39,7 @@ namespace ELO.Models
         public bool DmUsersOnGameReady { get; set; } = false;
         //public bool ReactOnJoinLeave { get; set; } = false;
         public bool HideQueue { get; set; } = false;
+        public bool SelectHost { get; set; } = false;
 
         public int PlayersPerTeam { get; set; } = 5;
 

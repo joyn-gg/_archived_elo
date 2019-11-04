@@ -206,12 +206,22 @@ namespace ELO.Services
                 //TODO: Assign team members to specific roles and create a channel for chat within.
                 if (lobby.TeamPickMode == PickMode.TryBalance || lobby.TeamPickMode == PickMode.Random)
                 {
+                    string hostStr = null;
+                    if (lobby.SelectHost)
+                    {
+                        var qIds = queue.Select(x => x.UserId).ToList();
+                        var players = db.Players.Where(p => qIds.Contains(p.UserId)).ToArray();
+                        var maxPlayer = players.OrderByDescending(x => x.Points).First();
+                        hostStr = $"\n**Selected Host:** {MentionUtils.MentionUser(maxPlayer.UserId)}";
+                    }
+
                     var res = GameService.GetGameMessage(game, $"Game #{game.GameId} Started",
                             GameFlag.lobby,
                             GameFlag.map,
                             GameFlag.time,
                             GameFlag.usermentions,
                             GameFlag.gamestate);
+                    res.Item2.Description += hostStr;
 
                     await context.Channel.SendMessageAsync(res.Item1, false, res.Item2.Build());
                     if (lobby.GameReadyAnnouncementChannel != null)
