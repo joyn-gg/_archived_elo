@@ -30,6 +30,7 @@ namespace ELO.Models
 
         public int? MinimumPoints { get; set; } = null;
         public double LobbyMultiplier { get; set; } = 1;
+        public bool MultiplyLossValue { get; set; } = false;
 
 
         public int? HighLimit { get; set; } = null;

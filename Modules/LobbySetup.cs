@@ -529,6 +529,32 @@ namespace ELO.Modules
             }
         }
 
+        [Command("LobbyMultiplierLoss", RunMode = RunMode.Sync)]
+        [Summary("Sets whether the lobby multiplier affects the amount of points removed from users.")]
+        public async Task SetLossToggleMultiplier(bool? value = null)
+        {
+            using (var db = new Database())
+            {
+                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                if (lobby == null)
+                {
+                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    return;
+                }
+
+                if (value == null)
+                {
+                    await SimpleEmbedAsync($"Current Multiply Loss Value Setting: {lobby.MultiplyLossValue}");
+                    return;
+                }
+
+                lobby.MultiplyLossValue = value.Value;
+                db.Lobbies.Update(lobby);
+                db.SaveChanges();
+                await SimpleEmbedAsync($"Multiplier will affect the loss amount: {lobby.MultiplyLossValue}", Color.Green);
+            }
+        }
+
         [Command("SetReductionPercent", RunMode = RunMode.Sync)]
         [Summary("Sets the lobby score multiplier.")]
         public async Task SetReductionPercent(double percent = 0.5)
