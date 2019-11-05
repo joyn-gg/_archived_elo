@@ -37,14 +37,14 @@ namespace ELO.Modules
 
         [Command("Invite")]
         [Summary("Returns the bot invite")]
-        public async Task InviteAsync()
+        public virtual async Task InviteAsync()
         {
             await SimpleEmbedAsync($"Invite: https://discordapp.com/oauth2/authorize?client_id={Context.Client.CurrentUser.Id}&scope=bot&permissions=8");
         }
 
         [Command("Help")]
         [Summary("Shows available commands based on the current user permissions")]
-        public async Task HelpAsync()
+        public virtual async Task HelpAsync()
         {
             using (var db = new Database())
             {
@@ -85,12 +85,12 @@ namespace ELO.Modules
         [Command("FullHelp")]
         [RequirePermission(PermissionLevel.Moderator)]
         [Summary("Displays all commands without checking permissions")]
-        public async Task FullHelpAsync()
+        public virtual async Task FullHelpAsync()
         {
             await GenerateHelpAsync(false);
         }
 
-        public async Task GenerateHelpAsync(bool checkPreconditions = true)
+        public virtual async Task GenerateHelpAsync(bool checkPreconditions = true)
         {
             try
             {
@@ -108,7 +108,7 @@ namespace ELO.Modules
 
         [Command("Shards")]
         [Summary("Displays information about all shards")]
-        public async Task ShardInfoAsync()
+        public virtual async Task ShardInfoAsync()
         {
             var info = Context.Client.Shards.Select(x => $"[{x.ShardId}] {x.Status} {x.ConnectionState} - Guilds: {x.Guilds.Count} Users: {x.Guilds.Sum(g => g.MemberCount)}");
             await ReplyAsync($"```\n" + $"{string.Join("\n", info)}\n" + $"```");
@@ -117,7 +117,7 @@ namespace ELO.Modules
         [RateLimit(1, 1, Measure.Minutes, RateLimitFlags.ApplyPerGuild)]
         [Command("Stats")]
         [Summary("Bot Info and Stats")]
-        public async Task InformationAsync()
+        public virtual async Task InformationAsync()
         {
             string changes;
             var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/PassiveModding/ELO/commits");
@@ -160,7 +160,7 @@ namespace ELO.Modules
         [Command("Ranks", RunMode = RunMode.Async)]
         [Summary("Displays information about the server's current ranks")]
         [RequirePermission(PermissionLevel.Registered)]
-        public async Task ShowRanksAsync()
+        public virtual async Task ShowRanksAsync()
         {
             using (var db = new Database())
             {
@@ -181,7 +181,7 @@ namespace ELO.Modules
         [Alias("Info", "GetUser")]
         [Summary("Displays information about you or the specified user.")]
         [RequirePermission(PermissionLevel.Registered)]
-        public async Task InfoAsync(SocketGuildUser user = null)
+        public virtual async Task InfoAsync(SocketGuildUser user = null)
         {
             if (user == null)
             {
@@ -232,7 +232,7 @@ namespace ELO.Modules
         [Summary("Shows the current server-wide leaderboard.")]
         [RequirePermission(PermissionLevel.Registered)]
         //TODO: Ratelimiting as this is a data heavy command.
-        public async Task LeaderboardAsync()
+        public virtual async Task LeaderboardAsync()
         {
             using (var db = new Database())
             {

@@ -148,7 +148,7 @@ namespace ELO.Services
             return sb.ToString();
         }
 
-        public async Task GameAsync(ShardedCommandContext context, int gameNumber, TeamSelection winning_team, SocketTextChannel lobbyChannel = null, string comment = null)
+        public virtual async Task GameAsync(ShardedCommandContext context, int gameNumber, TeamSelection winning_team, SocketTextChannel lobbyChannel = null, string comment = null)
         {
             if (lobbyChannel == null)
             {
@@ -256,7 +256,7 @@ namespace ELO.Services
             }
         }
 
-        public async Task AnnounceResultAsync(ShardedCommandContext context, Lobby lobby, EmbedBuilder builder)
+        public virtual async Task AnnounceResultAsync(ShardedCommandContext context, Lobby lobby, EmbedBuilder builder)
         {
             if (lobby.GameResultAnnouncementChannel != null && lobby.GameResultAnnouncementChannel != context.Channel.Id)
             {
@@ -277,14 +277,14 @@ namespace ELO.Services
             await context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
-        public async Task AnnounceResultAsync(ShardedCommandContext context, Lobby lobby, GameResult game)
+        public virtual async Task AnnounceResultAsync(ShardedCommandContext context, Lobby lobby, GameResult game)
         {
             var embed = GameService.GetGameEmbed(game);
             await AnnounceResultAsync(context, lobby, embed);
         }
 
 
-        public async Task DrawAsync(ShardedCommandContext context, int gameNumber, SocketTextChannel lobbyChannel = null, [Remainder]string comment = null)
+        public virtual async Task DrawAsync(ShardedCommandContext context, int gameNumber, SocketTextChannel lobbyChannel = null, [Remainder]string comment = null)
         {
             if (lobbyChannel == null)
             {
@@ -345,7 +345,7 @@ namespace ELO.Services
         }
 
 
-        public async Task GameVoteAsync(ShardedCommandContext context, Database db, Lobby lobby, GameResult game, int gameNumber, TeamSelection winning_team, HashSet<ulong> team1, HashSet<ulong> team2, [Remainder]string comment = null)
+        public virtual async Task GameVoteAsync(ShardedCommandContext context, Database db, Lobby lobby, GameResult game, int gameNumber, TeamSelection winning_team, HashSet<ulong> team1, HashSet<ulong> team2, [Remainder]string comment = null)
         {
             if (game.GameState == GameState.Decided || game.GameState == GameState.Draw)
             {
@@ -415,7 +415,7 @@ namespace ELO.Services
             await AnnounceResultAsync(context, lobby, response);
         }
 
-        public async Task CancelAsync(ShardedCommandContext context, int gameNumber, SocketTextChannel lobbyChannel = null, [Remainder]string comment = null)
+        public virtual async Task CancelAsync(ShardedCommandContext context, int gameNumber, SocketTextChannel lobbyChannel = null, [Remainder]string comment = null)
         {
             if (lobbyChannel == null)
             {
@@ -464,7 +464,7 @@ namespace ELO.Services
             }
         }
 
-        public async Task GameResultAsync(ShardedCommandContext context, int gameNumber, string voteState, SocketTextChannel lobbyChannel = null)
+        public virtual async Task GameResultAsync(ShardedCommandContext context, int gameNumber, string voteState, SocketTextChannel lobbyChannel = null)
         {
             if (lobbyChannel == null)
             {

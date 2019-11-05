@@ -27,7 +27,7 @@ namespace ELO
             program.RunAsync(args).GetAwaiter().GetResult();
         }
 
-        public async Task RunAsync(string[] args = null)
+        public virtual async Task RunAsync(string[] args = null)
         {
             if (args != null)
             {

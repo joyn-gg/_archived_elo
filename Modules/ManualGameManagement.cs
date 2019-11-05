@@ -26,14 +26,14 @@ namespace ELO.Modules
 
         [Command("Win", RunMode = RunMode.Sync)]
         [Summary("Adds a win and updates points for the specified users.")]
-        public async Task WinAsync(params SocketGuildUser[] users)
+        public virtual async Task WinAsync(params SocketGuildUser[] users)
         {
             await UpdateTeamScoresAsync(true, users.Select(x => x.Id).ToHashSet());
         }
 
         [Command("Lose", RunMode = RunMode.Sync)]
         [Summary("Adds a loss and updates points for the specified users.")]
-        public async Task LoseAsync(params SocketGuildUser[] users)
+        public virtual async Task LoseAsync(params SocketGuildUser[] users)
         {
             await UpdateTeamScoresAsync(false, users.Select(x => x.Id).ToHashSet());
         }
@@ -43,7 +43,7 @@ namespace ELO.Modules
 
         [Command("UndoManualGame", RunMode = RunMode.Sync)]
         [Summary("Adds a win and updates points for the specified users.")]
-        public async Task UndoManualAsync(int gameId)
+        public virtual async Task UndoManualAsync(int gameId)
         {
             using (var db = new Database())
             {
@@ -95,7 +95,7 @@ namespace ELO.Modules
         }
 
 
-        public async Task UpdateTeamScoresAsync(bool win, HashSet<ulong> userIds)
+        public virtual async Task UpdateTeamScoresAsync(bool win, HashSet<ulong> userIds)
         {
             using (var db = new Database())
             {

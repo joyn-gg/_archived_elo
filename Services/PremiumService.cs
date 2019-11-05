@@ -53,7 +53,7 @@ namespace ELO.Services
             }
         }
 
-        public async Task Claim(ShardedCommandContext context)
+        public virtual async Task Claim(ShardedCommandContext context)
         {
             using (var db = new Database())
             {

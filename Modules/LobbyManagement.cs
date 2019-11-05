@@ -37,7 +37,7 @@ namespace ELO.Modules
         [Alias("Clear Queue", "clearq", "clearque")]
         [Summary("Clears the current queue.")]
         [Preconditions.RequirePermission(PermissionLevel.Moderator)]
-        public async Task ClearQueueAsync()
+        public virtual async Task ClearQueueAsync()
         {
             using (var db = new Database())
             {
@@ -72,7 +72,7 @@ namespace ELO.Modules
         [Command("ForceJoin", RunMode = RunMode.Sync)]
         [Summary("Forcefully adds a user to queue, bypasses minimum points")]
         [Preconditions.RequirePermission(PermissionLevel.Moderator)]
-        public async Task ForceJoinAsync(params SocketGuildUser[] users)
+        public virtual async Task ForceJoinAsync(params SocketGuildUser[] users)
         {
             using (var db = new Database())
             {
@@ -134,7 +134,7 @@ namespace ELO.Modules
         [Command("Sub")]
         [Summary("Replace a user in the specified game with another.")]
         [Preconditions.RequirePermission(PermissionLevel.Moderator)]
-        public async Task SubUserAsync(SocketGuildUser user, SocketGuildUser replacedWith)
+        public virtual async Task SubUserAsync(SocketGuildUser user, SocketGuildUser replacedWith)
         {
             using (var db = new Database())
             {
@@ -149,7 +149,7 @@ namespace ELO.Modules
         [Command("Sub")]
         [Summary("Replace a user in the specified game with another.")]
         [Preconditions.RequirePermission(PermissionLevel.Moderator)]
-        public async Task SubUserAsync(int gameNumber, SocketGuildUser user, SocketGuildUser replacedWith)
+        public virtual async Task SubUserAsync(int gameNumber, SocketGuildUser user, SocketGuildUser replacedWith)
         {
             using (var db = new Database())
             {
@@ -265,7 +265,7 @@ namespace ELO.Modules
         [Alias("FJ")]
         [Summary("Forcefully adds a user to queue, bypasses minimum points")]
         [Preconditions.RequirePermission(PermissionLevel.Moderator)]
-        public async Task ForceJoinAsync(SocketGuildUser user)
+        public virtual async Task ForceJoinAsync(SocketGuildUser user)
         {
             await ForceJoinAsync(new[] { user });
         }
@@ -274,7 +274,7 @@ namespace ELO.Modules
         [Alias("FR")]
         [Summary("Forcefully removes a player for the queue")]
         [Preconditions.RequirePermission(PermissionLevel.Moderator)]
-        public async Task ForceRemoveAsync(SocketGuildUser user)
+        public virtual async Task ForceRemoveAsync(SocketGuildUser user)
         {
             using (var db = new Database())
             {
@@ -311,7 +311,7 @@ namespace ELO.Modules
         [Command("Pick", RunMode = RunMode.Sync)]
         [Alias("p")]
         [Summary("Picks the specified player(s) for your team.")]
-        public async Task PickPlayerAsync(params SocketGuildUser[] users)
+        public virtual async Task PickPlayerAsync(params SocketGuildUser[] users)
         {
             using (var db = new Database())
             {

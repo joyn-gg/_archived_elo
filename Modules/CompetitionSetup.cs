@@ -22,7 +22,7 @@ namespace ELO.Modules
 
         [Command("SetPrefix", RunMode = RunMode.Sync)]
         [Summary("Set the server's prefix")]
-        public async Task SetPrefixAsync([Remainder]string prefix = null)
+        public virtual async Task SetPrefixAsync([Remainder]string prefix = null)
         {
             using (var db = new Database())
             {
@@ -36,14 +36,14 @@ namespace ELO.Modules
 
         [Command("ClaimPremium", RunMode = RunMode.Sync)]
         [Summary("Claim a patreon premium subscription")]
-        public async Task ClaimPremiumAsync()
+        public virtual async Task ClaimPremiumAsync()
         {
             await Premium.Claim(Context);
         }
 
         [Command("RedeemLegacyToken", RunMode = RunMode.Sync)]
         [Summary("Redeem a 16 digit token for the old version of ELO")]
-        public async Task RedeemLegacyTokenAsync([Remainder]string token = null)
+        public virtual async Task RedeemLegacyTokenAsync([Remainder]string token = null)
         {
             if (token == null)
             {
@@ -87,7 +87,7 @@ namespace ELO.Modules
 
         [Command("LegacyExpiration", RunMode = RunMode.Sync)]
         [Summary("Displays the expiry date of any legacy subscription")]
-        public async Task LegacyExpirationAsync()
+        public virtual async Task LegacyExpirationAsync()
         {
             using (var db = new Database())
             {
@@ -113,7 +113,7 @@ namespace ELO.Modules
 
         [Command("RegistrationLimit", RunMode = RunMode.Async)]
         [Summary("Displays the maximum amount of registrations for the server")]
-        public async Task GetRegisterLimit()
+        public virtual async Task GetRegisterLimit()
         {
             await SimpleEmbedAsync($"Current registration limit is a maximum of: {Premium.GetRegistrationLimit(Context.Guild.Id)}", Color.Blue);
         }
@@ -121,7 +121,7 @@ namespace ELO.Modules
         [Command("CompetitionInfo", RunMode = RunMode.Async)]
         [Alias("CompetitionSettings", "GameSettings")]
         [Summary("Displays information about the current servers competition settings")]
-        public async Task CompetitionInfo()
+        public virtual async Task CompetitionInfo()
         {
             using (var db = new Database())
             {
@@ -157,7 +157,7 @@ namespace ELO.Modules
 
         [Command("SetRegisterScore", RunMode = RunMode.Sync)]
         [Summary("Sets default points when registering")]
-        public async Task SetRegisterRole(int amount = 0)
+        public virtual async Task SetRegisterRole(int amount = 0)
         {
             using (var db = new Database())
             {
@@ -172,7 +172,7 @@ namespace ELO.Modules
         [Command("SetRegisterRole", RunMode = RunMode.Sync)]
         [Alias("Set RegisterRole", "RegisterRole")]
         [Summary("Sets or displays the current register role")]
-        public async Task SetRegisterRole([Remainder] IRole role = null)
+        public virtual async Task SetRegisterRole([Remainder] IRole role = null)
         {
             using (var db = new Database())
             {
@@ -215,7 +215,7 @@ namespace ELO.Modules
         [Command("SetRegisterMessage", RunMode = RunMode.Sync)]
         [Alias("Set RegisterMessage")]
         [Summary("Sets the message shown to users when they register")]
-        public async Task SetRegisterMessageAsync([Remainder] string message = null)
+        public virtual async Task SetRegisterMessageAsync([Remainder] string message = null)
         {
             using (var db = new Database())
             {
@@ -240,7 +240,7 @@ namespace ELO.Modules
 
         [Command("RegisterMessage", RunMode = RunMode.Async)]
         [Summary("Displays the current register message for the server")]
-        public async Task ShowRegisterMessageAsync()
+        public virtual async Task ShowRegisterMessageAsync()
         {
             using (var db = new Database())
             {
@@ -273,7 +273,7 @@ namespace ELO.Modules
         [Command("RegisterMessageFormats", RunMode = RunMode.Async)]
         [Alias("RegisterFormats")]
         [Summary("Shows replacements that can be used in the register message")]
-        public async Task ShowRegistrationFormatsAsync()
+        public virtual async Task ShowRegistrationFormatsAsync()
         {
             var response = "**Register Message Formats**\n" + // Use Title
                 "{score} - Total points\n" +
@@ -292,7 +292,7 @@ namespace ELO.Modules
         [Command("SetNicknameFormat", RunMode = RunMode.Sync)]
         [Alias("Set NicknameFormat", "NicknameFormat", "NameFormat", "SetNameFormat")]
         [Summary("Sets how user nicknames are formatted")]
-        public async Task SetNicknameFormatAsync([Remainder] string format)
+        public virtual async Task SetNicknameFormatAsync([Remainder] string format)
         {
             using (var db = new Database())
             {
@@ -314,7 +314,7 @@ namespace ELO.Modules
         [Command("NicknameFormats", RunMode = RunMode.Async)]
         [Alias("NameFormats")]
         [Summary("Shows replacements that can be used in the user nickname formats")]
-        public async Task ShowNicknameFormatsAsync()
+        public virtual async Task ShowNicknameFormatsAsync()
         {
             var response = "**NickNameFormats**\n" + // Use Title
                 "{score} - Total points\n" +
@@ -334,7 +334,7 @@ namespace ELO.Modules
         [Command("AddRank", RunMode = RunMode.Sync)]
         [Alias("Add Rank", "UpdateRank")]
         [Summary("Adds a new rank with the specified amount of points")]
-        public async Task AddRank(IRole role, int points)
+        public virtual async Task AddRank(IRole role, int points)
         {
             using (var db = new Database())
             {
@@ -365,7 +365,7 @@ namespace ELO.Modules
         [Command("AddRank", RunMode = RunMode.Sync)]
         [Alias("Add Rank", "UpdateRank")]
         [Summary("Adds a new rank with the specified amount of points and win/loss modifiers")]
-        public async Task AddRank(IRole role, int points, int win, int lose)
+        public virtual async Task AddRank(IRole role, int points, int win, int lose)
         {
             using (var db = new Database())
             {
@@ -397,7 +397,7 @@ namespace ELO.Modules
         [Command("AddRank", RunMode = RunMode.Sync)]
         [Alias("Add Rank", "UpdateRank")]
         [Summary("Adds a new rank with the specified amount of points and win/loss modifiers")]
-        public async Task AddRank(int points, IRole role, int win, int lose)
+        public virtual async Task AddRank(int points, IRole role, int win, int lose)
         {
             await AddRank(role, points, win, lose);
         }
@@ -405,14 +405,14 @@ namespace ELO.Modules
         [Command("AddRank", RunMode = RunMode.Sync)]
         [Alias("Add Rank", "UpdateRank")]
         [Summary("Adds a new rank with the specified amount of points")]
-        public async Task AddRank(int points, IRole role)
+        public virtual async Task AddRank(int points, IRole role)
         {
             await AddRank(role, points);
         }
 
         [Command("PurgeRanks", RunMode = RunMode.Sync)]
         [Summary("Remove all ranks that no longer have a role")]
-        public async Task RemoveRank()
+        public virtual async Task RemoveRank()
         {
             using (var db = new Database())
             {
@@ -428,7 +428,7 @@ namespace ELO.Modules
         [Command("RemoveRank", RunMode = RunMode.Sync)]
         [Alias("Remove Rank", "DelRank")]
         [Summary("Removes a rank based of the role's id")]
-        public async Task RemoveRank(ulong roleId)
+        public virtual async Task RemoveRank(ulong roleId)
         {
             using (var db = new Database())
             {
@@ -448,7 +448,7 @@ namespace ELO.Modules
         [Command("RemoveRank", RunMode = RunMode.Sync)]
         [Alias("Remove Rank", "DelRank")]
         [Summary("Removes a rank")]
-        public async Task RemoveRank(IRole role)
+        public virtual async Task RemoveRank(IRole role)
         {
             await RemoveRank(role.Id);
         }
@@ -456,7 +456,7 @@ namespace ELO.Modules
         [Command("AllowNegativeScore", RunMode = RunMode.Sync)]
         [Alias("AllowNegative")]
         [Summary("Sets whether negative scores are allowed")]
-        public async Task AllowNegativeAsync(bool? allowNegative = null)
+        public virtual async Task AllowNegativeAsync(bool? allowNegative = null)
         {
             using (var db = new Database())
             {
@@ -475,7 +475,7 @@ namespace ELO.Modules
 
         [Command("AllowReRegister", RunMode = RunMode.Sync)]
         [Summary("Sets whether users are allowed to run the register command multiple times")]
-        public async Task AllowReRegisterAsync(bool? reRegister = null)
+        public virtual async Task AllowReRegisterAsync(bool? reRegister = null)
         {
             using (var db = new Database())
             {
@@ -494,7 +494,7 @@ namespace ELO.Modules
 
         [Command("AllowSelfRename", RunMode = RunMode.Sync)]
         [Summary("Sets whether users are allowed to use the rename command")]
-        public async Task AllowSelfRenameAsync(bool? selfRename = null)
+        public virtual async Task AllowSelfRenameAsync(bool? selfRename = null)
         {
             using (var db = new Database())
             {
@@ -513,7 +513,7 @@ namespace ELO.Modules
 
         [Command("DefaultWinModifier", RunMode = RunMode.Sync)]
         [Summary("Sets the default amount of points users can earn when winning.")]
-        public async Task CompWinModifier(int? amountToAdd = null)
+        public virtual async Task CompWinModifier(int? amountToAdd = null)
         {
             using (var db = new Database())
             {
@@ -534,7 +534,7 @@ namespace ELO.Modules
 
         [Command("DefaultLossModifier", RunMode = RunMode.Sync)]
         [Summary("Sets the default amount of points users lose when the lose a game.")]
-        public async Task CompLossModifier(int? amountToSubtract = null)
+        public virtual async Task CompLossModifier(int? amountToSubtract = null)
         {
             using (var db = new Database())
             {
@@ -554,7 +554,7 @@ namespace ELO.Modules
 
         [Command("RankLossModifier", RunMode = RunMode.Sync)]
         [Summary("Sets the amount of points lost for a user with the specified rank.")]
-        public async Task RankLossModifier(IRole role, int? amountToSubtract = null)
+        public virtual async Task RankLossModifier(IRole role, int? amountToSubtract = null)
         {
             using (var db = new Database())
             {
@@ -582,7 +582,7 @@ namespace ELO.Modules
 
         [Command("RankWinModifier", RunMode = RunMode.Sync)]
         [Summary("Sets the amount of points lost for a user with the specified rank.")]
-        public async Task RankWinModifier(IRole role, int? amountToAdd = null)
+        public virtual async Task RankWinModifier(IRole role, int? amountToAdd = null)
         {
             using (var db = new Database())
             {
@@ -610,7 +610,7 @@ namespace ELO.Modules
 
         [Command("UpdateNicknames", RunMode = RunMode.Sync)]
         [Summary("Sets whether the bot will update user nicknames.")]
-        public async Task UpdateNicknames(bool? updateNicknames = null)
+        public virtual async Task UpdateNicknames(bool? updateNicknames = null)
         {
             using (var db = new Database())
             {
@@ -630,7 +630,7 @@ namespace ELO.Modules
 
         [Command("CreateReactionRegistration", RunMode = RunMode.Sync)]
         [Summary("Creates a message which users can react to in order to register")]
-        public async Task CreateReactAsync([Remainder]string message = null)
+        public virtual async Task CreateReactAsync([Remainder]string message = null)
         {
             using (var db = new Database())
             {
@@ -648,7 +648,7 @@ namespace ELO.Modules
         [Command("ReQueueDelay", RunMode = RunMode.Sync)]
         [Summary("Set or displays the amount of time required between joining queues.")]
         [Alias("SetRequeueDelay")]
-        public async Task SetReQueueDelayAsync([Remainder]TimeSpan? delay = null)
+        public virtual async Task SetReQueueDelayAsync([Remainder]TimeSpan? delay = null)
         {
             using (var db = new Database())
             {
@@ -668,7 +668,7 @@ namespace ELO.Modules
 
         [Command("ResetReQueueDelay", RunMode = RunMode.Sync)]
         [Summary("Removes the amount of time required between joining queues.")]
-        public async Task ResetReQueueDelayAsync()
+        public virtual async Task ResetReQueueDelayAsync()
         {
             using (var db = new Database())
             {
@@ -683,7 +683,7 @@ namespace ELO.Modules
 
         [Command("SetQueueTimeout", RunMode = RunMode.Sync)]
         [Summary("Set an automated queue timeout value.")]
-        public async Task SetQueueTimeout(TimeSpan? timeout = null)
+        public virtual async Task SetQueueTimeout(TimeSpan? timeout = null)
         {
             if (timeout.HasValue && timeout < TimeSpan.FromMinutes(10))
             {
@@ -709,7 +709,7 @@ namespace ELO.Modules
 
         [Command("ResetQueueTimeout", RunMode = RunMode.Sync)]
         [Summary("Remove the queue timeout.")]
-        public async Task ResetQueueTimeout()
+        public virtual async Task ResetQueueTimeout()
         {
             using (var db = new Database())
             {

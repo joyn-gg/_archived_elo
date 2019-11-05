@@ -25,7 +25,7 @@ namespace ELO.Modules
 
         [Command("ForceRegisterUsers", RunMode = RunMode.Sync)]
         [RavenRequireOwner]
-        public async Task ForceRegisterAsync(params SocketGuildUser[] users)
+        public virtual async Task ForceRegisterAsync(params SocketGuildUser[] users)
         {
             foreach (var user in users)
             {
@@ -35,7 +35,7 @@ namespace ELO.Modules
 
         [Command("ForceRegister", RunMode = RunMode.Sync)]
         [RavenRequireOwner]
-        public async Task ForceRegisterAsync(SocketGuildUser regUser, [Remainder]string name = null)
+        public virtual async Task ForceRegisterAsync(SocketGuildUser regUser, [Remainder]string name = null)
         {
             await RegisterAsync(regUser, name);
         }
@@ -43,12 +43,12 @@ namespace ELO.Modules
         [Command("Register", RunMode = RunMode.Sync)]
         [Alias("reg")]
         [Summary("Register for the ELO competition.")]
-        public async Task RegisterAsync([Remainder]string name = null)
+        public virtual async Task RegisterAsync([Remainder]string name = null)
         {
             await RegisterAsync(Context.User as SocketGuildUser, name);
         }
 
-        public async Task RegisterAsync(SocketGuildUser regUser, [Remainder]string name = null)
+        public virtual async Task RegisterAsync(SocketGuildUser regUser, [Remainder]string name = null)
         {
             if (name == null)
             {
@@ -99,7 +99,7 @@ namespace ELO.Modules
 
         [Command("Rename", RunMode = RunMode.Sync)]
         [Summary("Rename yourself.")]
-        public async Task RenameAsync(SocketGuildUser user, [Remainder]string name)
+        public virtual async Task RenameAsync(SocketGuildUser user, [Remainder]string name)
         {
             if (user.Id == Context.User.Id)
             {
@@ -114,7 +114,7 @@ namespace ELO.Modules
 
         [Command("Rename", RunMode = RunMode.Sync)]
         [Summary("Rename yourself.")]
-        public async Task RenameAsync([Remainder]string name = null)
+        public virtual async Task RenameAsync([Remainder]string name = null)
         {
             if (name == null)
             {
@@ -171,7 +171,7 @@ namespace ELO.Modules
         [Alias("ForceRename")]
         [Summary("Renames the specified user.")]
         [Preconditions.RequirePermission(PermissionLevel.Moderator)]
-        public async Task RenameUserAsync(SocketGuildUser user, [Remainder]string newname)
+        public virtual async Task RenameUserAsync(SocketGuildUser user, [Remainder]string newname)
         {
             if (!user.IsRegistered(out var player))
             {

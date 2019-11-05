@@ -29,7 +29,7 @@ namespace ELO.Modules
         [Command("Bans", RunMode = RunMode.Async)]
         [Alias("Banlist")]
         [Summary("Shows all bans for the current server.")]
-        public async Task Bans()
+        public virtual async Task Bans()
         {
             using (var db = new Database())
             {
@@ -75,7 +75,7 @@ namespace ELO.Modules
 
         [Command("AllBans", RunMode = RunMode.Async)]
         [Summary("Shows all bans for the current server.")]
-        public async Task AllBans()
+        public virtual async Task AllBans()
         {
             using (var db = new Database())
             {
@@ -116,7 +116,7 @@ namespace ELO.Modules
 
         [Command("Unban", RunMode = RunMode.Sync)]
         [Summary("Unbans the specified user.")]
-        public async Task Unban(SocketGuildUser user)
+        public virtual async Task Unban(SocketGuildUser user)
         {
             if (!user.IsRegistered(out var player))
             {
@@ -153,7 +153,7 @@ namespace ELO.Modules
         [Command("BanUser", RunMode = RunMode.Sync)]
         [Alias("Ban")]
         [Summary("Bans the specified user for the specified amount of time, optional reason.")]
-        public async Task BanUserAsync(SocketGuildUser user, TimeSpan time, [Remainder]string reason = null)
+        public virtual async Task BanUserAsync(SocketGuildUser user, TimeSpan time, [Remainder]string reason = null)
         {
             await BanUserAsync(time, user, reason);
         }
@@ -161,7 +161,7 @@ namespace ELO.Modules
         [Command("BanUser", RunMode = RunMode.Sync)]
         [Alias("Ban")]
         [Summary("Bans the specified user for the specified amount of time, optional reason.")]
-        public async Task BanUserAsync(TimeSpan time, SocketGuildUser user, [Remainder]string reason = null)
+        public virtual async Task BanUserAsync(TimeSpan time, SocketGuildUser user, [Remainder]string reason = null)
         {
             using (var db = new Database())
             {
@@ -193,7 +193,7 @@ namespace ELO.Modules
         [Command("DeleteUser", RunMode = RunMode.Sync)]
         [Alias("DelUser")]
         [Summary("Deletes the specified user from the ELO competition, NOTE: Will not affect the LobbyLeaderboard command")]
-        public async Task DeleteUserAsync(SocketGuildUser user)
+        public virtual async Task DeleteUserAsync(SocketGuildUser user)
         {
             var player = Service.GetPlayer(Context.Guild.Id, user.Id);
             if (player == null)

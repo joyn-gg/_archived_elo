@@ -30,7 +30,7 @@ namespace ELO.Services
         }
         public DiscordShardedClient Client { get; }
 
-        public async Task PopulateOwner()
+        public virtual async Task PopulateOwner()
         {
             if (OwnerId == 0)
             {

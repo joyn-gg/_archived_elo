@@ -16,7 +16,7 @@ namespace ELO.Modules
         [Command("Maps", RunMode = RunMode.Async)]
         [Alias("MapList")]
         [Summary("Displays map information")]
-        public async Task MapsAsync()
+        public virtual async Task MapsAsync()
         {
             using (var db = new Database())
             {
@@ -41,7 +41,7 @@ namespace ELO.Modules
 
         [Command("Lobby", RunMode = RunMode.Async)]
         [Summary("Displays information about the current lobby.")]
-        public async Task LobbyInfoAsync()
+        public virtual async Task LobbyInfoAsync()
         {
             using (var db = new Database())
             {
@@ -79,7 +79,7 @@ namespace ELO.Modules
         [Command("Queue", RunMode = RunMode.Async)]
         [Alias("Q", "lps", "listplayers", "playerlist", "who")]
         [Summary("Displays information about the current queue or current game being picked.")]
-        public async Task ShowQueueAsync()
+        public virtual async Task ShowQueueAsync()
         {
             using (var db = new Database())
             {
@@ -163,7 +163,7 @@ namespace ELO.Modules
 
         [Command("LobbyLeaderboard", RunMode = RunMode.Async)]
         [Summary("Displays a leaderboard with stats for the current lobby only.")]
-        public async Task ShowLobbyLeaderboardAsync(ISocketMessageChannel channel = null)
+        public virtual async Task ShowLobbyLeaderboardAsync(ISocketMessageChannel channel = null)
         {
             if (channel == null)
             {

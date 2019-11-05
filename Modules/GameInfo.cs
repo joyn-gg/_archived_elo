@@ -26,7 +26,7 @@ namespace ELO.Modules
         [Command("LastGame", RunMode = RunMode.Async)]
         [Alias("Last Game", "Latest Game", "LatestGame", "lg")]
         [Summary("Shows information about the most recent game in the current (or specified) lobby")]
-        public async Task LastGameAsync(SocketGuildChannel lobbyChannel = null)
+        public virtual async Task LastGameAsync(SocketGuildChannel lobbyChannel = null)
         {
             if (lobbyChannel == null)
             {
@@ -55,13 +55,13 @@ namespace ELO.Modules
 
         }
 
-        public async Task DisplayGameAsync(ManualGameResult game)
+        public virtual async Task DisplayGameAsync(ManualGameResult game)
         {
             var embed = GameService.GetGameEmbed(game);
             await ReplyAsync(embed);
         }
 
-        public async Task DisplayGameAsync(GameResult game)
+        public virtual async Task DisplayGameAsync(GameResult game)
         {
             var embed = GameService.GetGameEmbed(game);
             await ReplyAsync(embed);
@@ -70,7 +70,7 @@ namespace ELO.Modules
         [Command("GameInfo", RunMode = RunMode.Async)]
         [Alias("Game Info", "Show Game", "ShowGame", "sg")]
         [Summary("Shows information about the specified game in the current (or specified) lobby")]
-        public async Task GameInfoAsync(SocketGuildChannel lobbyChannel, int gameNumber) //add functionality to specify lobby
+        public virtual async Task GameInfoAsync(SocketGuildChannel lobbyChannel, int gameNumber) //add functionality to specify lobby
         {
             await GameInfoAsync(gameNumber, lobbyChannel);
         }
@@ -78,7 +78,7 @@ namespace ELO.Modules
         [Command("GameInfo", RunMode = RunMode.Async)]
         [Alias("Game Info", "Show Game", "ShowGame", "sg")]
         [Summary("Shows information about the specified game in the current (or specified) lobby")]
-        public async Task GameInfoAsync(int gameNumber, SocketGuildChannel lobbyChannel = null) //add functionality to specify lobby
+        public virtual async Task GameInfoAsync(int gameNumber, SocketGuildChannel lobbyChannel = null) //add functionality to specify lobby
         {
             if (lobbyChannel == null)
             {
@@ -109,7 +109,7 @@ namespace ELO.Modules
         [Command("ManualGameInfo", RunMode = RunMode.Async)]
         [Alias("Manual Game Info", "Show Manual Game", "ShowManualGame", "smg")]
         [Summary("Shows information about the specified manual game")]
-        public async Task ManualGameInfoAsync(int gameNumber)
+        public virtual async Task ManualGameInfoAsync(int gameNumber)
         {
             using (var db = new Database())
             {
@@ -127,7 +127,7 @@ namespace ELO.Modules
         [Command("ManualGameList", RunMode = RunMode.Async)]
         [Alias("Manual Game List", "ManualGamesList", "ShowManualGames", "ListManualGames")]
         [Summary("Displays statuses for the last 100 manual games in the server")]
-        public async Task ManualGameList()
+        public virtual async Task ManualGameList()
         {
             using (var db = new Database())
             {
@@ -177,7 +177,7 @@ namespace ELO.Modules
         [Command("GameList", RunMode = RunMode.Async)]
         [Alias("Game List", "GamesList", "ShowGames", "ListGames")]
         [Summary("Displays statuses for the last 100 games in the lobby")]
-        public async Task GameListAsync(ISocketMessageChannel lobbyChannel = null)
+        public virtual async Task GameListAsync(ISocketMessageChannel lobbyChannel = null)
         {
             if (lobbyChannel == null)
             {

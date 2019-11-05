@@ -9,7 +9,7 @@ namespace ELO.Services
 {
     public class UserService
     {
-        public async Task<List<string>> UpdateUserAsync(Competition comp, Player player, Rank[] ranks, SocketGuildUser user)
+        public virtual async Task<List<string>> UpdateUserAsync(Competition comp, Player player, Rank[] ranks, SocketGuildUser user)
         {
             var noted = new List<string>();
             try

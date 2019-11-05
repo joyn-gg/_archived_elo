@@ -25,7 +25,7 @@ namespace ELO.Modules
 
         [Command("PermissionLevels", RunMode = RunMode.Async)]
         [Summary("Shows all possible permission levels.")]
-        public async Task ShowLevelsAsync()
+        public virtual async Task ShowLevelsAsync()
         {
             var options = RavenBOT.Common.Extensions.GetEnumNameValues<PermissionLevel>();
             await SimpleEmbedAsync($"Custom Permissions Levels:\n{string.Join("\n", options.Select(x => x.Item1))}", Color.Blue);
@@ -33,7 +33,7 @@ namespace ELO.Modules
 
         [Command("ShowPermissions", RunMode = RunMode.Async)]
         [Summary("Shows all custom set permission levels.")]
-        public async Task ShowPermissionsAsync()
+        public virtual async Task ShowPermissionsAsync()
         {
             using (var db = new Database())
             {
@@ -44,7 +44,7 @@ namespace ELO.Modules
 
         [Command("SetCommandPermission", RunMode = RunMode.Sync)]
         [Summary("Sets the required permission for a specified command.")]
-        public async Task SetPermissionAsync(string commandName, PermissionLevel level)
+        public virtual async Task SetPermissionAsync(string commandName, PermissionLevel level)
         {
             using (var db = new Database())
             {
@@ -81,7 +81,7 @@ namespace ELO.Modules
 
         [Command("RemoveCommandPermission", RunMode = RunMode.Sync)]
         [Summary("Sets the required permission for a specified command.")]
-        public async Task RemovePermissionAsync(string commandName)
+        public virtual async Task RemovePermissionAsync(string commandName)
         {
             using (var db = new Database())
             {
@@ -108,7 +108,7 @@ namespace ELO.Modules
         [Command("SetModerator", RunMode = RunMode.Sync)]
         [Alias("Set Moderator", "Set Moderator Role", "SetMod", "Set Mod Role")]
         [Summary("Sets the ELO moderator role for the server.")]
-        public async Task SetModeratorAsync(SocketRole modRole = null)
+        public virtual async Task SetModeratorAsync(SocketRole modRole = null)
         {
             using (var db = new Database())
             {
@@ -133,7 +133,7 @@ namespace ELO.Modules
 
         [Command("SetAdmin", RunMode = RunMode.Sync)]
         [Summary("Sets the ELO admin role for the server.")]
-        public async Task SetAdminAsync(SocketRole adminRole = null)
+        public virtual async Task SetAdminAsync(SocketRole adminRole = null)
         {
             using (var db = new Database())
             {

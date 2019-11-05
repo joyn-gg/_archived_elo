@@ -17,7 +17,7 @@ namespace ELO.Modules
         [Command("CreateLobby", RunMode = RunMode.Sync)]
         [Alias("Create Lobby")]
         [Summary("Creates a lobby with the specified players per team and specified pick mode")]
-        public async Task CreateLobbyAsync(int playersPerTeam = 5, PickMode pickMode = PickMode.Captains_RandomHighestRanked)
+        public virtual async Task CreateLobbyAsync(int playersPerTeam = 5, PickMode pickMode = PickMode.Captains_RandomHighestRanked)
         {
             using (var db = new Database())
             {
@@ -48,7 +48,7 @@ namespace ELO.Modules
         [Command("SetPlayerCount", RunMode = RunMode.Sync)]
         [Alias("Set Player Count", "Set PlayerCount")]
         [Summary("Sets the amount of players per team.")]
-        public async Task SetPlayerAsync(int playersPerTeam)
+        public virtual async Task SetPlayerAsync(int playersPerTeam)
         {
             using (var db = new Database())
             {
@@ -69,7 +69,7 @@ namespace ELO.Modules
         [Command("SetPickMode", RunMode = RunMode.Sync)]
         [Alias("Set PickMode", "Set Pick Mode")]
         [Summary("Sets how players will be picked for teams in the current lobby.")]
-        public async Task SetPickModeAsync(PickMode pickMode)
+        public virtual async Task SetPickModeAsync(PickMode pickMode)
         {
             using (var db = new Database())
             {
@@ -90,7 +90,7 @@ namespace ELO.Modules
 
         /*[Command("ReactOnJoinLeave", RunMode = RunMode.Sync)]
         [Summary("Sets whether the bot will react or send a message when users join or leave a lobby.")]
-        public async Task ReactOnJoinLeaveAsync(bool react)
+        public virtual async Task ReactOnJoinLeaveAsync(bool react)
         {
             using (var db = new Database())
             {
@@ -111,7 +111,7 @@ namespace ELO.Modules
         [Command("PickModes", RunMode = RunMode.Async)]
         [Summary("Displays all pick modes to use with the SetPickMode command")]
         //[Alias("Pick Modes")] ignore this as it can potentially conflict with the lobby Pick command.
-        public async Task DisplayPickModesAsync()
+        public virtual async Task DisplayPickModesAsync()
         {
             await SimpleEmbedAsync(string.Join("\n", RavenBOT.Common.Extensions.EnumNames<PickMode>()), Color.Blue);
         }
@@ -119,7 +119,7 @@ namespace ELO.Modules
         [Command("SetPickOrder", RunMode = RunMode.Sync)]
         [Alias("Set PickOrder", "Set Pick Order")]
         [Summary("Sets how captains pick players.")]
-        public async Task SetPickOrderAsync(CaptainPickOrder orderMode)
+        public virtual async Task SetPickOrderAsync(CaptainPickOrder orderMode)
         {
             using (var db = new Database())
             {
@@ -140,7 +140,7 @@ namespace ELO.Modules
 
         [Command("PickOrders", RunMode = RunMode.Async)]
         [Summary("Shows pickorder settings for the SetPickOrder command")]
-        public async Task DisplayPickOrdersAsync()
+        public virtual async Task DisplayPickOrdersAsync()
         {
             var res = "`PickOne` - Captains each alternate picking one player until there are none remaining\n" +
                     "`PickTwo` - 1-2-2-1-1... Pick order. Captain 1 gets first pick, then Captain 2 picks 2 players,\n" +
@@ -152,7 +152,7 @@ namespace ELO.Modules
         [Command("SetReadyChannel", RunMode = RunMode.Sync)]
         [Alias("SetGameReadyAnnouncementChannel", "GameReadyAnnouncementsChannel", "GameReadyAnnouncements", "ReadyAnnouncements", "SetReadyAnnouncements")]
         [Summary("Set a channel to send game ready announcements for the current lobby to.")]
-        public async Task GameReadyAnnouncementChannel(SocketTextChannel destinationChannel = null)
+        public virtual async Task GameReadyAnnouncementChannel(SocketTextChannel destinationChannel = null)
         {
             if (destinationChannel == null)
             {
@@ -184,7 +184,7 @@ namespace ELO.Modules
         [Command("SetResultChannel", RunMode = RunMode.Sync)]
         [Alias("SetGameResultAnnouncementChannel", "SetGameResultAnnouncements", "GameResultAnnouncements")]
         [Summary("Set a channel to send game result announcements for the current lobby to.")]
-        public async Task GameResultAnnouncementChannel(SocketTextChannel destinationChannel = null)
+        public virtual async Task GameResultAnnouncementChannel(SocketTextChannel destinationChannel = null)
         {
             if (destinationChannel == null)
             {
@@ -215,7 +215,7 @@ namespace ELO.Modules
 
         [Command("SetMinimumPoints", RunMode = RunMode.Sync)]
         [Summary("Set the minimum amount of points required to queue for the current lobby.")]
-        public async Task SetMinimumPointsAsync(int points)
+        public virtual async Task SetMinimumPointsAsync(int points)
         {
             using (var db = new Database())
             {
@@ -235,7 +235,7 @@ namespace ELO.Modules
 
         [Command("ResetMinimumPoints", RunMode = RunMode.Sync)]
         [Summary("Resets minimum points to join the lobby, allowing all players to join.")]
-        public async Task ResetMinPointsAsync()
+        public virtual async Task ResetMinPointsAsync()
         {
             using (var db = new Database())
             {
@@ -256,7 +256,7 @@ namespace ELO.Modules
         /*
         [Command("MapMode", RunMode = RunMode.Sync)]
         [Summary("Sets the map selection mode for the lobby.")]
-        public async Task MapModeAsync(MapMode mode)
+        public virtual async Task MapModeAsync(MapMode mode)
         {
             if (mode == MapSelector.MapMode.Vote)
             {
@@ -290,7 +290,7 @@ namespace ELO.Modules
 
         [Command("MapMode", RunMode = RunMode.Async)]
         [Summary("Shows the current map selection mode for the lobby.")]
-        public async Task MapModeAsync()
+        public virtual async Task MapModeAsync()
         {
             var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
             if (lobby == null)
@@ -310,14 +310,14 @@ namespace ELO.Modules
 
         [Command("MapModes", RunMode = RunMode.Async)]
         [Summary("Shows all available map selection modes.")]
-        public async Task MapModes()
+        public virtual async Task MapModes()
         {
             await SimpleEmbedAsync(string.Join(", ", Extensions.EnumNames<MapSelector.MapMode>()), Color.Blue);
         }*/
 
         [Command("ClearMaps", RunMode = RunMode.Sync)]
         [Summary("Removes all maps set for the current lobby.")]
-        public async Task MapClear()
+        public virtual async Task MapClear()
         {
             using (var db = new Database())
             {
@@ -340,7 +340,7 @@ namespace ELO.Modules
         [Alias("Add Maps", "Addmap", "Add map")]
         [Summary("Adds multiple maps to the map list.")]
         [Remarks("Separate the names using commas.")]
-        public async Task AddMapsAsync([Remainder]string commaSeparatedMapNames)
+        public virtual async Task AddMapsAsync([Remainder]string commaSeparatedMapNames)
         {
             var mapNames = commaSeparatedMapNames.Split(',');
             if (!mapNames.Any()) return;
@@ -369,7 +369,7 @@ namespace ELO.Modules
 
         [Command("DelMap", RunMode = RunMode.Sync)]
         [Summary("Removes the specified map from the map list.")]
-        public async Task RemoveMapAsync([Remainder]string mapName)
+        public virtual async Task RemoveMapAsync([Remainder]string mapName)
         {
             using (var db = new Database())
             {
@@ -403,7 +403,7 @@ namespace ELO.Modules
 
         [Command("ToggleDms", RunMode = RunMode.Sync)]
         [Summary("Sets whether the bot will dm players when a game is ready.")]
-        public async Task ToggleDmsAsync()
+        public virtual async Task ToggleDmsAsync()
         {
             using (var db = new Database())
             {
@@ -422,7 +422,7 @@ namespace ELO.Modules
 
         [Command("SetDescription", RunMode = RunMode.Sync)]
         [Summary("Sets the lobbys description.")]
-        public async Task SetDescriptionAsync([Remainder]string description)
+        public virtual async Task SetDescriptionAsync([Remainder]string description)
         {
             using (var db = new Database())
             {
@@ -442,7 +442,7 @@ namespace ELO.Modules
 
         [Command("DeleteLobby", RunMode = RunMode.Sync)]
         [Summary("Deletes the current lobby and all game played in it.")]
-        public async Task DeleteLobbyAsync()
+        public virtual async Task DeleteLobbyAsync()
         {
             using (var db = new Database())
             {
@@ -462,7 +462,7 @@ namespace ELO.Modules
         [Command("HideQueue", RunMode = RunMode.Sync)]
         [Summary("Sets whether players in queue are shown.")]
         [RavenRequireBotPermission(GuildPermission.ManageMessages)]
-        public async Task AllowNegativeAsync(bool? hideQueue = null)
+        public virtual async Task AllowNegativeAsync(bool? hideQueue = null)
         {
             using (var db = new Database())
             {
@@ -487,7 +487,7 @@ namespace ELO.Modules
         [Command("MentionUsersInReadyAnnouncement", RunMode = RunMode.Sync)]
         [Summary("Sets whether players are pinged in the ready announcement.")]
         [RavenRequireBotPermission(GuildPermission.ManageMessages)]
-        public async Task MentionUsersReadyAsync(bool? mentionUsers = null)
+        public virtual async Task MentionUsersReadyAsync(bool? mentionUsers = null)
         {
             using (var db = new Database())
             {
@@ -512,7 +512,7 @@ namespace ELO.Modules
         [Command("SelectHost", RunMode = RunMode.Sync)]
         [Summary("Sets whether the bot will automatically select a host.")]
         [RavenRequireBotPermission(GuildPermission.ManageMessages)]
-        public async Task SelectHostAsync(bool? selectHost = null)
+        public virtual async Task SelectHostAsync(bool? selectHost = null)
         {
             using (var db = new Database())
             {
@@ -536,7 +536,7 @@ namespace ELO.Modules
 
         [Command("SetMultiplier", RunMode = RunMode.Sync)]
         [Summary("Sets the lobby score multiplier.")]
-        public async Task SetLobbyMultiplier(double multiplier)
+        public virtual async Task SetLobbyMultiplier(double multiplier)
         {
             using (var db = new Database())
             {
@@ -556,7 +556,7 @@ namespace ELO.Modules
 
         [Command("LobbyMultiplierLoss", RunMode = RunMode.Sync)]
         [Summary("Sets whether the lobby multiplier affects the amount of points removed from users.")]
-        public async Task SetLossToggleMultiplier(bool? value = null)
+        public virtual async Task SetLossToggleMultiplier(bool? value = null)
         {
             using (var db = new Database())
             {
@@ -582,7 +582,7 @@ namespace ELO.Modules
 
         [Command("SetReductionPercent", RunMode = RunMode.Sync)]
         [Summary("Sets the lobby score multiplier.")]
-        public async Task SetReductionPercent(double percent = 0.5)
+        public virtual async Task SetReductionPercent(double percent = 0.5)
         {
             using (var db = new Database())
             {
@@ -602,7 +602,7 @@ namespace ELO.Modules
 
         [Command("SetHighLimit", RunMode = RunMode.Sync)]
         [Summary("Sets max user points before point reduction multiplier is applied.")]
-        public async Task SetReductionPercent(int? highLimit = null)
+        public virtual async Task SetReductionPercent(int? highLimit = null)
         {
             using (var db = new Database())
             {

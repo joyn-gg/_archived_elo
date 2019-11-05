@@ -67,7 +67,7 @@ namespace ELO.Services
             }
         }
 
-        public async Task LobbyFullAsync(ShardedCommandContext context, Lobby lobby)
+        public virtual async Task LobbyFullAsync(ShardedCommandContext context, Lobby lobby)
         {
             using (var db = new Database())
             {
@@ -283,7 +283,7 @@ namespace ELO.Services
             return msg2.Item2.Build();
         }
 
-        public async Task<(GameResult, string)> PickOneAsync(ShardedCommandContext context, GameResult game, SocketGuildUser[] users, TeamCaptain cap1, TeamCaptain cap2)
+        public virtual async Task<(GameResult, string)> PickOneAsync(ShardedCommandContext context, GameResult game, SocketGuildUser[] users, TeamCaptain cap1, TeamCaptain cap2)
         {
             using (var db = new Database())
             {
@@ -332,7 +332,7 @@ namespace ELO.Services
             };
         }
 
-        public async Task<(GameResult, string)> PickTwoAsync(ShardedCommandContext context, GameResult game, SocketGuildUser[] users, TeamCaptain cap1, TeamCaptain cap2)
+        public virtual async Task<(GameResult, string)> PickTwoAsync(ShardedCommandContext context, GameResult game, SocketGuildUser[] users, TeamCaptain cap1, TeamCaptain cap2)
         {
             using (var db = new Database())
             {

@@ -25,7 +25,7 @@ namespace ELO.Modules
         [Command("Join", RunMode = RunMode.Sync)]
         [Alias("JoinLobby", "Join Lobby", "j", "sign", "play", "ready")]
         [Summary("Join the queue in the current lobby.")]
-        public async Task JoinLobbyAsync()
+        public virtual async Task JoinLobbyAsync()
         {
             using (var db = new Database())
             {
@@ -201,7 +201,7 @@ namespace ELO.Modules
         [Command("Leave", RunMode = RunMode.Sync)]
         [Alias("LeaveLobby", "Leave Lobby", "l", "out", "unsign", "remove", "unready")]
         [Summary("Leave the queue in the current lobby.")]
-        public async Task LeaveLobbyAsync()
+        public virtual async Task LeaveLobbyAsync()
         {
             using (var db = new Database())
             {

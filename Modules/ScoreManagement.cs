@@ -22,7 +22,7 @@ namespace ELO.Modules
 
         [Command("ModifyStates", RunMode = RunMode.Async)]
         [Summary("Shows modifier values for score management commands")]
-        public async Task ModifyStatesAsync()
+        public virtual async Task ModifyStatesAsync()
         {
             await SimpleEmbedAsync(string.Join("\n", RavenBOT.Common.Extensions.EnumNames<ModifyState>()), Color.Blue);
         }
@@ -30,14 +30,14 @@ namespace ELO.Modules
         //TODO: Consider whether it's necessary to have the single user command as multi user already is able to accept only one.
         [Command("Points", RunMode = RunMode.Sync)]
         [Summary("Modifies points for the specified user")]
-        public async Task PointsAsync(SocketGuildUser user, ModifyState state, int amount)
+        public virtual async Task PointsAsync(SocketGuildUser user, ModifyState state, int amount)
         {
             await PointsAsync(state, amount, user);
         }
 
         [Command("Points", RunMode = RunMode.Sync)]
         [Summary("Modifies points for the specified users.")]
-        public async Task PointsAsync(ModifyState state, int amount, params SocketGuildUser[] users)
+        public virtual async Task PointsAsync(ModifyState state, int amount, params SocketGuildUser[] users)
         {
             using (var db = new Database())
             {
@@ -74,14 +74,14 @@ namespace ELO.Modules
 
         [Command("Wins", RunMode = RunMode.Sync)]
         [Summary("Modifies wins for the specified user.")]
-        public async Task WinsAsync(SocketGuildUser user, ModifyState state, int amount)
+        public virtual async Task WinsAsync(SocketGuildUser user, ModifyState state, int amount)
         {
             await WinsAsync(state, amount, user);
         }
 
         [Command("Wins", RunMode = RunMode.Sync)]
         [Summary("Modifies wins for the specified users.")]
-        public async Task WinsAsync(ModifyState state, int amount, params SocketGuildUser[] users)
+        public virtual async Task WinsAsync(ModifyState state, int amount, params SocketGuildUser[] users)
         {
             using (var db = new Database())
             {
@@ -114,14 +114,14 @@ namespace ELO.Modules
 
         [Command("Losses", RunMode = RunMode.Sync)]
         [Summary("Modifies losses for the specified user.")]
-        public async Task LossesAsync(SocketGuildUser user, ModifyState state, int amount)
+        public virtual async Task LossesAsync(SocketGuildUser user, ModifyState state, int amount)
         {
             await LossesAsync(state, amount, user);
         }
 
         [Command("Losses", RunMode = RunMode.Sync)]
         [Summary("Modifies losses for the specified users.")]
-        public async Task LossesAsync(ModifyState state, int amount, params SocketGuildUser[] users)
+        public virtual async Task LossesAsync(ModifyState state, int amount, params SocketGuildUser[] users)
         {
             using (var db = new Database())
             {
@@ -154,14 +154,14 @@ namespace ELO.Modules
 
         [Command("Draws", RunMode = RunMode.Sync)]
         [Summary("Modifies draws for the specified user.")]
-        public async Task DrawsAsync(SocketGuildUser user, ModifyState state, int amount)
+        public virtual async Task DrawsAsync(SocketGuildUser user, ModifyState state, int amount)
         {
             await DrawsAsync(state, amount, user);
         }
 
         [Command("Draws", RunMode = RunMode.Sync)]
         [Summary("Modifies draws for the specified users.")]
-        public async Task DrawsAsync(ModifyState state, int amount, params SocketGuildUser[] users)
+        public virtual async Task DrawsAsync(ModifyState state, int amount, params SocketGuildUser[] users)
         {
             using (var db = new Database())
             {
@@ -198,7 +198,7 @@ namespace ELO.Modules
         [Command("ResetLeaderboard", RunMode = RunMode.Sync)]
         [Summary("Resets the leaderboard")]
         [RequirePermission(PermissionLevel.ELOAdmin)]
-        public async Task ResetLeaderboard()
+        public virtual async Task ResetLeaderboard()
         {
             using (var db = new Database())
             {
@@ -222,7 +222,7 @@ namespace ELO.Modules
         [Summary("Refreshes all user names and roles")]
         [RequirePermission(PermissionLevel.ELOAdmin)]
         [RequireBotPermission(GuildPermission.ManageNicknames)]
-        public async Task RefreshNamesAsync()
+        public virtual async Task RefreshNamesAsync()
         {
             using (var db = new Database())
             {
