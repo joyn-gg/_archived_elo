@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using ELO.Entities;
 using ELO.Models;
 using ELO.Services;
 using RavenBOT.Common;
@@ -509,31 +510,6 @@ namespace ELO.Modules
             }
         }
 
-        [Command("SelectHost", RunMode = RunMode.Sync)]
-        [Summary("Sets whether the bot will automatically select a host.")]
-        [RavenRequireBotPermission(GuildPermission.ManageMessages)]
-        public virtual async Task SelectHostAsync(bool? selectHost = null)
-        {
-            using (var db = new Database())
-            {
-                var lobby = db.Lobbies.Find(Context.Channel.Id);
-                if (lobby == null)
-                {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
-                    return;
-                }
-                if (selectHost == null)
-                {
-                    await SimpleEmbedAsync($"Current Select Host Setting: {lobby.SelectHost}", Color.Blue);
-                    return;
-                }
-                lobby.SelectHost = selectHost.Value;
-                db.Lobbies.Update(lobby);
-                db.SaveChanges();
-                await SimpleEmbedAsync($"Select Host: {selectHost.Value}", Color.Green);
-            }
-        }
-
         [Command("SetMultiplier", RunMode = RunMode.Sync)]
         [Summary("Sets the lobby score multiplier.")]
         public virtual async Task SetLobbyMultiplier(double multiplier)
@@ -617,6 +593,39 @@ namespace ELO.Modules
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
                 await SimpleEmbedAsync($"Max user points before point reduction set.", Color.Green);
+            }
+        }
+
+        [Command("HostModes")]
+        [Summary("Displays a list of host selection modes available")]
+        public virtual async Task ShowHostSelectionModes()
+        {
+            await SimpleEmbedAsync(string.Join("\n", RavenBOT.Common.Extensions.EnumNames<HostSelection>()));
+        }
+
+        [Command("SetHostMode", RunMode = RunMode.Sync)]
+        [Summary("Sets if and how the host is selected.")]
+        public virtual async Task SetHostModeAsync(HostSelection? hostMode = null)
+        {
+            using (var db = new Database())
+            {
+                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                if (lobby == null)
+                {
+                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    return;
+                }
+
+                if (hostMode == null)
+                {
+                    await SimpleEmbedAsync($"Current Host Selection Setting: {lobby.HostSelectionMode}");
+                    return;
+                }
+
+                lobby.HostSelectionMode = hostMode.Value;
+                db.Lobbies.Update(lobby);
+                db.SaveChanges();
+                await SimpleEmbedAsync($"Host Selection Mode set to: {lobby.HostSelectionMode}", Color.Green);
             }
         }
     }

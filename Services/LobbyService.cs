@@ -107,6 +107,7 @@ namespace ELO.Services
                 var team2 = db.GetTeamFull(game, 1).ToList();
                 var queue = db.GetQueue(game).ToList();
 
+
                 //Set team players/captains based on the team pick mode
                 switch (lobby.TeamPickMode)
                 {
@@ -207,12 +208,20 @@ namespace ELO.Services
                 if (lobby.TeamPickMode == PickMode.TryBalance || lobby.TeamPickMode == PickMode.Random)
                 {
                     string hostStr = null;
-                    if (lobby.SelectHost)
+                    if (lobby.HostSelectionMode != HostSelection.None)
                     {
                         var qIds = queue.Select(x => x.UserId).ToList();
                         var players = db.Players.Where(p => qIds.Contains(p.UserId)).ToArray();
-                        var maxPlayer = players.OrderByDescending(x => x.Points).First();
-                        hostStr = $"\n**Selected Host:** {MentionUtils.MentionUser(maxPlayer.UserId)}";
+                        if (lobby.HostSelectionMode == HostSelection.HighestRanked)
+                        {
+                            var maxPlayer = players.OrderByDescending(x => x.Points).First();
+                            hostStr = $"\n**Selected Host:** {MentionUtils.MentionUser(maxPlayer.UserId)}";
+                        }
+                        else if (lobby.HostSelectionMode == HostSelection.Random)
+                        {
+                            var maxPlayer = players.OrderByDescending(x => Random.Next()).First();
+                            hostStr = $"\n**Selected Host:** {MentionUtils.MentionUser(maxPlayer.UserId)}";
+                        }
                     }
 
                     var res = GameService.GetGameMessage(game, $"Game #{game.GameId} Started",

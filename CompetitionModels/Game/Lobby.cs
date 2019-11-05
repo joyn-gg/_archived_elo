@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using ELO.Entities;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -39,7 +40,6 @@ namespace ELO.Models
         public bool DmUsersOnGameReady { get; set; } = false;
         //public bool ReactOnJoinLeave { get; set; } = false;
         public bool HideQueue { get; set; } = false;
-        public bool SelectHost { get; set; } = false;
 
         public int PlayersPerTeam { get; set; } = 5;
 
@@ -48,6 +48,8 @@ namespace ELO.Models
         public int CurrentGameCount { get; set; } = 0;
 
         public CaptainPickOrder CaptainPickOrder { get; set; } = CaptainPickOrder.PickTwo;
+
+        public HostSelection HostSelectionMode { get; set; } = HostSelection.None;
 
         //TODO: Specific announcement channel per lobby
 
