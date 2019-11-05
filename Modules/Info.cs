@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using ELO.Entities;
 using ELO.Models;
 using ELO.Preconditions;
 using ELO.Services;
@@ -232,7 +233,7 @@ namespace ELO.Modules
         [Summary("Shows the current server-wide leaderboard.")]
         [RequirePermission(PermissionLevel.Registered)]
         //TODO: Ratelimiting as this is a data heavy command.
-        public virtual async Task LeaderboardAsync()
+        public virtual async Task LeaderboardAsync(LeaderboardSortMode mode = LeaderboardSortMode.points)
         {
             using (var db = new Database())
             {
@@ -242,7 +243,27 @@ namespace ELO.Modules
                 var users = db.Players.AsNoTracking().Where(x => x.GuildId == Context.Guild.Id);
 
                 //Order players by score and then split them into groups of 20 for pagination
-                var userGroups = users.OrderByDescending(x => x.Points).SplitList(20).ToArray();
+                IEnumerable<Player>[] userGroups;
+                switch (mode)
+                {
+                    case LeaderboardSortMode.point:
+                        userGroups = users.OrderByDescending(x => x.Points).SplitList(20).ToArray();
+                        break;
+                    case LeaderboardSortMode.wins:
+                        userGroups = users.OrderByDescending(x => x.Wins).SplitList(20).ToArray();
+                        break;
+                    case LeaderboardSortMode.losses:
+                        userGroups = users.OrderByDescending(x => x.Losses).SplitList(20).ToArray();
+                        break;
+                    case LeaderboardSortMode.wlr:
+                        userGroups = users.OrderByDescending(x => x.Losses == 0 ? x.Wins : (double)x.Wins / x.Losses).SplitList(20).ToArray();
+                        break;
+                    case LeaderboardSortMode.games:
+                        userGroups = users.ToList().OrderByDescending(x => x.Games).SplitList(20).ToArray();
+                        break;
+                    default:
+                        return;
+                }
                 if (userGroups.Length == 0)
                 {
                     await SimpleEmbedAsync("There are no registered users in this server yet.", Color.Blue);
@@ -250,14 +271,14 @@ namespace ELO.Modules
                 }
 
                 //Convert the groups into formatted pages for the response message
-                var pages = GetPages(userGroups);
+                var pages = GetPages(userGroups, mode);
 
                 //Construct a paginated message with each of the leaderboard pages
                 await PagedReplyAsync(new ReactivePager(pages).ToCallBack().WithDefaultPagerCallbacks());
             }
         }
 
-        public List<ReactivePage> GetPages(IEnumerable<Player>[] groups)
+        public List<ReactivePage> GetPages(IEnumerable<Player>[] groups, LeaderboardSortMode mode)
         {
             //Start the index at 1 because we are ranking players here ie. first place.
             int index = 1;
@@ -265,7 +286,7 @@ namespace ELO.Modules
             foreach (var group in groups)
             {
                 var playerGroup = group.ToArray();
-                var lines = GetPlayerLines(playerGroup, index);
+                var lines = GetPlayerLines(playerGroup, index, mode);
                 index = lines.Item1;
                 var page = new ReactivePage();
                 page.Color = Color.Blue;
@@ -278,14 +299,34 @@ namespace ELO.Modules
         }
 
         //Returns the updated index and the formatted player lines
-        public (int, string) GetPlayerLines(Player[] players, int startValue)
+        public (int, string) GetPlayerLines(Player[] players, int startValue, LeaderboardSortMode mode)
         {
             var sb = new StringBuilder();
 
             //Iterate through the players and add their summary line to the list.
             foreach (var player in players)
             {
-                sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - `{player.Points}`");
+                switch (mode)
+                {
+                    case LeaderboardSortMode.point:
+                        sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - `{player.Points}`");
+                        break;
+                    case LeaderboardSortMode.wins:
+                        sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - `{player.Wins}`");
+                        break;
+                    case LeaderboardSortMode.losses:
+                        sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - `{player.Losses}`");
+                        break;
+                    case LeaderboardSortMode.wlr:
+                        var wlr = player.Losses == 0 ? player.Wins : (double)player.Wins / player.Losses;
+                        sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - `{Math.Round(wlr, 2, MidpointRounding.AwayFromZero)}`");
+                        break;
+                    case LeaderboardSortMode.games:
+                        sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - `{player.Games}`");
+
+                        break;
+                }
+
                 startValue++;
             }
 
