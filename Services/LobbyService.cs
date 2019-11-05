@@ -141,10 +141,26 @@ namespace ELO.Services
 
                         var t1Users = GetMentionList(GetUserList(context.Guild, team1));
                         var t2Users = GetMentionList(GetUserList(context.Guild, team2));
-                        var remainingPlayers = queue.Where(x => x.UserId != captains.Item1 && x.UserId != captains.Item2).Select(x => MentionUtils.MentionUser(x.UserId));
+                        var remainingPlayers = queue.Where(x => x.UserId != captains.Item1 && x.UserId != captains.Item2).Select(x => MentionUtils.MentionUser(x.UserId));                        
+                        if (lobby.HostSelectionMode != HostSelection.None)
+                        {
+                            var qIds = queue.Select(x => x.UserId).ToList();
+                            var players = db.Players.Where(p => qIds.Contains(p.UserId)).ToArray();
+                            if (lobby.HostSelectionMode == HostSelection.HighestRanked)
+                            {
+                                var selected = players.OrderByDescending(x => x.Points).First();
+                                gameEmbed.AddField("Selected Host", MentionUtils.MentionUser(selected.UserId));
+                            }
+                            else if (lobby.HostSelectionMode == HostSelection.Random)
+                            {
+                                var selected = players.OrderByDescending(x => Random.Next()).First();
+                                gameEmbed.AddField("Selected Host", MentionUtils.MentionUser(selected.UserId));
+                            }
+                        }
                         gameEmbed.AddField("Team 1", $"Captain: {MentionUtils.MentionUser(captains.Item1)}");
                         gameEmbed.AddField("Team 2", $"Captain: {MentionUtils.MentionUser(captains.Item2)}");
                         gameEmbed.AddField("Remaining Players", string.Join("\n", remainingPlayers));
+
                         await context.Channel.SendMessageAsync($"Captains have been picked. Use the `pick` or `p` command to choose your players.\nCaptain 1: {MentionUtils.MentionUser(captains.Item1)}\nCaptain 2: {MentionUtils.MentionUser(captains.Item2)}", false, gameEmbed.Build());
                         break;
                     case PickMode.Random:
@@ -206,31 +222,29 @@ namespace ELO.Services
 
                 //TODO: Assign team members to specific roles and create a channel for chat within.
                 if (lobby.TeamPickMode == PickMode.TryBalance || lobby.TeamPickMode == PickMode.Random)
-                {
-                    string hostStr = null;
-                    if (lobby.HostSelectionMode != HostSelection.None)
-                    {
-                        var qIds = queue.Select(x => x.UserId).ToList();
-                        var players = db.Players.Where(p => qIds.Contains(p.UserId)).ToArray();
-                        if (lobby.HostSelectionMode == HostSelection.HighestRanked)
-                        {
-                            var maxPlayer = players.OrderByDescending(x => x.Points).First();
-                            hostStr = $"\n**Selected Host:** {MentionUtils.MentionUser(maxPlayer.UserId)}";
-                        }
-                        else if (lobby.HostSelectionMode == HostSelection.Random)
-                        {
-                            var maxPlayer = players.OrderByDescending(x => Random.Next()).First();
-                            hostStr = $"\n**Selected Host:** {MentionUtils.MentionUser(maxPlayer.UserId)}";
-                        }
-                    }
-
+                {                    
                     var res = GameService.GetGameMessage(game, $"Game #{game.GameId} Started",
                             GameFlag.lobby,
                             GameFlag.map,
                             GameFlag.time,
                             GameFlag.usermentions,
                             GameFlag.gamestate);
-                    res.Item2.Description += hostStr;
+
+                    if (lobby.HostSelectionMode != HostSelection.None)
+                    {
+                        var qIds = queue.Select(x => x.UserId).ToList();
+                        var players = db.Players.Where(p => qIds.Contains(p.UserId)).ToArray();
+                        if (lobby.HostSelectionMode == HostSelection.HighestRanked)
+                        {
+                            var selected = players.OrderByDescending(x => x.Points).First();
+                            res.Item2.AddField("Selected Host", MentionUtils.MentionUser(selected.UserId));
+                        }
+                        else if (lobby.HostSelectionMode == HostSelection.Random)
+                        {
+                            var selected = players.OrderByDescending(x => Random.Next()).First();
+                            res.Item2.AddField("Selected Host", MentionUtils.MentionUser(selected.UserId));
+                        }
+                    }
 
                     await context.Channel.SendMessageAsync(res.Item1, false, res.Item2.Build());
                     if (lobby.GameReadyAnnouncementChannel != null)

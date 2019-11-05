@@ -605,7 +605,7 @@ namespace ELO.Modules
 
         [Command("SetHostMode", RunMode = RunMode.Sync)]
         [Summary("Sets if and how the host is selected.")]
-        public virtual async Task SetHostModeAsync(HostSelection? hostMode = null)
+        public virtual async Task SetHostModeAsync(HostSelection hostMode)
         {
             using (var db = new Database())
             {
@@ -616,13 +616,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                if (hostMode == null)
-                {
-                    await SimpleEmbedAsync($"Current Host Selection Setting: {lobby.HostSelectionMode}");
-                    return;
-                }
-
-                lobby.HostSelectionMode = hostMode.Value;
+                lobby.HostSelectionMode = hostMode;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
                 await SimpleEmbedAsync($"Host Selection Mode set to: {lobby.HostSelectionMode}", Color.Green);
