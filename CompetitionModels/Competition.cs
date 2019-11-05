@@ -56,6 +56,7 @@ namespace ELO.Models
 
         public bool AllowReRegister { get; set; } = true;
         public bool AllowSelfRename { get; set; } = true;
+        public bool AllowVoting { get; set; } = true;
 
         public int DefaultRegisterScore { get; set; } = 0;
 

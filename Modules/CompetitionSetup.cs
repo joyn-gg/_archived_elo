@@ -627,6 +627,25 @@ namespace ELO.Modules
             }
         }
 
+        [Command("AllowVoting", RunMode = RunMode.Sync)]
+        [Summary("Sets whether users are allowed to vote on the result of games.")]
+        public virtual async Task AllowVotingAsync(bool? allowVoting = null)
+        {
+            using (var db = new Database())
+            {
+                var competition = db.GetOrCreateCompetition(Context.Guild.Id);
+                if (allowVoting == null)
+                {
+                    await SimpleEmbedAsync($"Current Allow Voting Setting: {competition.AllowVoting}", Color.Blue);
+                    return;
+                }
+                competition.AllowVoting = allowVoting.Value;
+                db.Update(competition);
+                db.SaveChanges();
+                await SimpleEmbedAsync($"Allow voting set to {competition.AllowVoting}", Color.Green);
+            }
+        }
+
 
         [Command("CreateReactionRegistration", RunMode = RunMode.Sync)]
         [Summary("Creates a message which users can react to in order to register")]

@@ -486,6 +486,13 @@ namespace ELO.Services
 
             using (var db = new Database())
             {
+                var comp = db.GetOrCreateCompetition(context.Guild.Id);
+                if (!comp.AllowVoting)
+                {
+                    await context.Channel.SendMessageAsync("", false, "Voting is not enabled.".QuickEmbed(Color.Red));
+                    return;
+                }
+
                 var lobby = db.GetLobby(lobbyChannel);
                 if (lobby == null)
                 {
