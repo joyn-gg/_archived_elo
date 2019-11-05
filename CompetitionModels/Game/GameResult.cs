@@ -69,8 +69,6 @@ namespace ELO.Models
 
         public bool VoteComplete { get; set; } = false;
 
-        public ulong? VoterMessageId { get; set; } = null;
-
         public virtual ICollection<TeamCaptain> Captains { get; set; }
         public virtual ICollection<TeamPlayer> TeamPlayers { get; set; }
         public virtual ICollection<ScoreUpdate> ScoreUpdates { get; set; }
