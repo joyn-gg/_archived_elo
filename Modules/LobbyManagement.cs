@@ -131,9 +131,9 @@ namespace ELO.Modules
             }
         }
 
-        [Command("Sub")]
-        [Summary("Replace a user in the specified game with another.")]
-        [Preconditions.RequirePermission(PermissionLevel.Moderator)]
+        //[Command("Sub")]
+        //[Summary("Replace a user in the specified game with another.")]
+        //[Preconditions.RequirePermission(PermissionLevel.Moderator)]
         public virtual async Task SubUserAsync(SocketGuildUser user, SocketGuildUser replacedWith)
         {
             using (var db = new Database())
@@ -146,9 +146,9 @@ namespace ELO.Modules
             }
         }
 
-        [Command("Sub")]
-        [Summary("Replace a user in the specified game with another.")]
-        [Preconditions.RequirePermission(PermissionLevel.Moderator)]
+        //[Command("Sub")]
+        //[Summary("Replace a user in the specified game with another.")]
+        //[Preconditions.RequirePermission(PermissionLevel.Moderator)]
         public virtual async Task SubUserAsync(int gameNumber, SocketGuildUser user, SocketGuildUser replacedWith)
         {
             using (var db = new Database())
@@ -160,7 +160,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var game = db.GameResults.SingleOrDefault(x => x.GameId == gameNumber && x.LobbyId == lobby.ChannelId);
+                var game = db.GameResults.FirstOrDefault(x => x.GameId == gameNumber && x.LobbyId == lobby.ChannelId);
                 if (game == null)
                 {
                     await SimpleEmbedAsync("Invalid game number.", Color.Red);
