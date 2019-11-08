@@ -15,7 +15,7 @@ namespace ELO.Services
 
         public bool PermissionBypass = false;
         public ulong OwnerId = 0;
-        public Dictionary<ulong, CachedPermissions> PermissionCache = new Dictionary<ulong, CachedPermissions>();
+        public static Dictionary<ulong, CachedPermissions> PermissionCache = new Dictionary<ulong, CachedPermissions>();
         public class CachedPermissions
         {
             public ulong GuildId;

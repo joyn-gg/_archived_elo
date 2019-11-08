@@ -107,6 +107,7 @@ namespace ELO.Modules
         {
             ELO.Extensions.Extensions.RegistrationCache = new Dictionary<ulong, Dictionary<ulong, bool>>();
             ELO.Services.PermissionService.PermissionCache = new Dictionary<ulong, PermissionService.CachedPermissions>();
+            await ReplyAsync("Done.");
         }
     }
 }
