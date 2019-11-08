@@ -103,8 +103,6 @@ namespace ELO.Services
                     lobby.TeamPickMode = PickMode.Random;
                 }
 
-                var team1 = db.GetTeamFull(game, 1).ToList();
-                var team2 = db.GetTeamFull(game, 1).ToList();
                 var queue = db.GetQueue(game).ToList();
 
 
@@ -139,8 +137,6 @@ namespace ELO.Services
                             Title = $"Game #{game.GameId} - Current Teams."
                         };
 
-                        var t1Users = GetMentionList(GetUserList(context.Guild, team1));
-                        var t2Users = GetMentionList(GetUserList(context.Guild, team2));
                         var remainingPlayers = queue.Where(x => x.UserId != captains.Item1 && x.UserId != captains.Item2).Select(x => MentionUtils.MentionUser(x.UserId));                        
                         if (lobby.HostSelectionMode != HostSelection.None)
                         {
