@@ -52,7 +52,7 @@ namespace ELO.Services
 
         public Lobby GetLobbyWithQueue(ISocketMessageChannel channel)
         {
-            return Lobbies.Where(x => x.ChannelId == channel.Id).Include(x => x.Queue).SingleOrDefault();
+            return Lobbies.Where(x => x.ChannelId == channel.Id).Include(x => x.Queue).FirstOrDefault();
         }
         public Lobby GetLobby(ISocketMessageChannel channel)
         {

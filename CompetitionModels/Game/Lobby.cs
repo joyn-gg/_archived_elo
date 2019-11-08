@@ -25,15 +25,12 @@ namespace ELO.Models
 
         public ulong? GameReadyAnnouncementChannel { get; set; } = null;
         public bool MentionUsersInReadyAnnouncement { get; set; } = true;
-
         public ulong? GameResultAnnouncementChannel { get; set; } = null;
 
 
         public int? MinimumPoints { get; set; } = null;
         public double LobbyMultiplier { get; set; } = 1;
         public bool MultiplyLossValue { get; set; } = false;
-
-
         public int? HighLimit { get; set; } = null;
         public double ReductionPercent { get; set; } = 0.5;
 

@@ -62,7 +62,7 @@ namespace ELO.Modules
                     var permissions = db.Permissions.Where(x => x.GuildId == Context.Guild.Id).ToArray();
                     foreach (var commandGroup in CommandService.Commands.GroupBy(x => x.Name.ToLower()))
                     {
-                        var match = permissions.SingleOrDefault(x => x.CommandName.Equals(commandGroup.Key, StringComparison.OrdinalIgnoreCase));
+                        var match = permissions.FirstOrDefault(x => x.CommandName.Equals(commandGroup.Key, StringComparison.OrdinalIgnoreCase));
                         if (match == null)
                         {
                             guildModel.Cache.Add(commandGroup.Key.ToLower(), null);

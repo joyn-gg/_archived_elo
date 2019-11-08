@@ -500,7 +500,7 @@ namespace ELO.Services
                     return;
                 }
 
-                var game = db.GameResults.SingleOrDefault(x => x.LobbyId == lobby.ChannelId && x.GameId == gameNumber);
+                var game = db.GameResults.FirstOrDefault(x => x.LobbyId == lobby.ChannelId && x.GameId == gameNumber);
                 if (game == null)
                 {
                     await context.Channel.SendMessageAsync("", false, "Game not found.".QuickEmbed(Color.Red));

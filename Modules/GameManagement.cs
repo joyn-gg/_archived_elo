@@ -192,7 +192,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var game = db.GameResults.SingleOrDefault(x => x.GuildId == Context.Guild.Id && x.LobbyId == lobby.ChannelId && x.GameId == gameNumber);
+                var game = db.GameResults.FirstOrDefault(x => x.GuildId == Context.Guild.Id && x.LobbyId == lobby.ChannelId && x.GameId == gameNumber);
                 if (game == null)
                 {
                     await SimpleEmbedAsync("Invalid Game number.", Color.Red);
