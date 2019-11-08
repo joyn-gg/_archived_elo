@@ -69,7 +69,7 @@ namespace ELO.Modules
                     Level = level
                 };
                 db.Permissions.Add(permission);
-                if (Permissions.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
+                if (PermissionService.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
                 {
                     cache.Cache.Remove(match.Name.ToLower());
                 }
@@ -96,7 +96,7 @@ namespace ELO.Modules
                 var permission = db.Permissions.Find(Context.Guild.Id, match.Name.ToLower());
                 //TODO: Is null check required?
                 db.Permissions.Remove(permission);
-                if (Permissions.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
+                if (PermissionService.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
                 {
                     cache.Cache.Remove(match.Name.ToLower());
                 }
@@ -114,7 +114,7 @@ namespace ELO.Modules
             {
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);
                 competition.ModeratorRole = modRole?.Id;
-                if (Permissions.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
+                if (PermissionService.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
                 {
                     cache.ModId = modRole?.Id;
                 }
@@ -139,7 +139,7 @@ namespace ELO.Modules
             {
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);
                 competition.AdminRole = adminRole?.Id;
-                if (Permissions.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
+                if (PermissionService.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
                 {
                     cache.AdminId = adminRole?.Id;
                 }
