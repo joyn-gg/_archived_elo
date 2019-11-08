@@ -85,7 +85,13 @@ namespace ELO.Modules
                     user.DisplayName = name;
                     db.SaveChanges();
                 }
-
+                if (ELO.Extensions.Extensions.RegistrationCache.TryGetValue(Context.Guild.Id, out var gCache))
+                {
+                    if (gCache.ContainsKey(regUser.Id))
+                    {
+                        gCache[regUser.Id] = true;
+                    }
+                }
                 var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
                 var responses = await UserService.UpdateUserAsync(comp, user, ranks, regUser);
 

@@ -67,7 +67,7 @@ namespace ELO.Preconditions
             {
                 if (Level == PermissionLevel.Registered)
                 {
-                    if (gUser.IsRegistered(out var _))
+                    if (gUser.IsRegistered(out var _, false))
                     {
                         return PreconditionResult.FromSuccess();
                     }

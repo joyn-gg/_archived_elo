@@ -1,4 +1,5 @@
 ﻿using Discord.WebSocket;
+using ELO.Extensions;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -120,7 +121,7 @@ namespace ELO.Services
                 if (permission.Level == PermissionLevel.Default) return (null, guildCache, null);
                 if (permission.Level == PermissionLevel.Registered)
                 {
-                    return (db.Players.Find(user.Guild.Id, user.Id) != null, guildCache, permission);
+                    return (user.IsRegistered(out var _, false), guildCache, permission);
                 }
             }
             if (permission.Level == PermissionLevel.Moderator)

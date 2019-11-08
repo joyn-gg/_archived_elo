@@ -125,7 +125,7 @@ namespace ELO.Services
                     }
                 });
             }
-            catch (Exception e)
+            catch// (Exception e)
             {
                 noted.Add($"Issue updating {user.Mention} name/roles.");
             }
