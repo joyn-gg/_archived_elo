@@ -188,9 +188,11 @@ namespace ELO.Services
                     case PickMode.TryBalance:
                         game.GameState = GameState.Undecided;
                         var ordered = queue.OrderByDescending(x => db.Players.Find(context.Guild.Id, x.UserId).Points).ToList();
+                        var t1Added = new HashSet<ulong>();
+                        var t2Added = new HashSet<ulong>();
                         foreach (var user in ordered)
                         {
-                            if (team1.Count > team2.Count)
+                            if (t1Added.Count > t2Added.Count)
                             {
                                 db.TeamPlayers.Add(new TeamPlayer
                                 {
@@ -200,6 +202,7 @@ namespace ELO.Services
                                     GameNumber = game.GameId,
                                     TeamNumber = 1
                                 });
+                                t1Added.Add(user.UserId);
                             }
                             else
                             {
@@ -211,6 +214,7 @@ namespace ELO.Services
                                     GameNumber = game.GameId,
                                     TeamNumber = 2
                                 });
+                                t2Added.Add(user.UserId);
                             }
                         }
                         db.QueuedPlayers.RemoveRange(queue);
