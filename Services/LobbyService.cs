@@ -342,6 +342,7 @@ namespace ELO.Services
                 var gm = db.GameResults.FirstOrDefault(x => x.LobbyId == game.LobbyId && x.GameId == game.GameId);
                 gm.Picks++;
                 db.Update(gm);
+                db.SaveChanges();
                 return (game, pickResponse);
             }
         }
