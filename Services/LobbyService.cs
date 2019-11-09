@@ -315,7 +315,7 @@ namespace ELO.Services
             {
                 var uc = users.Count();
                 var teamCaptain = game.Picks % 2 == 0 ? cap1 : cap2;
-                var offTeamCaptain = game.Picks % 2 == 0 ? cap2 : cap2;
+                var offTeamCaptain = game.Picks % 2 == 0 ? cap2 : cap1;
 
                 if (context.User.Id != teamCaptain.UserId)
                 {
@@ -336,8 +336,9 @@ namespace ELO.Services
 
                 db.TeamPlayers.Add(GetPlayer(game, users[0], game.Picks % 2 == 0 ? 1 : 2));
                 var pickResponse = $"{MentionUtils.MentionUser(offTeamCaptain.UserId)} can select **1** player for the next pick.";
-                game.Picks++;
-
+                var gm = db.GameResults.FirstOrDefault(x => x.LobbyId == game.LobbyId && x.GameId == game.GameId);
+                gm.Picks++;
+                db.Update(gm);
                 return (game, pickResponse);
             }
         }
@@ -366,7 +367,7 @@ namespace ELO.Services
                 //Lay out custom logic for 1-2-2-1-1... pick order.
 
                 var teamCaptain = game.Picks % 2 == 0 ? cap1 : cap2;
-                var offTeamCaptain = game.Picks % 2 == 0 ? cap2 : cap2;
+                var offTeamCaptain = game.Picks % 2 == 0 ? cap2 : cap1;
                 string pickResponse = null;
                 if (game.Picks == 0)
                 {
@@ -389,7 +390,6 @@ namespace ELO.Services
                     }
 
                     db.TeamPlayers.Add(GetPlayer(game, users[0], 1));
-                    game.Picks++;
                     pickResponse = $"{MentionUtils.MentionUser(offTeamCaptain.UserId)} can select **2** players for the next pick.";
                 }
                 else if (game.Picks == 1)
@@ -410,9 +410,7 @@ namespace ELO.Services
                     //Note adding a player multiple times (ie team captain to team 1) will not affect it because the players are a hashset.
                     db.TeamPlayers.Add(GetPlayer(game, users[0], 2));
                     db.TeamPlayers.Add(GetPlayer(game, users[1], 2));
-                    game.Picks++;
                     pickResponse = $"{MentionUtils.MentionUser(offTeamCaptain.UserId)} can select **2** players for the next pick.";
-                    game.Picks++;
                 }
                 else if (game.Picks == 2)
                 {
@@ -432,9 +430,7 @@ namespace ELO.Services
                     //Note adding a player multiple times (ie team captain to team 1) will not affect it because the players are a hashset.
                     db.TeamPlayers.Add(GetPlayer(game, users[0], 1));
                     db.TeamPlayers.Add(GetPlayer(game, users[1], 1));
-                    game.Picks++;
                     pickResponse = $"{MentionUtils.MentionUser(offTeamCaptain.UserId)} can select **1** player for the next pick.";
-                    game.Picks++;
                 }
                 else
                 {
@@ -456,12 +452,14 @@ namespace ELO.Services
                     }
 
                     db.TeamPlayers.Add(GetPlayer(game, users[0], game.Picks % 2 == 0 ? 1 : 2));
-                    game.Picks++;
                     pickResponse = $"{MentionUtils.MentionUser(offTeamCaptain.UserId)} can select **1** player for the next pick.";
-                    game.Picks++;
                 }
 
+                var gm = db.GameResults.FirstOrDefault(x => x.LobbyId == game.LobbyId && x.GameId == game.GameId);
+                gm.Picks++;
+                db.Update(gm);
                 db.SaveChanges();
+
                 return (game, pickResponse);
             }
         }
