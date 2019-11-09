@@ -14,7 +14,6 @@ namespace ELO.Models
             GuildId = guildId;
         }
 
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int GameId { get; set; }
 
         [ForeignKey("GuildId")]

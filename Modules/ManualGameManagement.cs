@@ -181,14 +181,18 @@ namespace ELO.Modules
                 }
 
                 //Update counter and save new competition config
-                competition.ManualGameCounter++;
-                db.Update(competition);
+
 
                 //Create new game info
+                var count = ((IQueryable<ManualGameResult>)db.ManualGameResults).Count(x => x.GuildId == Context.Guild.Id);
                 var game = new ManualGameResult
                 {
-                    GuildId = Context.Guild.Id
+                    GuildId = Context.Guild.Id,
+                    GameId = count + 1 
                 };
+
+                competition.ManualGameCounter = game.GameId;
+                db.Update(competition);
                 game.Submitter = Context.User.Id;
                 game.GameState = win ? ManualGameState.Win : ManualGameState.Lose;
                 db.ManualGameResults.Add(game);
