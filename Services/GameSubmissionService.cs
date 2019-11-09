@@ -105,7 +105,7 @@ namespace ELO.Services
                 {
                     GuildId = competition.GuildId,
                     ChannelId = game.LobbyId,
-                    UserId = player.UserId,
+                    UserId = userId,
                     GameNumber = game.GameId,
                     ModifyAmount = updateVal
                 };
@@ -212,16 +212,6 @@ namespace ELO.Services
                 }
 
                 game.GameState = GameState.Decided;
-
-                db.ScoreUpdates.AddRange(allUsers.Select(x => new ScoreUpdate
-                {
-                    UserId = x.Item1.UserId,
-                    GuildId = context.Guild.Id,
-                    ChannelId = game.LobbyId,
-                    GameNumber = game.GameId,
-                    ModifyAmount = x.Item2
-                }));
-
 
                 game.WinningTeam = (int)winning_team;
                 game.Comment = comment;
