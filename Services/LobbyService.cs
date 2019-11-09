@@ -186,23 +186,35 @@ namespace ELO.Services
                         var ordered = queue.OrderByDescending(x => db.Players.Find(context.Guild.Id, x.UserId).Points).ToList();
                         var t1Added = new HashSet<ulong>();
                         var t2Added = new HashSet<ulong>();
+                        foreach (var user in ordered)
+                        {
+                            if (t1Added.Count <= t2Added.Count)
+                            {
+                                db.TeamPlayers.Add(new TeamPlayer
+                                {
+                                    GuildId = context.Guild.Id,
+                                    ChannelId = lobby.ChannelId,
+                                    UserId = user.UserId,
+                                    GameNumber = game.GameId,
+                                    TeamNumber = 1
+                                });
+                                t1Added.Add(user.UserId);
+                            }
+                            else
+                            {
+                                db.TeamPlayers.Add(new TeamPlayer
+                                {
+                                    GuildId = context.Guild.Id,
+                                    ChannelId = lobby.ChannelId,
+                                    UserId = user.UserId,
+                                    GameNumber = game.GameId,
+                                    TeamNumber = 2
+                                });
+                                t2Added.Add(user.UserId);
+                            }
+                        }
 
-                        db.TeamPlayers.AddRange(ordered.Take(lobby.PlayersPerTeam).Select(x => new TeamPlayer
-                        {
-                            GuildId = context.Guild.Id,
-                            ChannelId = lobby.ChannelId,
-                            UserId = x.UserId,
-                            GameNumber = game.GameId,
-                            TeamNumber = 1
-                        }));
-                        db.TeamPlayers.AddRange(ordered.Skip(lobby.PlayersPerTeam).Take(lobby.PlayersPerTeam).Select(x => new TeamPlayer
-                        {
-                            GuildId = context.Guild.Id,
-                            ChannelId = lobby.ChannelId,
-                            UserId = x.UserId,
-                            GameNumber = game.GameId,
-                            TeamNumber = 2
-                        }));
+
                         db.QueuedPlayers.RemoveRange(queue);
 
                         break;
