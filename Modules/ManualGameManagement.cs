@@ -167,7 +167,7 @@ namespace ELO.Modules
                     var gUser = Context.Guild.GetUser(userId);
                     if (gUser == null) continue;
 
-                    await UserService.UpdateUserAsync(competition, player, ranks, gUser);
+                    var _ = Task.Run(async () => await UserService.UpdateUserAsync(competition, player, ranks, gUser));
 
                     var rankUpdate = "";
                     if (maxRank != null || newRank != null)
