@@ -184,7 +184,7 @@ namespace ELO.Modules
 
 
                 //Create new game info
-                var count = ((IQueryable<ManualGameResult>)db.ManualGameResults).Count(x => x.GuildId == Context.Guild.Id);
+                var count = ((IQueryable<ManualGameResult>)db.ManualGameResults).Where(x => x.GuildId == Context.Guild.Id).Max(x => x.GameId);
                 var game = new ManualGameResult
                 {
                     GuildId = Context.Guild.Id,
