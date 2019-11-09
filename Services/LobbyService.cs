@@ -368,6 +368,7 @@ namespace ELO.Services
             using (var db = new Database())
             {
                 var uc = users.Count();
+                var lobby = db.Lobbies.Find(game.LobbyId);
                 //Lay out custom logic for 1-2-2-1-1... pick order.
 
                 var teamCaptain = game.Picks % 2 == 0 ? cap1 : cap2;
@@ -456,13 +457,31 @@ namespace ELO.Services
                     }
 
                     db.TeamPlayers.Add(GetPlayer(game, users[0], game.Picks % 2 == 0 ? 1 : 2));
+                    var gm = db.GameResults.FirstOrDefault(x => x.LobbyId == game.LobbyId && x.GameId == game.GameId);
+                    gm.Picks++;
+                    db.Update(gm);
+                    db.SaveChanges();
+
+                    var allUsers = db.GetTeamFull(game, 1).Union(db.GetTeamFull(game, 2)).ToHashSet();
+                    if (allUsers.Count >= lobby.PlayersPerTeam*2)
+                    {
+                        return (game, "Game all players have been chosen.");
+                    }
+
                     pickResponse = $"{MentionUtils.MentionUser(offTeamCaptain.UserId)} can select **1** player for the next pick.";
+                    return (game, pickResponse);
                 }
 
-                var gm = db.GameResults.FirstOrDefault(x => x.LobbyId == game.LobbyId && x.GameId == game.GameId);
-                gm.Picks++;
-                db.Update(gm);
+                var gm2 = db.GameResults.FirstOrDefault(x => x.LobbyId == game.LobbyId && x.GameId == game.GameId);
+                gm2.Picks++;
+                db.Update(gm2);
                 db.SaveChanges();
+
+                var allUsers2 = db.GetTeamFull(game, 1).Union(db.GetTeamFull(game, 2)).ToHashSet();
+                if (allUsers2.Count >= lobby.PlayersPerTeam * 2)
+                {
+                    return (game, "Game all players have been chosen.");
+                }
 
                 return (game, pickResponse);
             }

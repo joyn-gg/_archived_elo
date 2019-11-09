@@ -335,11 +335,31 @@ namespace ELO.Modules
                     return;
                 }
 
-                var queue = db.GetQueuedPlayers(Context.Guild.Id, Context.Channel.Id).ToArray();
+                var queue = db.GetQueuedPlayers(Context.Guild.Id, Context.Channel.Id).ToList();
                 var team1 = db.GetTeamPlayers(Context.Guild.Id, Context.Channel.Id, latestGame.GameId, 1).ToArray();
                 var team2 = db.GetTeamPlayers(Context.Guild.Id, Context.Channel.Id, latestGame.GameId, 2).ToArray();
                 var cap1 = db.GetTeamCaptain(Context.Guild.Id, Context.Channel.Id, latestGame.GameId, 1);
                 var cap2 = db.GetTeamCaptain(Context.Guild.Id, Context.Channel.Id, latestGame.GameId, 2);
+
+                if (cap1 != null)
+                {
+                    var match = queue.FirstOrDefault(x => x.UserId == cap1.UserId);
+                    if (match != null)
+                    {
+                        db.QueuedPlayers.Remove(match);
+                        queue.Remove(match);
+                    }
+                }
+                if (cap2 != null)
+                {
+                    var match = queue.FirstOrDefault(x => x.UserId == cap2.UserId);
+                    if (match != null)
+                    {
+                        db.QueuedPlayers.Remove(match);
+                        queue.Remove(match);
+                    }
+                }
+
                 //Ensure the player is eligible to join a team
                 if (users.Any(user => !queue.Any(x => x.UserId == user.Id)))
                 {
@@ -389,7 +409,7 @@ namespace ELO.Modules
                 }
                 else
                 {
-                    var remaining = queue.Where(x => team1.All(u => u.UserId != x.UserId) && team2.All(u => u.UserId != x.UserId)).ToList();
+                    var remaining = queue.Where(x => team1.All(u => u.UserId != x.UserId) && x.UserId != cap1?.UserId && x.UserId != cap2?.UserId && team2.All(u => u.UserId != x.UserId)).ToList();
                     if (remaining.Count == 1)
                     {
                         var lastUser = remaining.First();
@@ -404,7 +424,9 @@ namespace ELO.Modules
                     }
                 }
 
-                if (team1.Length + team2.Length + 2 >= queue.Length)
+                var allQueued = db.GetTeamFull(latestGame, 1).Union(db.GetTeamFull(latestGame, 2)).ToHashSet();
+
+                if (allQueued.Count >= queue.Count)
                 {
                     //Teams have been filled.
                     latestGame.GameState = GameState.Undecided;
@@ -433,6 +455,7 @@ namespace ELO.Modules
                 {
                     var res = GameService.GetGameMessage(latestGame, "Player(s) picked.",
                             GameFlag.gamestate);
+                    res.Item2.AddField("Remaining", string.Join("\n", queue.Where(x => !allQueued.Contains(x.UserId)).Select(x => MentionUtils.MentionUser(x.UserId))));
                     await ReplyAsync(pickResponse ?? "", false, res.Item2.Build());
                 }
 
