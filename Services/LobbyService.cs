@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using ELO.Entities;
 using ELO.Models;
+using Microsoft.EntityFrameworkCore;
 using RavenBOT.Common;
 using System;
 using System.Collections.Generic;
@@ -71,6 +72,7 @@ namespace ELO.Services
         {
             using (var db = new Database())
             {
+                lobby = db.Lobbies.Find(lobby.ChannelId);
                 await context.Channel.SendMessageAsync("", false, "Queue is full. Picking teams...".QuickEmbed(Color.Blue));
                 //Increment the game counter as there is now a new game.
                 var vals = ((IQueryable<GameResult>)db.GameResults).Where(x => x.LobbyId == lobby.ChannelId).ToArray();
@@ -90,7 +92,7 @@ namespace ELO.Services
                     game.MapName = map.MapName;
                 }
 
-                db.Update(lobby);
+                db.Lobbies.Update(lobby);
                 db.GameResults.Add(game);
                 db.SaveChanges();
 
