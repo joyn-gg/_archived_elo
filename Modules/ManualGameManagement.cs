@@ -115,7 +115,7 @@ namespace ELO.Modules
                     if (player == null) continue;
 
                     //This represents the current user's rank
-                    var maxRank = ranks.Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                    var maxRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
 
                     int updateVal;
                     RankChangeState state = RankChangeState.None;
@@ -126,7 +126,7 @@ namespace ELO.Modules
                         updateVal = maxRank?.WinModifier ?? competition.DefaultWinModifier;
                         player.Points += updateVal;
                         player.Wins++;
-                        newRank = ranks.Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                        newRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
                         if (newRank != null)
                         {
                             if (maxRank == null)
@@ -155,7 +155,7 @@ namespace ELO.Modules
                             if (player.Points < maxRank.Points)
                             {
                                 state = RankChangeState.DeRank;
-                                newRank = ranks.Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                                newRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
                             }
                         }
                     }

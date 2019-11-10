@@ -62,7 +62,7 @@ namespace ELO.Services
                     }
                     player.Points += updateVal;
                     player.Wins++;
-                    newRank = ranks.Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                    newRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
                     if (newRank != null)
                     {
                         if (maxRank == null)
@@ -95,7 +95,7 @@ namespace ELO.Services
                         if (player.Points < maxRank.Points)
                         {
                             state = RankChangeState.DeRank;
-                            newRank = ranks.Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                            newRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
                         }
                     }
                 }
