@@ -449,7 +449,10 @@ namespace ELO.Modules
                         }
                     }
 
-                    await MessageUsersAsync(queue.Select(x => x.UserId).ToArray(), x => MentionUtils.MentionUser(x), res.Item2.Build());
+                    if (lobby.DmUsersOnGameReady)
+                    {
+                        await MessageUsersAsync(queue.Select(x => x.UserId).ToArray(), x => MentionUtils.MentionUser(x), res.Item2.Build());
+                    }
                 }
                 else
                 {
