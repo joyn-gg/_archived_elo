@@ -119,7 +119,7 @@ namespace ELO.Modules
         }
 
         [Command("CompetitionInfo", RunMode = RunMode.Async)]
-        [Alias("CompetitionSettings", "GameSettings")]
+        [Alias("CompetitionSettings")]
         [Summary("Displays information about the current servers competition settings")]
         public virtual async Task CompetitionInfo()
         {
