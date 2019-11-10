@@ -78,7 +78,8 @@ namespace ELO.Modules
                     var queued = db.QueuedPlayers.Where(x => x.GuildId == Context.Guild.Id && x.UserId == Context.User.Id);
                     if (queued.Any())
                     {
-                        var guildChannels = queue.Select(x => MentionUtils.MentionChannel(x.ChannelId));
+                        var userChannels = db.QueuedPlayers.Where(x => x.GuildId == Context.Guild.Id && x.UserId == Context.User.Id).ToArray();
+                        var guildChannels = userChannels.Select(x => MentionUtils.MentionChannel(x.ChannelId));
 
                         if (lobby.HideQueue)
                         {
