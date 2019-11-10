@@ -311,7 +311,7 @@ namespace ELO.Modules
         [Command("Pick", RunMode = RunMode.Sync)]
         [Alias("p")]
         [Summary("Picks the specified player(s) for your team.")]
-        public virtual async Task PickPlayerAsync(params SocketGuildUser[] users)
+        public virtual async Task PickPlayersAsync(params SocketGuildUser[] users)
         {
             using (var db = new Database())
             {
@@ -386,13 +386,13 @@ namespace ELO.Modules
                 string pickResponse = null;
                 if (latestGame.PickOrder == CaptainPickOrder.PickTwo)
                 {
-                    var res = await LobbyService.PickTwoAsync(Context, latestGame, users, cap1, cap2);
+                    var res = await LobbyService.PickTwoAsync(db, Context, lobby, latestGame, users, cap1, cap2);
                     latestGame = res.Item1;
                     pickResponse = res.Item2;
                 }
                 else if (latestGame.PickOrder == CaptainPickOrder.PickOne)
                 {
-                    var res = await LobbyService.PickOneAsync(Context, latestGame, users, cap1, cap2);
+                    var res = await LobbyService.PickOneAsync(db, Context, latestGame, users, cap1, cap2);
                     latestGame = res.Item1;
                     pickResponse = res.Item2;
                 }
@@ -402,34 +402,34 @@ namespace ELO.Modules
                     return;
                 }
 
-                //game will be returned null from pickone/picktwo if there was an issue with a pick. The function already replies to just return.
-                if (latestGame == null)
-                {
-                    return;
-                }
-                else
-                {
-                    var remaining = queue.Where(x => team1.All(u => u.UserId != x.UserId) && x.UserId != cap1?.UserId && x.UserId != cap2?.UserId && team2.All(u => u.UserId != x.UserId)).ToList();
-                    if (remaining.Count == 1)
-                    {
-                        var lastUser = remaining.First();
-                        db.TeamPlayers.Add(new TeamPlayer
-                        {
-                            GuildId = Context.Guild.Id,
-                            ChannelId = Context.Channel.Id,
-                            UserId = lastUser.UserId,
-                            GameNumber = latestGame.GameId,
-                            TeamNumber = 2
-                        });
-                    }
-                }
 
+                if (latestGame == null) return;
+
+                db.SaveChanges();
                 var allQueued = db.GetTeamFull(latestGame, 1).Union(db.GetTeamFull(latestGame, 2)).ToHashSet();
+                latestGame.Picks++;
+                db.Update(latestGame);
+                var remaining = queue.Where(x => !allQueued.Contains(x.UserId)).ToArray();
+                if (remaining.Length == 1)
+                {
+                    var lastUser = remaining.First();
+                    db.TeamPlayers.Add(new TeamPlayer
+                    {
+                        GuildId = Context.Guild.Id,
+                        ChannelId = Context.Channel.Id,
+                        UserId = lastUser.UserId,
+                        GameNumber = latestGame.GameId,
+                        TeamNumber = 2
+                    });
+                    allQueued.Add(lastUser.UserId);
+                }
 
-                if (allQueued.Count >= queue.Count)
+                if (allQueued.Count >= lobby.PlayersPerTeam * 2)
                 {
                     //Teams have been filled.
                     latestGame.GameState = GameState.Undecided;
+                    db.QueuedPlayers.RemoveRange(queue);
+                    db.SaveChanges();
 
                     var res = GameService.GetGameMessage(latestGame, $"Game #{latestGame.GameId} Started",
                             GameFlag.gamestate,
@@ -453,13 +453,12 @@ namespace ELO.Modules
                 }
                 else
                 {
+                    db.SaveChanges();
                     var res = GameService.GetGameMessage(latestGame, "Player(s) picked.",
                             GameFlag.gamestate);
-                    res.Item2.AddField("Remaining", string.Join("\n", queue.Where(x => !allQueued.Contains(x.UserId)).Select(x => MentionUtils.MentionUser(x.UserId))));
+                    res.Item2.AddField("Remaining", string.Join("\n", remaining.Select(x => MentionUtils.MentionUser(x.UserId))));
                     await ReplyAsync(pickResponse ?? "", false, res.Item2.Build());
                 }
-
-                db.SaveChanges();
             }
         }
 

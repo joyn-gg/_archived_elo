@@ -15,7 +15,11 @@ namespace ELO.Services
             if (captain != null)
             {
                 resStr += $"Captain: {MentionUtils.MentionUser(captain.UserId)}\n";
-                resStr += $"Players: {string.Join("\n", RavenBOT.Common.Extensions.GetUserMentionList(players))}";
+                players = players.Where(x => x != captain.UserId).ToArray();
+                if (players.Any())
+                {
+                    resStr += $"Players: {string.Join("\n", RavenBOT.Common.Extensions.GetUserMentionList(players))}";
+                }
 
             }
             else

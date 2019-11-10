@@ -111,7 +111,10 @@ namespace ELO.Modules
                         var remainingPlayers = LobbyService.GetMentionList(LobbyService.GetUserList(Context.Guild, queue.Where(x => !team1.Any(y => y.UserId == x.UserId) && !team2.Any(y => y.UserId == x.UserId)).Select(x => x.UserId)));
                         gameEmbed.AddField("Team 1", $"Captain: {MentionUtils.MentionUser(t1c.UserId)}\n{string.Join("\n", t1Users)}");
                         gameEmbed.AddField("Team 2", $"Captain: {MentionUtils.MentionUser(t2c.UserId)}\n{string.Join("\n", t2Users)}");
-                        gameEmbed.AddField("Remaining Players", string.Join("\n", remainingPlayers));
+                        if (remainingPlayers.Any())
+                        {
+                            gameEmbed.AddField("Remaining Players", string.Join("\n", remainingPlayers));
+                        }
 
                         var teamCaptain = game.Picks % 2 == 0 ? t1c : t2c;
                         if (game.PickOrder == CaptainPickOrder.PickOne)
