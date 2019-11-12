@@ -29,8 +29,8 @@ namespace ELO.Modules
         }
         //TODO: Ensure correct commands require mod/admin perms
 
-        [Command("VoteTypes", RunMode = RunMode.Async)]
-        [Alias("Results")]
+        [Command("VoteStates", RunMode = RunMode.Async)]
+        [Alias("Results", "VoteTypes")]
         [Summary("Shows possible vote options for the Result command")]
         [RequirePermission(PermissionLevel.Registered)]
         public virtual async Task ShowResultsAsync()
