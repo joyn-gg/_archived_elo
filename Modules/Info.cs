@@ -280,7 +280,7 @@ namespace ELO.Modules
                     pages = pages.Take(1).ToList();
                     pages.Add(new ReactivePage
                     {
-                        Description = $"In order to access a complete leaderboard, consider joining ELO premium ay {Premium.PremiumConfig.AltLink}, patrons must also be members of the ELO server at: {Premium.PremiumConfig.ServerInvite}"
+                        Description = $"In order to access a complete leaderboard, consider joining ELO premium at {Premium.PremiumConfig.AltLink}, patrons must also be members of the ELO server at: {Premium.PremiumConfig.ServerInvite}"
                     });
                 }
 
