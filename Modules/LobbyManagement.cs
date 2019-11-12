@@ -15,17 +15,19 @@ namespace ELO.Modules
     [RavenRequireContext(ContextType.Guild)]
     public partial class LobbyManagement : ReactiveBase
     {
-        public LobbyManagement(Random random, GameService gameService, LobbyService lobbyService)
+        public LobbyManagement(Random random, GameService gameService, LobbyService lobbyService, PremiumService premiumService)
         {
             Random = random;
             GameService = gameService;
             LobbyService = lobbyService;
+            PremiumService = premiumService;
         }
 
         //TODO: Player queuing via reactions to a message.
         public Random Random { get; }
         public GameService GameService { get; }
         public LobbyService LobbyService { get; }
+        public PremiumService PremiumService { get; }
 
         //TODO: Replace command
         //TODO: Map stuff

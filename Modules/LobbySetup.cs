@@ -15,6 +15,13 @@ namespace ELO.Modules
     [Preconditions.RequirePermission(PermissionLevel.ELOAdmin)]
     public class LobbySetup : ReactiveBase
     {
+        public PremiumService Premium { get; }
+
+        public LobbySetup(PremiumService premium)
+        {
+            Premium = premium;
+        }
+
         [Command("CreateLobby", RunMode = RunMode.Sync)]
         [Alias("Create Lobby")]
         [Summary("Creates a lobby with the specified players per team and specified pick mode")]
@@ -29,6 +36,17 @@ namespace ELO.Modules
                 {
                     await SimpleEmbedAndDeleteAsync("This channel is already a lobby. Remove the lobby before trying top create a new one here.", Color.Red);
                     return;
+                }
+                var allLobbies = db.Lobbies.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                if (allLobbies.Length >= Premium.PremiumConfig.LobbyLimit)
+                {
+                    if (!Premium.IsPremium(Context.Guild.Id))
+                    {
+                        await SimpleEmbedAsync($"This server already has {Premium.PremiumConfig.LobbyLimit} lobbies created. " +
+                            $"In order to create more you must become an ELO premium subscriber at {Premium.PremiumConfig.AltLink} join the server " +
+                            $"{Premium.PremiumConfig.ServerInvite} to recieve your role and then run the `claimpremium` command in your server.");
+                        return;
+                    }
                 }
 
                 lobby = new Lobby

@@ -173,6 +173,14 @@ namespace ELO.Modules
                 channel = Context.Channel;
             }
 
+            if (!PremiumService.IsPremium(Context.Guild.Id))
+            {
+                await SimpleEmbedAsync($"This is a premium only command. " +
+                    $"In order to get premium must become an ELO premium subscriber at {PremiumService.PremiumConfig.AltLink} join the server " +
+                    $"{PremiumService.PremiumConfig.ServerInvite} to recieve your role and then run the `claimpremium` command in your server.");
+                return;
+            }
+
             using (var db = new Database())
             {
                 var lobby = db.GetLobby(channel);

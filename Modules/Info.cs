@@ -26,14 +26,16 @@ namespace ELO.Modules
         public HelpService HelpService { get; }
         public GameService GameService { get; }
         public PermissionService PermissionService { get; }
+        public PremiumService Premium { get; }
 
-        public Info(HttpClient httpClient, CommandService commandService, HelpService helpService, GameService gameService, PermissionService permissionService)
+        public Info(HttpClient httpClient, CommandService commandService, HelpService helpService, GameService gameService, PermissionService permissionService, PremiumService premium)
         {
             HttpClient = httpClient;
             CommandService = commandService;
             HelpService = helpService;
             GameService = gameService;
             PermissionService = permissionService;
+            Premium = premium;
         }
 
         [Command("Invite")]
@@ -272,6 +274,15 @@ namespace ELO.Modules
 
                 //Convert the groups into formatted pages for the response message
                 var pages = GetPages(userGroups, mode);
+
+                if (!Premium.IsPremium(Context.Guild.Id))
+                {
+                    pages = pages.Take(1).ToList();
+                    pages.Add(new ReactivePage
+                    {
+                        Description = $"In order to access a complete leaderboard, consider joining ELO premium ay {Premium.PremiumConfig.AltLink}, patrons must also be members of the ELO server at: {Premium.PremiumConfig.ServerInvite}"
+                    });
+                }
 
                 //Construct a paginated message with each of the leaderboard pages
                 await PagedReplyAsync(new ReactivePager(pages).ToCallBack().WithDefaultPagerCallbacks());

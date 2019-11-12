@@ -282,7 +282,10 @@ namespace ELO.Services
                             {
                                 var t1 = db.GetTeamFull(game, 1);
                                 var u = context.Client.GetUser(user);
-                                await u.SendMessageAsync(MentionUtils.MentionUser(user), false, GetMsg(game, t1.ToList(), user));
+                                var _ = Task.Run(async () =>
+                                    {
+                                        await u.SendMessageAsync(MentionUtils.MentionUser(user), false, GetMsg(game, t1.ToList(), user));
+                                    });
                             }
                             catch
                             {

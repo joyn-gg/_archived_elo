@@ -65,7 +65,7 @@ namespace ELO.Modules
                     var limit = Premium.GetRegistrationLimit(Context.Guild.Id);
                     if (limit < registered)
                     {
-                        await SimpleEmbedAsync($"This server has exceeded the maximum registration count of {limit}, it must be upgraded to premium to allow additional registrations, you can get premium by subscribing at {Premium.PremiumConfig.AltLink} for support and to claim premium, a patreon must join the ELO server: {Premium.PremiumConfig.ServerInvite}", Color.DarkBlue);
+                        await SimpleEmbedAsync($"This server has exceeded the maximum registration count of {limit}, it must be upgraded to premium to allow additional registrations, you can get premium by subscribing at {Premium.PremiumConfig.AltLink} for support and to claim premium, a patron must join the ELO server: {Premium.PremiumConfig.ServerInvite}", Color.DarkBlue);
                         return;
                     }
 

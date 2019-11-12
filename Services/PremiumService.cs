@@ -26,8 +26,37 @@ namespace ELO.Services
             return userRole;
         }
 
+        public bool IsPremium(ulong guildId)
+        {
+            if (!PremiumConfig.Enabled) return true;
+            using (var db = new Database())
+            {
+                var match = db.Competitions.Find(guildId);
+                if (match == null) return false;
+                if (match.LegacyPremiumExpiry != null && match.LegacyPremiumExpiry > DateTime.UtcNow)
+                {
+                    return true;
+                }
+
+                if (match.PremiumRedeemer == null)
+                {
+                    return false;
+                }
+
+                var patreonGuild = Client.GetGuild(PremiumConfig.GuildId);
+                var patreonUser = patreonGuild?.GetUser(match.PremiumRedeemer.Value);
+                if (patreonUser == null) return false;
+
+                var patreonRole = GetPremiumRole(patreonUser);
+                if (patreonRole == null) return false;
+
+                return true;
+            }
+        }
+
         public int GetRegistrationLimit(ulong guildId)
         {
+            if (!PremiumConfig.Enabled) return int.MaxValue;
             using (var db = new Database())
             {
                 var match = db.Competitions.Find(guildId);
@@ -141,9 +170,11 @@ namespace ELO.Services
 
         public class Config
         {
+            public bool Enabled { get; set; } = true;
             public ulong GuildId { get; set; }
 
             public int DefaultLimit { get; set; } = 20;
+            public int LobbyLimit { get; set; } = 3;
 
             public string ServerInvite { get; set; }
             public string AltLink { get; set; }
