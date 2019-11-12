@@ -285,7 +285,9 @@ namespace ELO.Modules
                 }
 
                 //Construct a paginated message with each of the leaderboard pages
-                await PagedReplyAsync(new ReactivePager(pages).ToCallBack().WithDefaultPagerCallbacks());
+                var callback = new ReactivePager(pages).ToCallBack();
+                callback.Precondition = async (x, y) => y.UserId == Context.User.Id;
+                await PagedReplyAsync(callback.WithDefaultPagerCallbacks());
             }
         }
 
