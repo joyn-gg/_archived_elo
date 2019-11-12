@@ -15,6 +15,7 @@ namespace ELO.Services
             try
             {
                 var userRoles = user.Roles.Where(x => !x.IsEveryone && !x.IsManaged).Select(x => x.Id).ToList();
+                bool updateRoles = false;
                 if (user.Guild.CurrentUser.GuildPermissions.ManageRoles)
                 {
                     var rankMatches = ranks.Where(x => x.Points <= player.Points);
@@ -36,6 +37,7 @@ namespace ELO.Services
                             {
                                 if (role.Position < user.Guild.CurrentUser.Hierarchy)
                                 {
+                                    updateRoles = true;
                                     userRoles.RemoveAll(x => gRoles.Any(g => g.Id == x));
                                     userRoles.Add(role.Id);
 
@@ -59,11 +61,12 @@ namespace ELO.Services
                         }
                     }
 
-                    var removeRanks = ranks.Where(x => x.Points > player.Points).ToArray();
+
+                    /*var removeRanks = ranks.Where(x => x.Points > player.Points).ToArray();
                     if (removeRanks.Length > 0)
                     {
                         userRoles.RemoveAll(x => removeRanks.Any(g => g.RoleId == x));
-                    }
+                    }*/
 
 
                     //Ensure the user has the registerd role if it exists.
@@ -76,6 +79,7 @@ namespace ELO.Services
                             {
                                 if (role.Position < user.Guild.CurrentUser.Hierarchy)
                                 {
+                                    updateRoles = true;
                                     userRoles.Add(role.Id);
                                 }
                             }
@@ -89,6 +93,7 @@ namespace ELO.Services
 
 
                 string replacementName = null;
+                bool updateNames = false;
                 if (comp.UpdateNames)
                 {
                     var newName = comp.GetNickname(player);
@@ -102,6 +107,7 @@ namespace ELO.Services
                         {
                             if (user.Hierarchy < user.Guild.CurrentUser.Hierarchy)
                             {
+                                updateRoles = true;
                                 replacementName = newName;
                             }
                             else
@@ -118,15 +124,17 @@ namespace ELO.Services
 
                 await user.ModifyAsync(x =>
                 {
-                    x.RoleIds = userRoles;
+                    if (updateRoles) x.RoleIds = userRoles;
+
                     if (replacementName != null)
                     {
-                        x.Nickname = replacementName;
+                        if (updateNames) x.Nickname = replacementName;
                     }
                 });
             }
-            catch// (Exception e)
+            catch (Exception e)
             {
+                Console.WriteLine(e);
                 noted.Add($"Issue updating {user.Mention} name/roles.");
             }
 
