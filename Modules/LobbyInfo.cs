@@ -203,8 +203,8 @@ namespace ELO.Modules
                 foreach (var group in groups)
                 {
                     var playerGroup = group.ToArray();
-                    var lines = group.Select(x => $"{index}: {MentionUtils.MentionUser(x.Key)} - `{x.Value}`").ToArray();
-                    index += lines.Length;
+                    var lines = group.Select(x => $"{index++}: {MentionUtils.MentionUser(x.Key)} - `{x.Value}`").ToArray();
+                    //index += lines.Length;
                     var page = new ReactivePage();
                     page.Color = Color.Blue;
                     page.Title = $"{channel.Name} - Leaderboard";
