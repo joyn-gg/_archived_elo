@@ -710,6 +710,12 @@ namespace ELO.Modules
                 return;
             }
 
+            if (!Premium.IsPremium(Context.Guild.Id))
+            {
+                await SimpleEmbedAsync($"This feature is for premium ELO servers only. {Premium.PremiumConfig.ServerInvite}");
+                return;
+            }
+
             using (var db = new Database())
             {
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);

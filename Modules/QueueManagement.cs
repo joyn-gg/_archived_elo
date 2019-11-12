@@ -15,12 +15,14 @@ namespace ELO.Modules
     public class QueueManagement : ReactiveBase
     {
         public static Dictionary<ulong, Dictionary<ulong, DateTime>> QueueDelays = new Dictionary<ulong, Dictionary<ulong, DateTime>>();
-        public QueueManagement(LobbyService lobbyService)
+        public QueueManagement(LobbyService lobbyService, PremiumService premium)
         {
             LobbyService = lobbyService;
+            Premium = premium;
         }
 
         public LobbyService LobbyService { get; }
+        public PremiumService Premium { get; }
 
         [Command("Join", RunMode = RunMode.Sync)]
         [Alias("JoinLobby", "Join Lobby", "j", "sign", "play", "ready")]
@@ -191,7 +193,20 @@ namespace ELO.Modules
                         await SimpleEmbedAsync($"A player has joined the queue. **[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]**");
                         return;
                     }
-                    await SimpleEmbedAsync($"{player.GetDisplayNameSafe()} joined the queue. **[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]**", Color.Green);
+
+                    if (Premium.IsPremium(Context.Guild.Id))
+                    {
+                        await SimpleEmbedAsync($"{player.GetDisplayNameSafe()} joined the queue. **[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]**", Color.Green);
+                    }
+                    else
+                    {
+                        await ReplyAsync("", false, new EmbedBuilder
+                        {
+                            Description = $"{player.GetDisplayNameSafe()} joined the queue. **[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]**\n" +
+                            $"[Get Premium to remove ELO bot branding]({Premium.PremiumConfig.ServerInvite})",
+                            Color = Color.Green
+                        }.Build());
+                    }
                 }
 
                 db.SaveChanges();
