@@ -42,7 +42,7 @@ namespace ELO.Services
                                 var channel = Client.GetChannel(player.ChannelId) as SocketTextChannel;
                                 if (channel != null)
                                 {
-                                    await channel.SendMessageAsync("", false, $"{MentionUtils.MentionUser(player.UserId)} was removed from the queue as they have been queued for more than {comp.QueueTimeout.Value.GetReadableLength()}".QuickEmbed(Color.DarkBlue));
+                                    await channel.SendMessageAsync(MentionUtils.MentionUser(player.UserId), false, $"{MentionUtils.MentionUser(player.UserId)} was removed from the queue as they have been queued for more than {comp.QueueTimeout.Value.GetReadableLength()}".QuickEmbed(Color.DarkBlue));
                                 }
                             }
                         }
