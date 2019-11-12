@@ -101,16 +101,25 @@ namespace ELO.Services
                 }
 
                 updates.Add((player, updateVal, maxRank, state, newRank));
-                var update = new ScoreUpdate
+                var oldUpdate = db.ScoreUpdates.FirstOrDefault(x => x.ChannelId == lobby.ChannelId && x.GameNumber == game.GameId && x.UserId == userId);
+                if (oldUpdate == null)
                 {
-                    GuildId = competition.GuildId,
-                    ChannelId = game.LobbyId,
-                    UserId = userId,
-                    GameNumber = game.GameId,
-                    ModifyAmount = updateVal
-                };
-                db.ScoreUpdates.Add(update);
-                db.Entry(update).State = Microsoft.EntityFrameworkCore.EntityState.Detached;
+                    var update = new ScoreUpdate
+                    {
+                        GuildId = competition.GuildId,
+                        ChannelId = game.LobbyId,
+                        UserId = userId,
+                        GameNumber = game.GameId,
+                        ModifyAmount = updateVal
+                    };
+                    db.ScoreUpdates.Add(update);
+                }
+                else
+                {
+                    oldUpdate.ModifyAmount = updateVal;
+                    db.ScoreUpdates.Update(oldUpdate);
+                }
+
                 db.Update(player);
             }
             db.SaveChanges();
