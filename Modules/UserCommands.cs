@@ -83,6 +83,7 @@ namespace ELO.Modules
                     }
 
                     user.DisplayName = name;
+                    db.Players.Update(user);
                     db.SaveChanges();
                 }
                 if (ELO.Extensions.Extensions.RegistrationCache.TryGetValue(Context.Guild.Id, out var gCache))
