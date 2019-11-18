@@ -191,21 +191,22 @@ namespace ELO.Modules
                     {
                         await Context.Message.DeleteAsync();
                         await SimpleEmbedAsync($"A player has joined the queue. **[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]**");
-                        return;
-                    }
-
-                    if (Premium.IsPremium(Context.Guild.Id))
-                    {
-                        await SimpleEmbedAsync($"{player.GetDisplayNameSafe()} joined the queue. **[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]**", Color.Green);
                     }
                     else
                     {
-                        await ReplyAsync("", false, new EmbedBuilder
+                        if (Premium.IsPremium(Context.Guild.Id))
                         {
-                            Description = $"{player.GetDisplayNameSafe()} joined the queue. **[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]**\n" +
-                            $"[Get Premium to remove ELO bot branding]({Premium.PremiumConfig.ServerInvite})",
-                            Color = Color.Green
-                        }.Build());
+                            await SimpleEmbedAsync($"{player.GetDisplayNameSafe()} joined the queue. **[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]**", Color.Green);
+                        }
+                        else
+                        {
+                            await ReplyAsync("", false, new EmbedBuilder
+                            {
+                                Description = $"{player.GetDisplayNameSafe()} joined the queue. **[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]**\n" +
+                                $"[Get Premium to remove ELO bot branding]({Premium.PremiumConfig.ServerInvite})",
+                                Color = Color.Green
+                            }.Build());
+                        }
                     }
                 }
 
