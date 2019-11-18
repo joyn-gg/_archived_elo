@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace ELO.Handlers
 {
-    public class ELOEventHandler : RavenBOT.Common.EventHandler
+    public partial class ELOEventHandler : RavenBOT.Common.EventHandler
     {
         public ELOEventHandler(ConfigManager configManager, IServiceProvider provider) : base(provider)
         {
@@ -19,6 +19,9 @@ namespace ELO.Handlers
             ConfigManager = configManager;
             LogHandler = provider.GetService<Logger>() ?? new Logger();
             Logger.Message += async (m, l) => LogHandler.Log(m, l);
+
+            GuildSchedule.Provider = provider;
+            GuildSchedule.Service = provider.GetRequiredService<CommandService>();
         }
 
         public ConfigManager ConfigManager { get; }
@@ -102,7 +105,22 @@ namespace ELO.Handlers
                 }
             }
 
-            var result = await CommandService.ExecuteAsync(context, argPos, Provider);
+            if (guildId != 0)
+            {
+                if (!GuildScheduler.ContainsKey(guildId))
+                {
+                    GuildScheduler[guildId] = new GuildSchedule
+                    {
+                        GuildId = guildId
+                    };
+                }
+
+                GuildScheduler[guildId].AddTask(context, argPos);
+            }
+            else
+            {
+                var result = await CommandService.ExecuteAsync(context, argPos, Provider);
+            }
         }
 
     }
