@@ -87,7 +87,6 @@ namespace ELO.Handlers
                 var context = new ShardedCommandContext(Client, message);
                 var argPos = 0;
 
-                //TODO: Add support for Custom prefixes.
                 if (guildId != 0 && !ConfigManager.LastConfig.Developer)
                 {
                     using (var db = new Database())
