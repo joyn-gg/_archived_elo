@@ -60,7 +60,8 @@ namespace ELO.Modules
                 db.SaveChanges();
                 await SimpleEmbedAsync("New Lobby has been created\n" +
                     $"Players per team: {playersPerTeam}\n" +
-                    $"Pick Mode: {pickMode}", Color.Green);
+                    $"Pick Mode: {pickMode}\n" +
+                    $"NOTE: You can play multiple games per lobby. After a game has been created simply join the queue again and another game can be played.", Color.Green);
             }
         }
 
