@@ -29,6 +29,7 @@ namespace ELO
 
         public virtual async Task RunAsync(string[] args = null)
         {
+            //Parse cl arguments and set the variables
             if (args != null)
             {
                 Parser.Default.ParseArguments<Options>(args)
@@ -41,6 +42,7 @@ namespace ELO
                     });
             }
 
+            //Initialize new default required configs
             var localManagement = new ConfigManager();
             localManagement.GetConfig();
             var socketConfig = localManagement.LastConfig.GetConfig<DscSerializable>("SocketConfig")?.ToConfig();
@@ -77,6 +79,7 @@ namespace ELO
             }
             Database.Config = dbConfig;
 
+            //Ensure the database is created. This should also verify connection
             using (var db = new Database())
             {
                 db.Database.EnsureCreated();
@@ -104,6 +107,7 @@ namespace ELO
 
             try
             {
+                //Initialize the event handler
                 await Provider.GetRequiredService<ELOEventHandler>().InitializeAsync(localManagement.GetConfig().Token);
             }
             catch (Exception e)

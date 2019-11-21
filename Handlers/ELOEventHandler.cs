@@ -20,8 +20,9 @@ namespace ELO.Handlers
             LogHandler = provider.GetService<Logger>() ?? new Logger();
             Logger.Message += async (m, l) => LogHandler.Log(m, l);
 
-            GuildSchedule.Provider = provider;
-            GuildSchedule.Service = provider.GetRequiredService<CommandService>();
+            //Set commandschedule variables so they don't need to be injected
+            CommandSchedule.Provider = provider;
+            CommandSchedule.Service = provider.GetRequiredService<CommandService>();
         }
 
         public ConfigManager ConfigManager { get; }
@@ -29,20 +30,25 @@ namespace ELO.Handlers
 
         public override async Task JoinedGuildAsync(SocketGuild guild)
         {
+            //Check server whitelist
             if (!ConfigManager.LastConfig.IsAcceptable(guild.Id))
             {
                 return;
             }
 
+            //Try to find a channel the bot can send messages to with it's current permissions
             var firstChannel = guild.TextChannels.Where(x =>
             {
                 var permissions = guild.CurrentUser?.GetPermissions(x);
                 return permissions.HasValue ? permissions.Value.ViewChannel && permissions.Value.SendMessages : false;
             }).OrderBy(c => c.Position).FirstOrDefault();
 
+            //Let the server know the help command name (assuming default prefix)
             await firstChannel?.SendMessageAsync("", false, new EmbedBuilder()
             {
                 Title = $"{Client.CurrentUser.Username}",
+                //TODO: In case that server has a custom prefix (set it, removed bot and then re-invited bot)
+                //Show custom prefix instead
                 Description = $"Get started by using the help command: `{ConfigManager.LastConfig.Prefix}help`",
                 Color = Color.Green
             }.Build());
@@ -65,6 +71,7 @@ namespace ELO.Handlers
             }
             else
             {
+                //Still ignore messages from the bot to avoid recursive commands
                 if (message.Author.Id == Client.CurrentUser.Id)
                 {
                     return;
@@ -77,18 +84,20 @@ namespace ELO.Handlers
                 guildId = gChannel.GuildId;
             }
 
+            //Ensure the server is whitelisted or whitelist disabled
+            if (!ConfigManager.LastConfig.IsAcceptable(guildId))
+            {
+                return;
+            }
+
             var _ = Task.Run(async () =>
             {
-                if (!ConfigManager.LastConfig.IsAcceptable(guildId))
-                {
-                    return;
-                }
-
                 var context = new ShardedCommandContext(Client, message);
                 var argPos = 0;
 
                 if (guildId != 0 && !ConfigManager.LastConfig.Developer)
                 {
+                    //Check that the message was from a server and try to use a custom set prefix if available.
                     using (var db = new Database())
                     {
                         var comp = db.GetOrCreateCompetition(guildId);
@@ -101,38 +110,24 @@ namespace ELO.Handlers
                 }
                 else
                 {
+                    //If the bot is in developer mode or dms use regular prefix or dev override prefix
                     if (!message.HasStringPrefix(ConfigManager.LastConfig.Developer ? ConfigManager.LastConfig.DeveloperPrefix : ConfigManager.LastConfig.Prefix, ref argPos, StringComparison.InvariantCultureIgnoreCase))
                     {
                         return;
                     }
                 }
 
-                if (guildId != 0)
-                {
-                    if (!GuildScheduler.ContainsKey(guildId))
-                    {
-                        GuildScheduler[guildId] = new GuildSchedule
-                        {
-                            GuildId = guildId
-                        };
-                    }
 
-                    GuildScheduler[guildId].AddTask(context, argPos);
-                }
-                else
+                //NOTE: Since guildId is 0 for dms, they have their own command queue.
+                if (!CommandScheduler.ContainsKey(guildId))
                 {
-                    if (!GuildScheduler.ContainsKey(0))
+                    CommandScheduler[guildId] = new CommandSchedule
                     {
-                        GuildScheduler[0] = new GuildSchedule
-                        {
-                            GuildId = 0
-                        };
-                    }
-
-                    GuildScheduler[0].AddTask(context, argPos);
-                    //Should dm commands also just have a global queue
-                    //var result = await CommandService.ExecuteAsync(context, argPos, Provider).ConfigureAwait(false);
+                        GuildId = guildId
+                    };
                 }
+
+                CommandScheduler[guildId].AddTask(context, argPos);
             });
         }
 

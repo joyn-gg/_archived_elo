@@ -9,8 +9,8 @@ namespace ELO.Handlers
 {
     public partial class ELOEventHandler
     {
-        public Dictionary<ulong, GuildSchedule> GuildScheduler = new Dictionary<ulong, GuildSchedule>();
-        public class GuildSchedule
+        public Dictionary<ulong, CommandSchedule> CommandScheduler = new Dictionary<ulong, CommandSchedule>();
+        public class CommandSchedule
         {
             public static CommandService Service;
             public static IServiceProvider Provider;
@@ -31,10 +31,12 @@ namespace ELO.Handlers
                     }
                 }
 
+                //Command is synchronous so add to guild queue
                 Queue.Enqueue((message, argPos));
 
+                //Check and attempt to run the command processor
                 if (!Running)
-                {
+                {                   
                     Task.Run(() => RunProcessor());
                 }
             }
@@ -45,10 +47,12 @@ namespace ELO.Handlers
                 Running = true;
                 try
                 {
+                    //Continue getting commands until there are none left
                     while (Queue.TryDequeue(out var context))
                     {
                         try
                         {
+                            //Wait for either the command to finish or 30 seconds to pass.
                             Task.WaitAny(Service.ExecuteAsync(context.Item1, context.Item2, Provider), Task.Delay(30000));
                         }
                         catch (Exception e)
@@ -63,6 +67,7 @@ namespace ELO.Handlers
                 }
                 finally
                 {
+                    //Ensure running is set to false on exit so commands are not lost
                     Running = false;
                 }
             }
