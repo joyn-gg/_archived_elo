@@ -502,8 +502,7 @@ namespace ELO.Modules
             using (var db = new Database())
             {
                 //Find lobbies for the server where there is NO matching channel found
-                var lobbies = db.Lobbies.Where(x => x.GuildId == Context.Guild.Id && 
-                                            !Context.Guild.Channels.Any(c => c.Id == x.ChannelId)).ToArray();
+                var lobbies = db.Lobbies.Where(x => x.GuildId == Context.Guild.Id).ToArray().Where(x => !Context.Guild.Channels.Any(c => c.Id == x.ChannelId)).ToArray();
                 if (lobbies.Length == 0)
                 {
                     await SimpleEmbedAsync("There are no lobbies to remove.", Color.Red);
