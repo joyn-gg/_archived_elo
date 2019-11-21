@@ -50,6 +50,7 @@ namespace ELO.Handlers
 
         public override async Task MessageReceivedAsync(SocketMessage discordMessage)
         {
+
             if (!(discordMessage is SocketUserMessage message))
             {
                 return;
@@ -76,51 +77,64 @@ namespace ELO.Handlers
                 guildId = gChannel.GuildId;
             }
 
-            if (!ConfigManager.LastConfig.IsAcceptable(guildId))
+            var _ = Task.Run(async () =>
             {
-                return;
-            }
-
-            var context = new ShardedCommandContext(Client, message);
-            var argPos = 0;
-
-            //TODO: Add support for Custom prefixes.
-            if (guildId != 0 && !ConfigManager.LastConfig.Developer)
-            {
-                using (var db = new Database())
+                if (!ConfigManager.LastConfig.IsAcceptable(guildId))
                 {
-                    var comp = db.GetOrCreateCompetition(guildId);
-                    var prefix = comp.Prefix ?? ConfigManager.LastConfig.Prefix;
-                    if (!message.HasStringPrefix(prefix, ref argPos, StringComparison.InvariantCultureIgnoreCase))
+                    return;
+                }
+
+                var context = new ShardedCommandContext(Client, message);
+                var argPos = 0;
+
+                //TODO: Add support for Custom prefixes.
+                if (guildId != 0 && !ConfigManager.LastConfig.Developer)
+                {
+                    using (var db = new Database())
+                    {
+                        var comp = db.GetOrCreateCompetition(guildId);
+                        var prefix = comp.Prefix ?? ConfigManager.LastConfig.Prefix;
+                        if (!message.HasStringPrefix(prefix, ref argPos, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            return;
+                        }
+                    }
+                }
+                else
+                {
+                    if (!message.HasStringPrefix(ConfigManager.LastConfig.Developer ? ConfigManager.LastConfig.DeveloperPrefix : ConfigManager.LastConfig.Prefix, ref argPos, StringComparison.InvariantCultureIgnoreCase))
                     {
                         return;
                     }
                 }
-            }
-            else
-            {
-                if (!message.HasStringPrefix(ConfigManager.LastConfig.Developer ? ConfigManager.LastConfig.DeveloperPrefix : ConfigManager.LastConfig.Prefix, ref argPos, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return;
-                }
-            }
 
-            if (guildId != 0)
-            {
-                if (!GuildScheduler.ContainsKey(guildId))
+                if (guildId != 0)
                 {
-                    GuildScheduler[guildId] = new GuildSchedule
+                    if (!GuildScheduler.ContainsKey(guildId))
                     {
-                        GuildId = guildId
-                    };
-                }
+                        GuildScheduler[guildId] = new GuildSchedule
+                        {
+                            GuildId = guildId
+                        };
+                    }
 
-                GuildScheduler[guildId].AddTask(context, argPos);
-            }
-            else
-            {
-                var result = await CommandService.ExecuteAsync(context, argPos, Provider);
-            }
+                    GuildScheduler[guildId].AddTask(context, argPos);
+                }
+                else
+                {
+                    if (!GuildScheduler.ContainsKey(0))
+                    {
+                        GuildScheduler[0] = new GuildSchedule
+                        {
+                            GuildId = 0
+                        };
+                    }
+
+                    GuildScheduler[0].AddTask(context, argPos);
+                    //Should dm commands also just have a global queue
+                    //var result = await CommandService.ExecuteAsync(context, argPos, Provider).ConfigureAwait(false);
+                }
+            });
         }
 
     }

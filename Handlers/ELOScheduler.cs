@@ -33,29 +33,37 @@ namespace ELO.Handlers
 
                 Queue.Enqueue((message, argPos));
 
-                if (ProcessorTask == null)
+                if (!Running)
                 {
-                    ProcessorTask = Task.Run(() => RunProcessor());
+                    Task.Run(() => RunProcessor());
                 }
             }
 
-            public Task ProcessorTask = null;
+            public bool Running = false;
             public async Task RunProcessor()
             {
+                Running = true;
                 try
                 {
-                    var context = Queue.Dequeue();
-
-                    while (context != default)
+                    while (Queue.TryDequeue(out var context))
                     {
-                        await Service.ExecuteAsync(context.Item1, context.Item2, Provider);
-                        context = Queue.Dequeue();
+                        try
+                        {
+                            Task.WaitAny(Service.ExecuteAsync(context.Item1, context.Item2, Provider), Task.Delay(30000));
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e);
+                        }
                     }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
                 }
                 finally
                 {
-                    await Task.Delay(1000);
-                    await RunProcessor();
+                    Running = false;
                 }
             }
         }

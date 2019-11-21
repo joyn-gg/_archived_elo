@@ -33,42 +33,45 @@ namespace ELO.Services
             var user = reaction.User.Value;
             if (user.IsBot || user.IsWebhook) return;
 
-            using (var db = new Database())
+            var _ = Task.Run(async () =>
             {
-                var config = db.GetOrCreateCompetition(guildChannel.Guild.Id);
-                if (config == null) return;
-                if (messageCache.Id != config.ReactiveMessage) return;
-
-                if ((user as SocketGuildUser).IsRegistered(out var player))
+                using (var db = new Database())
                 {
-                    return;
-                }
+                    var config = db.GetOrCreateCompetition(guildChannel.Guild.Id);
+                    if (config == null) return;
+                    if (messageCache.Id != config.ReactiveMessage) return;
 
-                var limit = Premium.GetRegistrationLimit(guildChannel.Guild.Id);
-                var registered = ((IQueryable<Player>)db.Players).Count(x => x.GuildId == guildChannel.Guild.Id);
-                if (limit < registered)
-                {
-                    var maxErrorMsg = await channel.SendMessageAsync($"{user.Mention} - This server has exceeded the maximum registration count of {limit}, it must be upgraded to premium to allow additional registrations");
-                    var errTask = Task.Run(async () =>
+                    if ((user as SocketGuildUser).IsRegistered(out var player))
+                    {
+                        return;
+                    }
+
+                    var limit = Premium.GetRegistrationLimit(guildChannel.Guild.Id);
+                    var registered = ((IQueryable<Player>)db.Players).Count(x => x.GuildId == guildChannel.Guild.Id);
+                    if (limit < registered)
+                    {
+                        var maxErrorMsg = await channel.SendMessageAsync($"{user.Mention} - This server has exceeded the maximum registration count of {limit}, it must be upgraded to premium to allow additional registrations").ConfigureAwait(false);
+                        var errTask = Task.Run(async () =>
+                        {
+                            await Task.Delay(5000);
+                            await maxErrorMsg.DeleteAsync();
+                        });
+                        return;
+                    }
+                    player = new Player(guildChannel.Guild.Id, user.Id, user.Username);
+                    db.Add(player);
+                    db.SaveChanges();
+
+                    var responses = await UserService.UpdateUserAsync(config, player, db.Ranks.Where(x => x.GuildId == guildChannel.Guild.Id).ToArray(), user as SocketGuildUser).ConfigureAwait(false);
+
+                    var responseMsg = await guildChannel.SendMessageAsync($"{user.Mention} - " + config.FormatRegisterMessage(player) + $"\n{string.Join("\n", responses)}");
+                    var resTask = Task.Run(async () =>
                     {
                         await Task.Delay(5000);
-                        await maxErrorMsg.DeleteAsync();
+                        await responseMsg.DeleteAsync().ConfigureAwait(false);
                     });
-                    return;
                 }
-                player = new Player(guildChannel.Guild.Id, user.Id, user.Username);
-                db.Add(player);
-                db.SaveChanges();
-
-                var responses = await UserService.UpdateUserAsync(config, player, db.Ranks.Where(x => x.GuildId == guildChannel.Guild.Id).ToArray(), user as SocketGuildUser);
-
-                var responseMsg = await guildChannel.SendMessageAsync($"{user.Mention} - " + config.FormatRegisterMessage(player) + $"\n{string.Join("\n", responses)}");
-                var resTask = Task.Run(async () =>
-                {
-                    await Task.Delay(5000);
-                    await responseMsg.DeleteAsync();
-                });
-            }
+            });
         }
         public DiscordShardedClient Client { get; }
         public ShardChecker Checker { get; }
