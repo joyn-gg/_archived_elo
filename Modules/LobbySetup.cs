@@ -460,12 +460,19 @@ namespace ELO.Modules
 
 
         [Command("DeleteLobby", RunMode = RunMode.Sync)]
-        [Summary("Deletes the current lobby and all game played in it.")]
+        [Summary("Deletes the current lobby and all games played in it.")]
         public virtual async Task DeleteLobbyAsync()
+        {
+            await DeleteLobbyAsync(Context.Channel.Id);
+        }
+
+        [Command("DeleteLobby", RunMode = RunMode.Sync)]
+        [Summary("Deletes the given lobby and all games played in it.")]
+        public virtual async Task DeleteLobbyAsync(ulong lobbyId)
         {
             using (var db = new Database())
             {
-                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                var lobby = db.Lobbies.Find(lobbyId);
                 if (lobby == null)
                 {
                     await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
@@ -474,7 +481,37 @@ namespace ELO.Modules
 
                 db.Lobbies.Remove(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync("Lobby and all games played in it have been removed.", Color.Green);
+                await SimpleEmbedAsync($"Lobby and all games played in it have been removed.", Color.Green);
+            }
+        }
+
+
+        [Command("DeleteLobby", RunMode = RunMode.Sync)]
+        [Summary("Deletes the given lobby and all games played in it.")]
+        public virtual async Task DeleteLobbyAsync(SocketTextChannel channel)
+        {
+            await DeleteLobbyAsync(channel.Id);
+        }
+
+        [Command("PurgeLobbies", RunMode = RunMode.Sync)]
+        [Alias("PurgeLobbys")]
+        [Summary("Deletes all lobbies that no longer have a channel associated with it.")]
+        public virtual async Task PurgeLobbiesAsynnc()
+        {
+            using (var db = new Database())
+            {
+                //Find lobbies for the server where there is NO matching channel found
+                var lobbies = db.Lobbies.Where(x => x.GuildId == Context.Guild.Id && 
+                                            !Context.Guild.Channels.Any(c => c.Id == x.ChannelId)).ToArray();
+                if (lobbies.Length == 0)
+                {
+                    await SimpleEmbedAsync("There are no lobbies to remove.", Color.Red);
+                    return;
+                }
+
+                db.Lobbies.RemoveRange(lobbies);
+                db.SaveChanges();
+                await SimpleEmbedAsync($"{lobbies.Length} Lobbies removed.", Color.Green);
             }
         }
 
