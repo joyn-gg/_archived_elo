@@ -612,7 +612,7 @@ namespace ELO.Modules
         }
 
         [Command("SetReductionPercent", RunMode = RunMode.Sync)]
-        [Summary("Sets the lobby score multiplier.")]
+        [Summary("Sets a multiplier for users who have a higher amount of points than what is defined in the SetHighLimit command.")]
         public virtual async Task SetReductionPercent(double percent = 0.5)
         {
             using (var db = new Database())
