@@ -415,14 +415,31 @@ namespace ELO.Modules
                 if (remaining.Length == 1)
                 {
                     var lastUser = remaining.First();
-                    db.TeamPlayers.Add(new TeamPlayer
+                    var allMembers = db.TeamPlayers.Where(x => x.GuildId == Context.Guild.Id && x.ChannelId == Context.Channel.Id && x.GameNumber == latestGame.GameId);
+
+                    //More players in team 1 so add user to team 2
+                    if (allMembers.Count(x => x.TeamNumber == 1) > allMembers.Count(x => x.TeamNumber == 2))
                     {
-                        GuildId = Context.Guild.Id,
-                        ChannelId = Context.Channel.Id,
-                        UserId = lastUser.UserId,
-                        GameNumber = latestGame.GameId,
-                        TeamNumber = 2
-                    });
+                        db.TeamPlayers.Add(new TeamPlayer
+                        {
+                            GuildId = Context.Guild.Id,
+                            ChannelId = Context.Channel.Id,
+                            UserId = lastUser.UserId,
+                            GameNumber = latestGame.GameId,
+                            TeamNumber = 2
+                        });
+                    }
+                    else
+                    {
+                        db.TeamPlayers.Add(new TeamPlayer
+                        {
+                            GuildId = Context.Guild.Id,
+                            ChannelId = Context.Channel.Id,
+                            UserId = lastUser.UserId,
+                            GameNumber = latestGame.GameId,
+                            TeamNumber = 1
+                        });
+                    }
                     allQueued.Add(lastUser.UserId);
                 }
 
