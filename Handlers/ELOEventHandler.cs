@@ -192,8 +192,21 @@ namespace ELO.Handlers
             {
                 BaseLogger.Log(context.Message.Content, context);
             }
-            else
+            else 
             {
+                //Check for if the server has disabled displaying errors
+                if (context.Guild != null)
+                {
+                    using (var db = new Database())
+                    {
+                        var comp = db.GetOrCreateCompetition(context.Guild.Id);
+                        if (!comp.DisplayErrors)
+                        {
+                            return;
+                        }
+                    }
+                }
+
                 if (result is ExecuteResult exResult)
                 {
                     BaseLogger.Log($"{context.Message.Content}\n{result.Error}\n{result.ErrorReason}\n{exResult.Exception}", context, LogSeverity.Error);

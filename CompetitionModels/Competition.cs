@@ -22,6 +22,7 @@ namespace ELO.Models
         public TimeSpan? RequeueDelay { get; set; } = null;
         public ulong? RegisteredRankId { get; set; } = null;
         public int ManualGameCounter { get; set; } = 0;
+        public bool DisplayErrors { get; set; } = true;
         public string RegisterMessageTemplate { get; set; } = "You have registered as `{name}`, all roles/name updates have been applied if applicable.";
 
         public string NameFormat { get; set; } = "[{score}] {name}";

@@ -138,6 +138,7 @@ namespace ELO.Modules
                             $"**Allow Multiqueuing:** {comp.AllowMultiQueueing}\n" +
                             $"**Allow Negative Score:** {comp.AllowNegativeScore}\n" +
                             $"**Update Nicknames:** {comp.UpdateNames}\n" +
+                            $"**Display Error Messages:** {comp.DisplayErrors}\n" +
                             $"**Allow Self Rename:** {comp.AllowSelfRename}\n" +
                             $"**Allow Re-registering:** {comp.AllowReRegister}\n" +
                             $"**Requeue Delay:** {(comp.RequeueDelay.HasValue ? comp.RequeueDelay.Value.GetReadableLength() : "None")}");
@@ -508,6 +509,25 @@ namespace ELO.Modules
                 db.Update(competition);
                 db.SaveChanges();
                 await SimpleEmbedAsync($"Allow Self Rename set to {selfRename.Value}", Color.Green);
+            }
+        }
+
+        [Command("DisplayErrors", RunMode = RunMode.Sync)]
+        [Summary("Sets whether error messages are displayed to users")]
+        public virtual async Task DisplayErrorsAsync(bool? displayErrors = null)
+        {
+            using (var db = new Database())
+            {
+                var competition = db.GetOrCreateCompetition(Context.Guild.Id);
+                if (displayErrors == null)
+                {
+                    await SimpleEmbedAsync($"Current DisplayErrors Setting: {competition.DisplayErrors}", Color.Blue);
+                    return;
+                }
+                competition.DisplayErrors = displayErrors.Value;
+                db.Update(competition);
+                db.SaveChanges();
+                await SimpleEmbedAsync($"Display Errors set to {displayErrors.Value}", Color.Green);
             }
         }
 
