@@ -109,5 +109,31 @@ namespace ELO.Modules
             ELO.Services.PermissionService.PermissionCache = new Dictionary<ulong, PermissionService.CachedPermissions>();
             await ReplyAsync("Done.");
         }
+
+        [Command("CannotBeRun", RunMode = RunMode.Async)]
+        [Summary("This command should never be able to run")]
+        [CannotRun]
+        public async Task CBR()
+        {
+            await ReplyAsync("Whoops.");
+        }
+
+        public class CannotRun : PreconditionBase
+        {
+            public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
+            {
+                return Task.FromResult(PreconditionResult.FromError("This command cannot be run at all."));
+            }
+
+            public override string Name()
+            {
+                return "Cannot Run";
+            }
+
+            public override string PreviewText()
+            {
+                return "This command should not be able to run under any circumstances";
+            }
+        }
     }
 }

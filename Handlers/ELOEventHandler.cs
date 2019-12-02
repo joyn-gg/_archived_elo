@@ -4,31 +4,85 @@ using Discord.WebSocket;
 using ELO.Services;
 using Microsoft.Extensions.DependencyInjection;
 using RavenBOT.Common;
+using RavenBOT.Common.TypeReaders;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace ELO.Handlers
 {
-    public partial class ELOEventHandler : RavenBOT.Common.EventHandler
+    public partial class ELOEventHandler
     {
-        public ELOEventHandler(ConfigManager configManager, IServiceProvider provider) : base(provider)
+        public ELOEventHandler(ConfigManager configManager, IServiceProvider provider)
         {
             //Ensure lastconfig is populated
             configManager.GetConfig();
             ConfigManager = configManager;
-            LogHandler = provider.GetService<Logger>() ?? new Logger();
-            Logger.Message += async (m, l) => LogHandler.Log(m, l);
-
+            Logger = provider.GetService<Logger>() ?? new Logger();
+            BaseLogger = provider.GetService<LogHandler>() ?? new LogHandler();
+            Provider = provider;
+            Client = provider.GetRequiredService<DiscordShardedClient>();
+            CommandService = provider.GetService<CommandService>() ?? new CommandService();
+            ShardChecker = provider.GetService<ShardChecker>() ?? new ShardChecker(Client);
+            ShardChecker.AllShardsReady += AllShardsReadyAsync;
+            Client.ShardConnected += ShardConnectedAsync;
+            Client.ShardReady += ShardReadyAsync;
             //Set commandschedule variables so they don't need to be injected
             CommandSchedule.Provider = provider;
             CommandSchedule.Service = provider.GetRequiredService<CommandService>();
+            Client.Log += async x => BaseLogger.Log(x.Message, x.Severity);
+            BaseLogger.Message += async (x, y) => Logger.Log(x, y);
         }
 
-        public ConfigManager ConfigManager { get; }
-        public Logger LogHandler { get; }
 
-        public override async Task JoinedGuildAsync(SocketGuild guild)
+        private LogHandler BaseLogger { get; }
+        public ConfigManager ConfigManager { get; }
+        public Logger Logger { get; }
+        public IServiceProvider Provider { get; }
+        public DiscordShardedClient Client { get; }
+        public CommandService CommandService { get; }
+        public ShardChecker ShardChecker { get; }
+
+        public Task AllShardsReadyAsync()
+        {
+            Client.MessageReceived += MessageReceivedAsync;
+            Client.JoinedGuild += JoinedGuildAsync;
+            Logger.Log("All shards ready, message received and joined guild events are now subscribed.");
+            return Task.CompletedTask;
+        }
+
+        public async Task InitializeAsync(string token)
+        {
+            CommandService.AddTypeReader(typeof(Emoji), new EmojiTypeReader());
+
+            await Client.LoginAsync(TokenType.Bot, token);
+            await Client.StartAsync();
+            await RegisterModulesAsync();
+            CommandService.CommandExecuted += CommandExecutedAsync;
+            CommandService.Log += async (x) => BaseLogger.Log(x.Message, x.Severity);
+        }
+
+        public Task RegisterModulesAsync()
+        {
+            return CommandService.AddModulesAsync(Assembly.GetEntryAssembly(), Provider);
+        }
+
+        public Task ShardConnectedAsync(DiscordSocketClient shard)
+        {
+            Logger.Log($"Shard {shard.ShardId} connected! Guilds:{shard.Guilds.Count} Users:{shard.Guilds.Sum(x => x.MemberCount)}");
+            return Task.CompletedTask;
+        }
+
+        public Task ShardReadyAsync(DiscordSocketClient shard)
+        {
+
+            Logger.Log($"Shard {shard.ShardId} ready! Guilds:{shard.Guilds.Count} Users:{shard.Guilds.Sum(x => x.MemberCount)}");
+            return Task.CompletedTask;
+        }
+
+        public async Task JoinedGuildAsync(SocketGuild guild)
         {
             //Check server whitelist
             if (!ConfigManager.LastConfig.IsAcceptable(guild.Id))
@@ -54,7 +108,7 @@ namespace ELO.Handlers
             }.Build());
         }
 
-        public override async Task MessageReceivedAsync(SocketMessage discordMessage)
+        public async Task MessageReceivedAsync(SocketMessage discordMessage)
         {
 
             if (!(discordMessage is SocketUserMessage message))
@@ -129,6 +183,143 @@ namespace ELO.Handlers
 
                 CommandScheduler[guildId].AddTask(context, argPos);
             });
+        }
+
+
+        public virtual async Task CommandExecutedAsync(Optional<CommandInfo> commandInfo, ICommandContext context, IResult result)
+        {
+            if (result.IsSuccess)
+            {
+                BaseLogger.Log(context.Message.Content, context);
+            }
+            else
+            {
+                if (result is ExecuteResult exResult)
+                {
+                    BaseLogger.Log($"{context.Message.Content}\n{result.Error}\n{result.ErrorReason}\n{exResult.Exception}", context, LogSeverity.Error);
+                    await context.Channel.SendMessageAsync("", false, new EmbedBuilder
+                    {
+                        Title = $"Command Execution Error{(result.Error.HasValue ? $": {result.Error.Value}" : "")}",
+                        Description = $"Message: {context.Message.Content.FixLength(512)}\n" +
+                            "__**Error**__\n" +
+                            $"{result.ErrorReason.FixLength(512)}\n" +
+                            $"{exResult.Exception}".FixLength(1024),
+                        Color = Color.LightOrange
+                    }.Build());
+                }
+                else if (result is PreconditionResult preResult)
+                {
+                    BaseLogger.Log($"{context.Message.Content}\n{result.Error}\n{result.ErrorReason}", context, LogSeverity.Error);
+                    await context.Channel.SendMessageAsync("", false, new EmbedBuilder
+                    {
+                        Title = $"Command Precondition Error{(result.Error.HasValue ? $": {result.Error.Value}" : "")}",
+                        Description = $"Message: {context.Message.Content.FixLength(512)}\n" +
+                            "__**Error**__\n" +
+                            $"{result.ErrorReason.FixLength(512)}\n".FixLength(1024),
+                        Color = Color.LightOrange
+                    }.Build());
+                }
+                else if (result is RuntimeResult runResult)
+                {
+                    BaseLogger.Log($"{context.Message.Content}\n{result.Error}\n{result.ErrorReason}", context, LogSeverity.Error);
+                    //Post execution result. Ie. returned by developer
+                    await context.Channel.SendMessageAsync("", false, new EmbedBuilder
+                    {
+                        Title = $"Command Runtime Error{(result.Error.HasValue ? $": {result.Error.Value}" : "")}",
+                        Description = $"Message: {context.Message.Content.FixLength(512)}\n" +
+                            "__**Error**__\n" +
+                            $"{runResult.Reason.FixLength(512)}\n".FixLength(1024),
+                        Color = Color.LightOrange
+                    }.Build());
+                }
+                else if (result is SearchResult sResult)
+                {
+                    BaseLogger.Log($"{context.Message.Content}\n{result.Error}\n{result.ErrorReason}", context, LogSeverity.Error);
+
+                    //Since it is an error you can assume it's an unknown command as SearchResults will only return an error if not found.
+                    var dlDistances = new List<(int, string, CommandInfo)>();
+                    foreach (var command in CommandService.Commands)
+                    {
+                        foreach (var alias in command.Aliases)
+                        {
+                            var distance = context.Message.Content.DamerauLavenshteinDistance(alias);
+                            if (distance == context.Message.Content.Length || distance == alias.Length)
+                            {
+                                continue;
+                            }
+
+                            dlDistances.Add((distance, alias, command));
+                        }
+                    }
+
+                    var ordered = dlDistances.OrderBy(x => x.Item1);
+                    var toDisplay = new List<(int, string, CommandInfo)>();
+                    foreach (var cmd in ordered)
+                    {
+                        if (toDisplay.Count >= 5) break;
+                        var check = await cmd.Item3.CheckPreconditionsAsync(context, Provider);
+                        if (check.IsSuccess)
+                        {
+                            toDisplay.Add(cmd);
+                        }
+                    }
+
+                    await context.Channel.SendMessageAsync("", false, new EmbedBuilder()
+                    {
+                        Title = $"Unknown Command",
+                        Description = $"Message: {context.Message.Content.FixLength(512)}\n" +
+                            $"Similar commands: \n{string.Join("\n", toDisplay.Select(x => x.Item2))}",
+                        Color = Color.Red
+                    }.Build());
+                }
+                else if (result is ParseResult pResult)
+                {
+                    BaseLogger.Log($"{context.Message.Content}\n{result.Error}\n{result.ErrorReason}", context, LogSeverity.Error);
+                    //Invalid parese result can be
+                    //ParseFailed, "There must be at least one character of whitespace between arguments."
+                    //ParseFailed, "Input text may not end on an incomplete escape."
+                    //ParseFailed, "A quoted parameter is incomplete."
+                    //BadArgCount, "The input text has too few parameters."
+                    //BadArgCount, "The input text has too many parameters."
+                    //typeReaderResults
+                    if (pResult.Error.Value == CommandError.BadArgCount && commandInfo.IsSpecified)
+                    {
+                        await context.Channel.SendMessageAsync("", false, new EmbedBuilder
+                        {
+                            Title = $"Argument Error {result.Error.Value}",
+                            Description = $"`{commandInfo.Value.Aliases.First()}{string.Join(" ", commandInfo.Value.Parameters.Select(x => x.ParameterInformation()))}`\n" +
+                                $"Message: {context.Message.Content.FixLength(512)}\n" +
+                                "__**Error**__\n" +
+                                $"{result.ErrorReason.FixLength(512)}",
+                            Color = Color.DarkRed
+
+                        }.Build());
+                    }
+                    else
+                    {
+                        await context.Channel.SendMessageAsync("", false, new EmbedBuilder
+                        {
+                            Title = $"Command Parse Error{(result.Error.HasValue ? $": {result.Error.Value}" : "")}",
+                            Description = $"Message: {context.Message.Content.FixLength(512)}\n" +
+                                "__**Error**__\n" +
+                                $"{result.ErrorReason.FixLength(512)}\n".FixLength(1024),
+                            Color = Color.LightOrange
+                        }.Build());
+                    }
+                }
+                else
+                {
+                    BaseLogger.Log($"{context.Message.Content}\n{result.Error}\n{result.ErrorReason}", context, LogSeverity.Error);
+                    await context.Channel.SendMessageAsync("", false, new EmbedBuilder
+                    {
+                        Title = $"Command Error{(result.Error.HasValue ? $": {result.Error.Value}" : "")}",
+                        Description = $"Message: {context.Message.Content.FixLength(512)}\n" +
+                            "__**Error**__\n" +
+                            $"{result.ErrorReason.FixLength(512)}\n".FixLength(1024),
+                        Color = Color.LightOrange
+                    }.Build());
+                }
+            }
         }
 
     }
