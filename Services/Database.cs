@@ -27,6 +27,7 @@ namespace ELO.Services
         public DbSet<ManualGameScoreUpdate> ManualGameScoreUpdates { get; set; }
         public DbSet<Map> Maps { get; set; }
         public DbSet<GameVote> Votes { get; set; }
+        public DbSet<PartyMember> PartyMembers { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -209,6 +210,11 @@ namespace ELO.Services
                 entity.HasOne(e => e.Game)
                     .WithMany(e => e.Captains)
                     .HasForeignKey(e => new { e.ChannelId, e.GameNumber });
+            });
+
+            modelBuilder.Entity<PartyMember>(entity =>
+            {
+                entity.HasKey(e => new { e.ChannelId, e.UserId });
             });
 
             modelBuilder.Entity<ScoreUpdate>(entity =>

@@ -109,7 +109,10 @@ namespace ELO.Services
 
                 var queue = db.GetQueue(game).ToList();
 
-
+                var team1Players = new List<ulong>();
+                var team2Players = new List<ulong>();
+                var t1Added = new List<ulong>();
+                var t2Added = new List<ulong>();
                 //Set team players/captains based on the team pick mode
                 switch (lobby.TeamPickMode)
                 {
@@ -166,30 +169,101 @@ namespace ELO.Services
                     case PickMode.Random:
                         game.GameState = GameState.Undecided;
                         var shuffled = queue.OrderBy(x => Random.Next()).ToList();
-                        db.TeamPlayers.AddRange(shuffled.Take(lobby.PlayersPerTeam).Select(x => new TeamPlayer
+                        var partyPlayers = db.PartyMembers.Where(x => x.ChannelId == context.Channel.Id).ToArray();
+                        var partyPlayerIds = partyPlayers.Select(x => x.UserId);
+                        var parties = partyPlayers.GroupBy(x => x.PartyHost).ToArray();
+
+                        var partySelected = new List<ulong>();
+                        int partySelection = 0;
+                        foreach (var party in parties.OrderBy(x => Random.Next()))
                         {
-                            GuildId = context.Guild.Id,
-                            ChannelId = lobby.ChannelId,
-                            UserId = x.UserId,
-                            GameNumber = game.GameId,
-                            TeamNumber = 1
-                        }));
-                        db.TeamPlayers.AddRange(shuffled.Skip(lobby.PlayersPerTeam).Take(lobby.PlayersPerTeam).Select(x => new TeamPlayer
+                            //Skip where a party member is not in the queue.
+                            if (party.Any(x => shuffled.All(sh => sh.UserId != x.UserId)))
+                            {
+                                continue;
+                            }
+
+                            //Ignore parties that are too large.
+                            if (party.Count() > lobby.PlayersPerTeam)
+                            {
+                                continue;
+                            }
+                            var partyIds = party.Select(x => x.UserId);
+
+
+                            if (partySelection % 2 == 0)
+                            {
+                                if (t1Added.Count + party.Count() > lobby.PlayersPerTeam) continue;
+
+                                db.TeamPlayers.AddRange(party.Select(x => new TeamPlayer
+                                {
+                                    GuildId = context.Guild.Id,
+                                    ChannelId = lobby.ChannelId,
+                                    UserId = x.UserId,
+                                    GameNumber = game.GameId,
+                                    TeamNumber = 1
+                                }));
+                                t1Added.AddRange(partyIds);
+                                team1Players.AddRange(partyIds);
+                            }
+                            else
+                            {
+                                if (t2Added.Count + party.Count() > lobby.PlayersPerTeam) continue;
+
+                                db.TeamPlayers.AddRange(party.Select(x => new TeamPlayer
+                                {
+                                    GuildId = context.Guild.Id,
+                                    ChannelId = lobby.ChannelId,
+                                    UserId = x.UserId,
+                                    GameNumber = game.GameId,
+                                    TeamNumber = 2
+                                }));
+                                t2Added.AddRange(partyIds);
+                                team2Players.AddRange(partyIds);
+                            }
+                            partySelected.AddRange(partyIds);
+                            partySelection++;
+
+                        }
+
+                        //Add remaining players to teams.
+                        foreach (var player in shuffled.Where(x => !partySelected.Contains(x.UserId)))
                         {
-                            GuildId = context.Guild.Id,
-                            ChannelId = lobby.ChannelId,
-                            UserId = x.UserId,
-                            GameNumber = game.GameId,
-                            TeamNumber = 2
-                        }));
+                            if (t1Added.Count > t2Added.Count)
+                            {
+                                db.TeamPlayers.Add(new TeamPlayer
+                                {
+                                    GuildId = context.Guild.Id,
+                                    ChannelId = lobby.ChannelId,
+                                    UserId = player.UserId,
+                                    GameNumber = game.GameId,
+                                    TeamNumber = 2
+                                });
+                                t2Added.Add(player.UserId);
+                                team2Players.Add(player.UserId);
+                            }
+                            else
+                            {
+                                db.TeamPlayers.Add(new TeamPlayer
+                                {
+                                    GuildId = context.Guild.Id,
+                                    ChannelId = lobby.ChannelId,
+                                    UserId = player.UserId,
+                                    GameNumber = game.GameId,
+                                    TeamNumber = 1
+                                });
+                                t1Added.Add(player.UserId);
+                                team1Players.Add(player.UserId);
+                            }
+                        }
+
                         db.QueuedPlayers.RemoveRange(queue);
 
                         break;
                     case PickMode.TryBalance:
                         game.GameState = GameState.Undecided;
                         var ordered = queue.OrderByDescending(x => db.Players.Find(context.Guild.Id, x.UserId).Points).ToList();
-                        var t1Added = new HashSet<ulong>();
-                        var t2Added = new HashSet<ulong>();
+
                         foreach (var user in ordered)
                         {
                             if (t1Added.Count <= t2Added.Count)
