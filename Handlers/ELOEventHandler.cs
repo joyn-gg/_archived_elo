@@ -97,13 +97,19 @@ namespace ELO.Handlers
                 return permissions.HasValue ? permissions.Value.ViewChannel && permissions.Value.SendMessages : false;
             }).OrderBy(c => c.Position).FirstOrDefault();
 
-            //Let the server know the help command name (assuming default prefix)
+            string prefix = null;
+            using (var db = new Database())
+            {
+                //Use firstordefault to avoid generating a new competition until commands are run ( GetOrCreateCompetition() )
+                var compMatch = db.Competitions.FirstOrDefault(x => x.GuildId == guild.Id);
+                prefix = compMatch?.Prefix;
+            }
+            
+            //Let the server know the help command name
             await firstChannel?.SendMessageAsync("", false, new EmbedBuilder()
             {
                 Title = $"{Client.CurrentUser.Username}",
-                //TODO: In case that server has a custom prefix (set it, removed bot and then re-invited bot)
-                //Show custom prefix instead
-                Description = $"Get started by using the help command: `{ConfigManager.LastConfig.Prefix}help`",
+                Description = $"Get started by using the help command: `{prefix ?? ConfigManager.LastConfig.Prefix}help`",
                 Color = Color.Green
             }.Build());
         }
@@ -154,8 +160,8 @@ namespace ELO.Handlers
                     //Check that the message was from a server and try to use a custom set prefix if available.
                     using (var db = new Database())
                     {
-                        var comp = db.GetOrCreateCompetition(guildId);
-                        var prefix = comp.Prefix ?? ConfigManager.LastConfig.Prefix;
+                        var comp = db.Competitions.FirstOrDefault(x => x.GuildId == guildId);
+                        var prefix = comp?.Prefix ?? ConfigManager.LastConfig.Prefix;
                         if (!message.HasStringPrefix(prefix, ref argPos, StringComparison.InvariantCultureIgnoreCase))
                         {
                             return;
