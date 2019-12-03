@@ -354,7 +354,6 @@ namespace ELO.Services
                         }
                         else
                         {
-                            //TODO: Address repeat response below
                             embed.AddField("Canceled",
                                 $"Team 1:\n{GetTeamInfo(cap1, team1p)}\n" +
                                 $"Team 2:\n{GetTeamInfo(cap2, team2p)}");
