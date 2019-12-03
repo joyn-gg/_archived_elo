@@ -148,15 +148,9 @@ namespace ELO.Modules
                         var scoreUpdates = db.ManualGameScoreUpdates.AsNoTracking().Where(y => y.GuildId == Context.Guild.Id && y.ManualGameId == x.GameId).ToArray();
                         if (scoreUpdates.Length == 0) return null;
 
-                        var scoreInfos = scoreUpdates.Select(s =>
-                        {
-                            //TODO: reduce string construction nesting.
-                            return $"{MentionUtils.MentionUser(s.UserId)} - `{s.ModifyAmount}`";
-                        });
-
                         return new EmbedFieldBuilder()
                             .WithName($"#{x.GameId}: {x.GameState}")
-                            .WithValue(string.Join("\n", scoreInfos) + $"\n **Submitted by: {MentionUtils.MentionUser(x.Submitter)}**");
+                            .WithValue(string.Join("\n", scoreUpdates.Select(s => $"{MentionUtils.MentionUser(s.UserId)} - `{s.ModifyAmount}`") + $"\n **Submitted by: {MentionUtils.MentionUser(x.Submitter)}**");
                     }).Where(x => x != null).ToList();
 
                     if (content.Count == 0) continue;
