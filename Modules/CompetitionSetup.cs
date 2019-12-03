@@ -340,26 +340,24 @@ namespace ELO.Modules
             using (var db = new Database())
             {
                 var oldRank = db.Ranks.Find(role.Id);
-                var newRank = new Rank
-                {
-                    RoleId = role.Id,
-                    GuildId = Context.Guild.Id,
-                    Points = points
-                };
                 if (oldRank != null)
                 {
-                    oldRank = newRank;
-                    oldRank.WinModifier = null;
-                    oldRank.LossModifier = null;
-                    db.Update(oldRank);
-                    db.SaveChanges();
+                    oldRank.Points = points;
+                    db.Ranks.Update(oldRank);
                 }
                 else
                 {
+                    var newRank = new Rank
+                    {
+                        RoleId = role.Id,
+                        GuildId = Context.Guild.Id,
+                        Points = points
+                    };
                     db.Ranks.Add(newRank);
-                    db.SaveChanges();
                 }
-                await SimpleEmbedAsync("Rank added, if you wish to change the win/loss point values, use the `RankWinModifier` and `RankLossModifier` commands.", Color.Green);
+
+                db.SaveChanges();
+                await SimpleEmbedAsync($"Rank {(oldRank != null ? "updated" : "added")}, if you wish to change the win/loss point values, use the `RankWinModifier` and `RankLossModifier` commands.", Color.Green);
             }
         }
 
@@ -371,26 +369,27 @@ namespace ELO.Modules
             using (var db = new Database())
             {
                 var oldRank = db.Ranks.Find(role.Id);
-                var newRank = new Rank
-                {
-                    RoleId = role.Id,
-                    GuildId = Context.Guild.Id,
-                    Points = points,
-                    WinModifier = win,
-                    LossModifier = lose
-                };
                 if (oldRank != null)
                 {
-                    oldRank = newRank;
-                    db.Update(oldRank);
-                    db.SaveChanges();
+                    oldRank.Points = points;
+                    oldRank.WinModifier = win;
+                    oldRank.LossModifier = lose;
+                    db.Ranks.Update(oldRank);
                 }
                 else
                 {
+                    var newRank = new Rank
+                    {
+                        RoleId = role.Id,
+                        GuildId = Context.Guild.Id,
+                        Points = points,
+                        WinModifier = win,
+                        LossModifier = lose
+                    };
                     db.Ranks.Add(newRank);
-                    db.SaveChanges();
                 }
-                await SimpleEmbedAsync($"Rank added.\n**Required Points:** {newRank.Points}\n**Win Modifier:** +{newRank.WinModifier}\n**Loss Modifier:** -{newRank.LossModifier}", Color.Green);
+                db.SaveChanges();
+                await SimpleEmbedAsync($"Rank {(oldRank != null ? "updated" : "added")}.\n**Required Points:** {points}\n**Win Modifier:** +{win}\n**Loss Modifier:** -{lose}", Color.Green);
             }
         }
 
