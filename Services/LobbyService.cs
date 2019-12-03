@@ -300,7 +300,6 @@ namespace ELO.Services
 
                 db.SaveChanges();
 
-                //TODO: Assign team members to specific roles and create a channel for chat within.
                 if (lobby.TeamPickMode == PickMode.TryBalance || lobby.TeamPickMode == PickMode.Random)
                 {                    
                     var res = GameService.GetGameMessage(game, $"Game #{game.GameId} Started",

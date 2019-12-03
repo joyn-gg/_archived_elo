@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 namespace ELO.Modules
 {
     [RavenRequireContext(ContextType.Guild)]
-    //TODO: Potential different permissions for creating lobby
     [Preconditions.RequirePermission(PermissionLevel.ELOAdmin)]
     public class LobbySetup : ReactiveBase
     {

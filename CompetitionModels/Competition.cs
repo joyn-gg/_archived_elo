@@ -63,7 +63,6 @@ namespace ELO.Models
 
         public TimeSpan? QueueTimeout { get; set; } = null;
 
-        //TODO: Consider adding a setter to ensure value is always positive.
         public int DefaultWinModifier
         {
             get
