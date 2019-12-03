@@ -27,8 +27,6 @@ namespace ELO.Modules
             UserService = userService;
             GSS = gSS;
         }
-        //TODO: Ensure correct commands require mod/admin perms
-
         [Command("VoteStates", RunMode = RunMode.Async)]
         [Alias("Results", "VoteTypes")]
         [Summary("Shows possible vote options for the Result command")]
@@ -160,11 +158,14 @@ namespace ELO.Modules
         }
 
 
+        /*
+        // If these commands are added back explain that this does not affect the users who were in the game if it had a result. this is only for removing the game log from the database
+        
         [Command("DeleteGame", RunMode = RunMode.Sync)]
         [Alias("Delete Game", "DelGame")]
         [Summary("Deletes the specified game from history")]
         [RequirePermission(PermissionLevel.ELOAdmin)]
-        //TODO: Explain that this does not affect the users who were in the game if it had a result. this is only for removing the game log from the database
+        
         public virtual async Task DelGame(SocketTextChannel lobbyChannel, int gameNumber)
         {
             await DelGame(gameNumber, lobbyChannel);
@@ -172,9 +173,8 @@ namespace ELO.Modules
 
         [Command("DeleteGame", RunMode = RunMode.Sync)]
         [Alias("Delete Game", "DelGame")]
-        [Summary("Deletes the specified game from history")]
+        [Summary("Deletes the specified game from history, DOES NOT UPDATE USERS")]
         [RequirePermission(PermissionLevel.ELOAdmin)]
-        //TODO: Explain that this does not affect the users who were in the game if it had a result. this is only for removing the game log from the database
         public virtual async Task DelGame(int gameNumber, SocketTextChannel lobbyChannel = null)
         {
             if (lobbyChannel == null)
@@ -203,7 +203,7 @@ namespace ELO.Modules
                 db.SaveChanges();
                 await ReplyAsync("Game deleted.", info.Build());
             }
-        }
+        }*/
 
         [Command("Cancel", RunMode = RunMode.Sync)]
         [Alias("CancelGame")]
