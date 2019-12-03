@@ -230,7 +230,6 @@ namespace ELO.Services
 
                 var winField = new EmbedFieldBuilder
                 {
-                    //TODO: Is this necessary to show which team the winning team was?
                     Name = $"Winning Team, Team{(int)winning_team}",
                     Value = GetResponseContent(winList).FixLength(1023)
                 };
@@ -390,7 +389,6 @@ namespace ELO.Services
 
             var winField = new EmbedFieldBuilder
             {
-                //TODO: Is this necessary to show which team the winning team was?
                 Name = $"Winning Team, Team{(int)winning_team}",
                 Value = GetResponseContent(winList).FixLength(1023)
             };
@@ -597,8 +595,19 @@ namespace ELO.Services
                     else
                     {
                         //Lock game votes and require admin to decide.
-                        //TODO: Show votes by whoever
-                        await context.Channel.SendMessageAsync("", false, "Vote was not unanimous, game result must be decided by a moderator.".QuickEmbed(Color.DarkBlue));
+                        var voteInfo = votes.Select(x =>
+                        {
+                            if (x.UserVote == VoteState.Win || x.UserVote == VoteState.Lose)
+                            {
+                                return $"{MentionUtils.MentionUser(x.UserId)} - Team {(team1.Contains(x.UserId) ? 1 : 2)} {x.UserVote}";
+                            }
+                            else
+                            {
+                                return $"{MentionUtils.MentionUser(x.UserId)} - {x.UserVote}";
+                            }
+                        });
+                        
+                        await context.Channel.SendMessageAsync("", false, $"Vote was not unanimous, game result must be decided by a moderator.\n{voteInfo}".QuickEmbed(Color.DarkBlue));
                         game.VoteComplete = true;
                         db.Update(game);
                         db.SaveChanges();
