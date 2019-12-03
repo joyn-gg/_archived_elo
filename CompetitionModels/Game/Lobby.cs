@@ -48,9 +48,6 @@ namespace ELO.Models
 
         public HostSelection HostSelectionMode { get; set; } = HostSelection.None;
 
-        //TODO: Specific announcement channel per lobby
-
-
         /// <summary>
         /// Checks whether the specified pickmode is captains
         /// </summary>
