@@ -29,12 +29,6 @@ namespace ELO.Modules
         public LobbyService LobbyService { get; }
         public PremiumService PremiumService { get; }
 
-        //TODO: Replace command
-        //TODO: Map stuff
-        //TODO: Assign teams to temp roles until game result is decided.
-        //TODO: Assign a game to a specific channel until game result is decided.
-        //TODO: Allow players to party up for a lobby
-
         [Command("ClearQueue", RunMode = RunMode.Sync)]
         [Alias("Clear Queue", "clearq", "clearque")]
         [Summary("Clears the current queue.")]
@@ -483,9 +477,5 @@ namespace ELO.Modules
                 }
             }
         }
-
-        //TODO: if more than x maps are added to the lobby, announce 3 (or so) and allow users to vote on them to pick
-        //Would have 1 minute timeout, then either picks the most voted map or randomly chooses from the most voted.
-        //Would need to have a way of reducing the amount of repeats as well.
     }
 }
