@@ -385,7 +385,6 @@ namespace ELO.Services
                 }
                 else if (game.GameState == GameState.Decided)
                 {
-                    //TODO: Null check getwinning/losing team methods
                     var pointsAwarded = new List<string>();
                     pointsAwarded.Add($"**Team {game.WinningTeam}**");
 
