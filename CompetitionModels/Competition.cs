@@ -64,7 +64,18 @@ namespace ELO.Models
         public TimeSpan? QueueTimeout { get; set; } = null;
 
         //TODO: Consider adding a setter to ensure value is always positive.
-        public int DefaultWinModifier { get; set; } = 10;
+        public int DefaultWinModifier
+        {
+            get
+            {
+                return _DefaultWinModifier;
+            }
+            set
+            {
+                _DefaultWinModifier = Math.Abs(value);
+            }
+        }
+        private int _DefaultWinModifier = 10;
         private int _DefaultLossModifier;
 
         public int DefaultLossModifier
@@ -77,7 +88,6 @@ namespace ELO.Models
             {
                 //Ensure the value that gets set is positive as it will be subtracted from scores.
                 _DefaultLossModifier = Math.Abs(value);
-
             }
         }
 
