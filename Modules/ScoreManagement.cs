@@ -27,7 +27,6 @@ namespace ELO.Modules
             await SimpleEmbedAsync(string.Join("\n", RavenBOT.Common.Extensions.EnumNames<ModifyState>()), Color.Blue);
         }
 
-        //TODO: Consider whether it's necessary to have the single user command as multi user already is able to accept only one.
         [Command("Points", RunMode = RunMode.Sync)]
         [Summary("Modifies points for the specified user")]
         public virtual async Task PointsAsync(SocketGuildUser user, ModifyState state, int amount)
