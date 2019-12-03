@@ -180,8 +180,6 @@ namespace ELO.Modules
 
             using (var db = new Database())
             {
-
-                //TODO: Check if necessary to load the lobby (what are the benefits of response vs performance hit of query)
                 var lobby = db.GetLobby(lobbyChannel);
                 if (lobby == null)
                 {
