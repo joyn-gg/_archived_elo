@@ -100,7 +100,7 @@ namespace ELO.Modules
                 var res = await HelpService.PagedHelpAsync(Context, checkPreconditions, null, null);
                 if (res != null)
                 {
-                    await PagedReplyAsync(res.ToCallBack().WithDefaultPagerCallbacks());
+                    await PagedReplyAsync(res.ToCallBack().WithDefaultPagerCallbacks().WithJump());
                 }
             }
             catch (Exception e)

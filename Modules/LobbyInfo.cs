@@ -215,7 +215,7 @@ namespace ELO.Modules
                 await PagedReplyAsync(new ReactivePager
                 {
                     Pages = pages
-                }.ToCallBack().WithDefaultPagerCallbacks());
+                }.ToCallBack().WithDefaultPagerCallbacks().WithJump());
             }
         }
     }
