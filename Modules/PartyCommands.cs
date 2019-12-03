@@ -83,14 +83,16 @@ namespace ELO.Modules
                             {
                                 UserId = Context.User.Id,
                                 PartyHost = Context.User.Id,
-                                ChannelId = Context.Channel.Id
+                                ChannelId = Context.Channel.Id,
+                                GuildId = Context.Guild.Id
                             };
 
                             var member = new PartyMember
                             {
                                 UserId = user.Id,
                                 PartyHost = Context.User.Id,
-                                ChannelId = Context.Channel.Id
+                                ChannelId = Context.Channel.Id,
+                                GuildId = Context.Guild.Id
                             };
                             db.PartyMembers.Add(host);
                             db.PartyMembers.Add(member);
@@ -150,14 +152,16 @@ namespace ELO.Modules
                 {
                     UserId = host.Id,
                     PartyHost = host.Id,
-                    ChannelId = Context.Channel.Id
+                    ChannelId = Context.Channel.Id,
+                    GuildId = Context.Guild.Id
                 };
 
                 var member = new PartyMember
                 {
                     UserId = user.Id,
                     PartyHost = host.Id,
-                    ChannelId = Context.Channel.Id
+                    ChannelId = Context.Channel.Id,
+                    GuildId = Context.Guild.Id
                 };
                 db.PartyMembers.Add(hostPlayer);
                 db.PartyMembers.Add(member);
