@@ -94,7 +94,11 @@ namespace ELO.Modules
                 }
 
                 var permission = db.Permissions.Find(Context.Guild.Id, match.Name.ToLower());
-                //TODO: Is null check required?
+                if (permission == null)
+                {
+                    await SimpleEmbedAsync("Permission override not found.");
+                    return;
+                }
                 db.Permissions.Remove(permission);
                 if (PermissionService.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
                 {
