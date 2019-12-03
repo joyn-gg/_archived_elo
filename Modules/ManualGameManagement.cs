@@ -38,7 +38,6 @@ namespace ELO.Modules
             await UpdateTeamScoresAsync(false, users.Select(x => x.Id).ToHashSet());
         }
 
-        //TODO: Undo manual game
         //TODO: Display manual game info/stats
 
         [Command("UndoManualGame", RunMode = RunMode.Sync)]
