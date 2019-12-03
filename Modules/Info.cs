@@ -234,13 +234,11 @@ namespace ELO.Modules
         [Alias("lb", "top20")]
         [Summary("Shows the current server-wide leaderboard.")]
         [RequirePermission(PermissionLevel.Registered)]
-        //TODO: Ratelimiting as this is a data heavy command.
+        [RateLimit(1, 10, Measure.Seconds, RateLimitFlags.ApplyPerGuild | RateLimitFlags.NoLimitForAdmins)]
         public virtual async Task LeaderboardAsync(LeaderboardSortMode mode = LeaderboardSortMode.points)
         {
             using (var db = new Database())
             {
-                //TODO: Implement sort modes
-
                 //Retrieve players in the current guild from database
                 var users = db.Players.AsNoTracking().Where(x => x.GuildId == Context.Guild.Id);
 
