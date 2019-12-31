@@ -493,6 +493,7 @@ namespace ELO.Modules
         }
 
         [Command("AllowSelfRename", RunMode = RunMode.Sync)]
+        [Alias("AllowRename")]
         [Summary("Sets whether users are allowed to use the rename command")]
         public virtual async Task AllowSelfRenameAsync(bool? selfRename = null)
         {
@@ -512,6 +513,7 @@ namespace ELO.Modules
         }
 
         [Command("DisplayErrors", RunMode = RunMode.Sync)]
+        [Alias("ShowErrors")]
         [Summary("Sets whether error messages are displayed to users")]
         public virtual async Task DisplayErrorsAsync(bool? displayErrors = null)
         {
