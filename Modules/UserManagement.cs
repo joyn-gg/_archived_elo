@@ -50,7 +50,7 @@ namespace ELO.Modules
                         var user = db.Players.Find(Context.Guild.Id, p.UserId);
                         var field = new EmbedFieldBuilder
                         {
-                            Name = user?.DisplayName ?? p.UserId.ToString(),
+                            Name = user?.GetDisplayNameSafe() ?? p.UserId.ToString(),
                             Value = $"**User:** {MentionUtils.MentionUser(p.UserId)}\n" +
                             $"**Banned at:**  {p.ExpiryTime.ToString("dd MMM yyyy")}\n" +
                             $"**Ban Length:** {p.Length.GetReadableLength()}\n" +
