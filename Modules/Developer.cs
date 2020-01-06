@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 namespace ELO.Modules
 {
     [RavenRequireOwner]
+    [Group("devcmd")]
     public class Developer : ReactiveBase
     {
         public Developer(Random random, PremiumService prem, ConfigManager local)
