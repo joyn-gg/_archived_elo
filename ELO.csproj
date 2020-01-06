@@ -11,7 +11,7 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="3.0.1" />
     <PackageReference Include="RavenBOT.Common" Version="2.0.0.4" />
     <PackageReference Include="RavenBOT.Services.ConfigManager" Version="2.0.0" />
-    <PackageReference Include="RavenBOT.Services.HelpService" Version="2.0.0.4" />
+    <PackageReference Include="RavenBOT.Services.HelpService" Version="2.0.0.7" />
     <PackageReference Include="RavenBOT.Services.Reactive" Version="2.0.0.4" />
     <PackageReference Include="System.Data.SqlClient" Version="4.7.0" />
   </ItemGroup>
