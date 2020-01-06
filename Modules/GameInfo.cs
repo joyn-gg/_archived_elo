@@ -164,7 +164,7 @@ namespace ELO.Modules
                 await PagedReplyAsync(new ReactivePager(pages)
                 {
                     Color = Color.Blue
-                }.ToCallBack().WithDefaultPagerCallbacks());
+                }.ToCallBack().WithDefaultPagerCallbacks().WithJump());
             }
         }
 

@@ -97,7 +97,9 @@ namespace ELO.Modules
         {
             try
             {
-                var res = await HelpService.PagedHelpAsync(Context, checkPreconditions, null, null);
+                var res = await HelpService.PagedHelpAsync(Context, checkPreconditions, null,
+                "You can react with the :1234: emote and type a page number to go directly to that page too,\n" +
+                "otherwise react with the arrows (◀ ▶) to change pages.\n");
                 if (res != null)
                 {
                     await PagedReplyAsync(res.ToCallBack().WithDefaultPagerCallbacks().WithJump());
@@ -285,7 +287,7 @@ namespace ELO.Modules
                 //Construct a paginated message with each of the leaderboard pages
                 var callback = new ReactivePager(pages).ToCallBack();
                 callback.Precondition = async (x, y) => y.UserId == Context.User.Id;
-                await PagedReplyAsync(callback.WithDefaultPagerCallbacks());
+                await PagedReplyAsync(callback.WithDefaultPagerCallbacks().WithJump());
             }
         }
 
