@@ -325,7 +325,7 @@ namespace ELO.Services
                 var team2p = db.GetTeamFull(game, 2);
                 var cap1 = db.GetTeamCaptain(game.GuildId, game.LobbyId, game.GameId, 1);
                 var cap2 = db.GetTeamCaptain(game.GuildId, game.LobbyId, game.GameId, 2);
-                var queueRemaining = queue.Where(x => team1p.All(y => y == x.UserId) && team2p.All(y => y == x.UserId));
+                var queueRemaining = queue.Where(x => team1p.All(y => y != x.UserId) && team2p.All(y => y != x.UserId));
 
                 var winningCap = game.WinningTeam == 1 ? cap1 : cap2;
                 var winningPlayers = game.WinningTeam == 1 ? team1p : team2p;
