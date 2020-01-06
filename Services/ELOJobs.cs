@@ -28,6 +28,7 @@ namespace ELO.Services
                 {
                     var now = DateTime.UtcNow;
                     //TODO: Avoid querying ALL queued players
+                    // maybe query all competitions and check for the queuetimeout first, then query players as per each comp that has a timeout
                     var queuedPlayers = db.QueuedPlayers.ToArray();
                     var guildGroups = queuedPlayers.GroupBy(x => x.GuildId);
                     foreach (var group in guildGroups)
@@ -35,18 +36,35 @@ namespace ELO.Services
                         var comp = db.GetOrCreateCompetition(group.Key);
                         if (comp.QueueTimeout == null) continue;
 
-                        foreach (var player in group)
+                        var lobbyQueues = group.GroupBy(x => x.ChannelId);
+                        foreach (var lobbyGroup in lobbyQueues)
                         {
-                            //Too much time has passed, user is to be removed from queue.
-                            if (player.QueuedAt + comp.QueueTimeout.Value < now)
+                            var lastGame = db.GameResults.Where(x => x.GuildId == group.Key && x.LobbyId == lobbyGroup.Key).OrderByDescending(x => x.GameId).FirstOrDefault();
+                            if (lastGame != null && lastGame.GameState == GameState.Picking)
                             {
-                                //Remove player from queue
-                                db.QueuedPlayers.Remove(player);
-                                //Ensure lobby channel still exists and announce the user is removed from queue
-                                var channel = Client.GetChannel(player.ChannelId) as SocketTextChannel;
-                                if (channel != null)
+                                continue;
+                            }
+
+                            foreach (var player in lobbyGroup)
+                            {
+                                //Too much time has passed, user is to be removed from queue.
+                                if (player.QueuedAt + comp.QueueTimeout.Value < now)
                                 {
-                                    await channel.SendMessageAsync(MentionUtils.MentionUser(player.UserId), false, $"{MentionUtils.MentionUser(player.UserId)} was removed from the queue as they have been queued for more than {comp.QueueTimeout.Value.GetReadableLength()}".QuickEmbed(Color.DarkBlue));
+                                    //Remove player from queue
+                                    db.QueuedPlayers.Remove(player);
+                                    //Ensure lobby channel still exists and announce the user is removed from queue
+                                    var channel = Client.GetChannel(player.ChannelId) as SocketTextChannel;
+                                    if (channel != null)
+                                    {
+                                        try
+                                        {
+                                            await channel.SendMessageAsync(MentionUtils.MentionUser(player.UserId), false, $"{MentionUtils.MentionUser(player.UserId)} was removed from the queue as they have been queued for more than {comp.QueueTimeout.Value.GetReadableLength()}".QuickEmbed(Color.DarkBlue));
+                                        }
+                                        catch //(Exception e)
+                                        {
+                                            //   
+                                        }
+                                    }
                                 }
                             }
                         }
