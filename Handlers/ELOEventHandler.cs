@@ -306,7 +306,7 @@ namespace ELO.Handlers
                         await context.Channel.SendMessageAsync("", false, new EmbedBuilder
                         {
                             Title = $"Argument Error {result.Error.Value}",
-                            Description = $"`{commandInfo.Value.Aliases.First()}{string.Join(" ", commandInfo.Value.Parameters.Select(x => x.ParameterInformation()))}`\n" +
+                            Description = $"`{commandInfo.Value.Aliases.First()} {string.Join(" ", commandInfo.Value.Parameters.Select(x => x.ParameterInformation()))}`\n" +
                                 $"Message: {context.Message.Content.FixLength(512)}\n" +
                                 "__**Error**__\n" +
                                 $"{result.ErrorReason.FixLength(512)}",
