@@ -263,6 +263,12 @@ namespace ELO.Services
                     case PickMode.TryBalance:
                         game.GameState = GameState.Undecided;
                         var ordered = queue.OrderByDescending(x => db.Players.Find(context.Guild.Id, x.UserId).Points).ToList();
+                        //0-0
+                        //1-0
+                        //1-1
+                        //2-1
+                        //2-2
+                        //...
 
                         foreach (var user in ordered)
                         {
