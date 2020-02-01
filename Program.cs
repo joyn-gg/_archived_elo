@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using ELO.Handlers;
 using ELO.Models;
 using ELO.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RavenBOT.Common;
 using System;
@@ -82,7 +83,7 @@ namespace ELO
             //Ensure the database is created. This should also verify connection
             using (var db = new Database())
             {
-                db.Database.EnsureCreated();
+                db.Database.Migrate();
                 db.SaveChanges();
             }
 

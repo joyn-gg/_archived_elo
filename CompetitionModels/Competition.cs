@@ -92,6 +92,10 @@ namespace ELO.Models
 
         public ulong? PremiumRedeemer { get; set; }
         public DateTime? LegacyPremiumExpiry { get; set; }
+
+        public DateTime? PremiumBuffer { get; set; } = null;
+        public int? BufferedPremiumCount { get; set; } = null;
+
         public ulong? ReactiveMessage { get; set; }
 
         public virtual ICollection<Lobby> Lobbies { get; set; }

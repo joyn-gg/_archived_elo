@@ -572,6 +572,26 @@ namespace ELO.Modules
             }
         }
 
+        [Command("PurgeRegistrations", RunMode = RunMode.Sync)]
+        [Summary("Purges registrations.")]
+        public virtual async Task PurgeRegistrationsAsync(string confirm = null)
+        {
+            string confirmKey = "erkjbg4rt";
+            if (confirm == null || !confirm.Equals(confirmKey, StringComparison.OrdinalIgnoreCase))
+            {
+                await SimpleEmbedAsync($"Confirm key is: `{confirmKey}`\nThis command will remove registrations from users who are no longer in the server.");
+                return;
+            }
+
+            using (var db = new Database())
+            {
+                var players = db.Players.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                var missing = players.Where(x => Context.Guild.GetUser(x.UserId) == null).ToArray();
+                db.Players.RemoveRange(missing);
+                db.SaveChanges();
+                await SimpleEmbedAsync($"Removed {missing.Length} registrations.", Color.Green);
+            }
+        }
 
         [Command("DefaultLossModifier", RunMode = RunMode.Sync)]
         [Summary("Sets the default amount of points users lose when the lose a game.")]

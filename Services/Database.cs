@@ -31,7 +31,7 @@ namespace ELO.Services
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseNpgsql(Config.PostgresConnectionString());
+            optionsBuilder.UseNpgsql(Config?.PostgresConnectionString() ?? "Host={Server};Database={DatabaseName};Username={Username};Password={Password};");
             /*.UseMySql(Config.ConnectionString(), mySqlOptions =>
             {
                 mySqlOptions.ServerVersion(Config.Version, ServerType.MySql);

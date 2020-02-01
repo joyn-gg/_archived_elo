@@ -48,8 +48,22 @@ namespace ELO.Services
                 if (patreonUser == null) return false;
 
                 var patreonRole = GetPremiumRole(patreonUser);
-                if (patreonRole == null) return false;
+                if (patreonRole == null)
+                {
+                    if (match.PremiumBuffer != null && match.PremiumBuffer > DateTime.UtcNow)
+                    {
+                        return true;
+                    }
 
+                    return false;
+                }
+
+                if (match.BufferedPremiumCount != patreonRole.Limit)
+                {
+                    match.BufferedPremiumCount = patreonRole.Limit;
+                    db.Update(match);
+                    db.SaveChanges();
+                }
                 return true;
             }
         }
@@ -76,8 +90,21 @@ namespace ELO.Services
                 if (patreonUser == null) return PremiumConfig.DefaultLimit;
 
                 var patreonRole = GetPremiumRole(patreonUser);
-                if (patreonRole == null) return PremiumConfig.DefaultLimit;
+                if (patreonRole == null)
+                {
+                    if (match.PremiumBuffer != null && match.PremiumBuffer > DateTime.UtcNow)
+                    {
+                        return match.BufferedPremiumCount ?? PremiumConfig.DefaultLimit;
+                    }
+                    return PremiumConfig.DefaultLimit;
+                }
 
+                if (match.BufferedPremiumCount != patreonRole.Limit)
+                {
+                    match.BufferedPremiumCount = patreonRole.Limit;
+                    db.Update(match);
+                    db.SaveChanges();
+                }
                 return patreonRole.Limit;
             }
         }
@@ -157,11 +184,16 @@ namespace ELO.Services
                 foreach (var claim in prevClaims)
                 {
                     claim.PremiumRedeemer = null;
+                    claim.PremiumBuffer = null;
+                    claim.BufferedPremiumCount = null;
                     await context.Channel.SendMessageAsync("You've already claimed a server, the old claim will be removed and applied to this server.");
                 }
 
                 db.UpdateRange(prevClaims);
                 config.PremiumRedeemer = context.User.Id;
+                config.PremiumBuffer = DateTime.UtcNow + TimeSpan.FromDays(28);
+                config.BufferedPremiumCount = currentRole.Limit;
+
                 db.Update(config);
                 await context.Channel.SendMessageAsync($"The server has been upgraded to {currentRole.Limit} users");
                 db.SaveChanges();
