@@ -8,6 +8,7 @@ namespace ELO.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            /*
             migrationBuilder.CreateTable(
                 name: "Competitions",
                 columns: table => new
@@ -509,6 +510,7 @@ namespace ELO.Migrations
                 name: "IX_Votes_ChannelId_GameId",
                 table: "Votes",
                 columns: new[] { "ChannelId", "GameId" });
+                */
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
