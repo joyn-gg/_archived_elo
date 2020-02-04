@@ -26,6 +26,8 @@ namespace ELO.Handlers
             Client = provider.GetRequiredService<DiscordShardedClient>();
             CommandService = provider.GetService<CommandService>() ?? new CommandService();
             ShardChecker = provider.GetService<ShardChecker>() ?? new ShardChecker(Client);
+            ReactiveMessageService = new ReactiveMessageService(Client, ShardChecker, Provider.GetRequiredService<PremiumService>(), Provider.GetRequiredService<UserService>());
+
             ShardChecker.AllShardsReady += AllShardsReadyAsync;
             Client.ShardConnected += ShardConnectedAsync;
             Client.ShardReady += ShardReadyAsync;
@@ -44,6 +46,7 @@ namespace ELO.Handlers
         public DiscordShardedClient Client { get; }
         public CommandService CommandService { get; }
         public ShardChecker ShardChecker { get; }
+        public ReactiveMessageService ReactiveMessageService { get; }
 
         public Task AllShardsReadyAsync()
         {

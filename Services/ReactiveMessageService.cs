@@ -15,13 +15,13 @@ namespace ELO.Services
             Client = client;
             Checker = checker;
             Premium = premium;
-            UserService = userService;
-            Checker.AllShardsReady += Checker_AllShardsReady;
+            UserService = userService; 
+            Client.ReactionAdded += Client_ReactionAdded;
+
         }
 
         private Task Checker_AllShardsReady()
         {
-            Client.ReactionAdded += Client_ReactionAdded;
             return Task.CompletedTask;
         }
 
