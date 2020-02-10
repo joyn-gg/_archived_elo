@@ -25,6 +25,7 @@ namespace ELO.Modules
 
         //TODO: Player queuing via reactions to a message.
         public Random Random { get; }
+
         public GameService GameService { get; }
         public LobbyService LobbyService { get; }
         public PremiumService PremiumService { get; }
@@ -37,7 +38,7 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
                     await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
@@ -72,7 +73,7 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
                     await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
@@ -274,7 +275,7 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
                     await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
@@ -303,7 +304,6 @@ namespace ELO.Modules
             }
         }
 
-
         [Command("Pick", RunMode = RunMode.Sync)]
         [Alias("p")]
         [Summary("Picks the specified player(s) for your team.")]
@@ -311,7 +311,7 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
                     await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
@@ -397,7 +397,6 @@ namespace ELO.Modules
                     await SimpleEmbedAsync("There was an error picking your game.", Color.DarkRed);
                     return;
                 }
-
 
                 if (latestGame == null) return;
 

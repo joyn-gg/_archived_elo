@@ -16,6 +16,7 @@ namespace ELO.Services
         public bool PermissionBypass = false;
         public ulong OwnerId = 0;
         public static Dictionary<ulong, CachedPermissions> PermissionCache = new Dictionary<ulong, CachedPermissions>();
+
         public class CachedPermissions
         {
             public ulong GuildId;
@@ -23,12 +24,14 @@ namespace ELO.Services
             public ulong? ModId = null;
 
             public Dictionary<string, CachedPermission> Cache = new Dictionary<string, CachedPermission>();
+
             public class CachedPermission
             {
                 public string CommandName;
                 public PermissionLevel Level;
             }
         }
+
         public DiscordShardedClient Client { get; }
 
         public virtual async Task PopulateOwner()
@@ -42,6 +45,7 @@ namespace ELO.Services
 
         public (CachedPermissions, CachedPermissions.CachedPermission) GetCached(Database db, ulong guildId, string commandName)
         {
+            commandName = commandName.ToLower();
             CachedPermissions guildCache;
             CachedPermissions.CachedPermission permission;
             if (PermissionCache.TryGetValue(guildId, out guildCache))
@@ -56,7 +60,7 @@ namespace ELO.Services
                 }
                 else
                 {
-                    var dbPermission = db.Permissions.Find(guildId, commandName);
+                    var dbPermission = db.Permissions.FirstOrDefault(x => x.GuildId == guildId && x.CommandName == commandName);
                     if (dbPermission == null)
                     {
                         permission = null;
@@ -83,7 +87,7 @@ namespace ELO.Services
                     AdminId = comp.AdminRole
                 };
 
-                var dbPermission = db.Permissions.Find(guildId, commandName);
+                var dbPermission = db.Permissions.FirstOrDefault(x => x.GuildId == guildId && x.CommandName == commandName);
                 if (dbPermission == null)
                 {
                     permission = null;
@@ -103,6 +107,7 @@ namespace ELO.Services
 
             return (guildCache, permission);
         }
+
         public (bool?, CachedPermissions, CachedPermissions.CachedPermission) EvaluateCustomPermission(string commandName, SocketGuildUser user, out PermissionLevel? permissionLevel)
         {
             permissionLevel = null;

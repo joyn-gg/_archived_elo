@@ -15,6 +15,7 @@ namespace ELO.Modules
     public class QueueManagement : ReactiveBase
     {
         public static Dictionary<ulong, Dictionary<ulong, DateTime>> QueueDelays = new Dictionary<ulong, Dictionary<ulong, DateTime>>();
+
         public QueueManagement(LobbyService lobbyService, PremiumService premium)
         {
             LobbyService = lobbyService;
@@ -37,7 +38,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
                     await SimpleEmbedAsync("This channel is not a lobby.");
@@ -227,13 +228,12 @@ namespace ELO.Modules
                     return;
                 }
 
-                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
                     await SimpleEmbedAsync("This channel is not a lobby.");
                     return;
                 }
-
 
                 var queue = db.GetQueuedPlayers(Context.Guild.Id, Context.Channel.Id).ToList();
                 if (!queue.Any(x => x.UserId == Context.User.Id))
@@ -262,7 +262,6 @@ namespace ELO.Modules
 
                     if (lobby.HideQueue)
                     {
-
                         await Context.Message.DeleteAsync();
                         await SimpleEmbedAsync($"Removed a player. **[{queue.Count - 1}/{lobby.PlayersPerTeam * 2}]**");
                         return;

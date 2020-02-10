@@ -34,7 +34,7 @@ namespace ELO.Modules
                     return;
                 }
                 
-                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
                     await SimpleEmbedAsync("This channel is not a lobby.");
@@ -127,7 +127,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
                     await SimpleEmbedAsync("This channel is not a lobby.");
@@ -177,7 +177,7 @@ namespace ELO.Modules
             using (var db = new Database())
             {
 
-                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
                     await SimpleEmbedAsync("This channel is not a lobby.");
@@ -208,7 +208,7 @@ namespace ELO.Modules
             using (var db = new Database())
             {
 
-                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
                     await SimpleEmbedAsync("This channel is not a lobby.");
@@ -236,7 +236,7 @@ namespace ELO.Modules
             using (var db = new Database())
             {
 
-                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
                     await SimpleEmbedAsync("This channel is not a lobby.");
@@ -270,7 +270,7 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
                     await SimpleEmbedAsync("This channel is not a lobby.");
