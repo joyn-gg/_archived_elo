@@ -217,7 +217,7 @@ namespace ELO.Modules
             }
         }
 
-        [Command("RefreshUsers", RunMode = RunMode.Async)]
+        /*[Command("RefreshUsers", RunMode = RunMode.Async)]
         [Summary("Refreshes all user names and roles")]
         [RequirePermission(PermissionLevel.ELOAdmin)]
         [RequireBotPermission(GuildPermission.ManageNicknames)]
@@ -227,14 +227,17 @@ namespace ELO.Modules
             {
                 try
                 {
-                    if (RenameTasks.Contains(Context.Guild.Id))
+                    lock (RenameTasks)
                     {
-                        await SimpleEmbedAsync($"There is currently a refresh task for this server running.", Color.Red);
-                        return;
+                        if (RenameTasks.Contains(Context.Guild.Id))
+                        {
+                            SimpleEmbedAsync($"There is currently a refresh task for this server running.", Color.Red);
+                            return;
+                        }
+                        RenameTasks.Add(Context.Guild.Id);
                     }
-                    RenameTasks.Add(Context.Guild.Id);
 
-                    await SimpleEmbedAsync($"Running refresh task... Estimated time: {TimeSpan.FromSeconds(Context.Guild.MemberCount * 2).GetReadableLength()}", Color.Green);
+                    await SimpleEmbedAsync($"Running refresh task... Estimated time: {TimeSpan.FromSeconds(Context.Guild.MemberCount * 10).GetReadableLength()}", Color.Green);
                     var comp = db.GetOrCreateCompetition(Context.Guild.Id);
                     var players = db.Players.Where(x => x.GuildId == Context.Guild.Id).ToArray();
                     var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
@@ -244,12 +247,18 @@ namespace ELO.Modules
                         var user = Context.Guild.GetUser(player.UserId);
                         if (user != null)
                         {
-                            var _ = Task.Run(async () =>
+                            try
                             {
                                 await UserService.UpdateUserAsync(comp, player, ranks, user);
-                            });
-                            //2 sec per rename? should be fine
-                            await Task.Delay(2000);
+                            }
+                            catch
+                            {
+                                //
+                            }
+                            finally
+                            {
+                                await Task.Delay(10000);
+                            }
                         }
                     }
                     await SimpleEmbedAsync($"Refresh task complete.", Color.Green);
@@ -258,6 +267,28 @@ namespace ELO.Modules
                 {
                     RenameTasks.Remove(Context.Guild.Id);
                 }
+            }
+        }*/
+
+        [Command("RefreshUser", RunMode = RunMode.Async)]
+        [Summary("Refreshes given users name and roles")]
+        [RequirePermission(PermissionLevel.ELOAdmin)]
+        [RequireBotPermission(GuildPermission.ManageNicknames)]
+        public virtual async Task RefreshNameAsync(SocketGuildUser user)
+        {
+            using (var db = new Database())
+            {
+                var player = db.Players.FirstOrDefault(x => x.GuildId == Context.Guild.Id && x.UserId == user.Id);
+                if (player == null)
+                {
+                    await ReplyAsync("User is not registered.");
+                    return;
+                }
+                var comp = db.GetOrCreateCompetition(Context.Guild.Id);
+                var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+
+                await UserService.UpdateUserAsync(comp, player, ranks, user);
+                await ReplyAsync("User update complete.");
             }
         }
     }
