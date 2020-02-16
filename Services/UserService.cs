@@ -91,7 +91,7 @@ namespace ELO.Services
                     {
                         try
                         {
-                            var finalRoles = currentRoles.Select(x => x.Id).ToList();
+                            var finalRoles = currentRoles.Where(x => !x.IsEveryone).Select(x => x.Id).ToList();
                             foreach (var role in toRemove)
                             {
                                 finalRoles.Remove(role.Id);
