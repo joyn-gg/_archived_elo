@@ -23,6 +23,7 @@ namespace ELO.Modules
         }
 
         public LobbyService LobbyService { get; }
+
         public PremiumService Premium { get; }
 
         [Command("Join", RunMode = RunMode.Sync)]
@@ -70,6 +71,7 @@ namespace ELO.Modules
                         await SimpleEmbedAndDeleteAsync("Queue is full, wait for teams to be chosen before joining.", Color.Red, TimeSpan.FromSeconds(5));
                         return;
                     }
+
                     //Queue will be reset after teams are completely picked.
                     await SimpleEmbedAsync($"{Context.User.Mention} - Queue is full, wait for teams to be chosen before joining.", Color.DarkBlue);
                     return;
@@ -130,10 +132,12 @@ namespace ELO.Modules
                     if (lobby.HideQueue)
                     {
                         await Context.Message.DeleteAsync();
-                        await SimpleEmbedAndDeleteAsync("You are already queued.", Color.DarkBlue, TimeSpan.FromSeconds(5));
+
+                        // await SimpleEmbedAndDeleteAsync("You are already queued.", Color.DarkBlue, TimeSpan.FromSeconds(5));
                         return;
                     }
-                    await SimpleEmbedAsync($"{Context.User.Mention} - You are already queued.", Color.DarkBlue);
+
+                    // await SimpleEmbedAsync($"{Context.User.Mention} - You are already queued.", Color.DarkBlue);
                     return;
                 }
 
