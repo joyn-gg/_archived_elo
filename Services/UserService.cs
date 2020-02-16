@@ -60,7 +60,7 @@ namespace ELO.Services
                         var match = rankMatches.First(x => x.Points == maxRank);
 
                         // Ensure user has their max role.
-                        var roleToAdd = user.Guild.GetRole(toAdd.RoleId);
+                        var roleToAdd = user.Guild.GetRole(match.RoleId);
 
                         if (roleToAdd != null && roleToAdd.Position < user.Guild.CurrentUser.Hierarchy)
                         {
