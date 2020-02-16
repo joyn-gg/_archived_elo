@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 using ELO.Models;
 using System;
 using System.Collections.Generic;
@@ -16,98 +17,117 @@ namespace ELO.Services
             {
                 if (user.Guild.CurrentUser.GuildPermissions.ManageRoles)
                 {
-                    var rankMatches = ranks.Where(x => x.Points <= player.Points);
+                    var currentRoles = user.Roles.ToList();
 
-                    //Check if user is to recieve any role
+                    // Track the removed roles (if any)
+                    List<SocketRole> toRemove = new List<SocketRole>();
+
+                    bool modifyRoles = false;
+
+                    // Remove all ranks that are not the max
+                    foreach (var rank in ranks)
+                    {
+                        var roleMatch = currentRoles.FirstOrDefault(x => x.Id == rank.RoleId);
+                        if (roleMatch == null) continue;
+
+                        if (roleMatch.Position >= user.Guild.CurrentUser.Hierarchy)
+                        {
+                            // Cannot remove the role if it is higher than the bot's position.
+                            continue;
+                        }
+
+                        if (roleMatch.IsEveryone || roleMatch.IsManaged)
+                        {
+                            // Cannot remove/add managed or everyone role from user.
+                            continue;
+                        }
+
+                        if (currentRoles.RemoveAll(x => x.Id == rank.RoleId) > 0)
+                        {
+                            modifyRoles = true;
+                            toRemove.Add(roleMatch);
+                        }
+                    }
+
+                    // Track the newly added role (if added)
+                    Rank toAdd = null;
+
+                    // Find Ranks that have less points than the current user.
+                    var rankMatches = ranks.Where(x => x.Points <= player.Points);
                     if (rankMatches.Any())
                     {
-                        //Get the highest rank that the user can receive from the bot.
                         var maxRank = rankMatches.Max(x => x.Points);
                         var match = rankMatches.First(x => x.Points == maxRank);
 
-                        //Remove other rank roles.
-                        //var gRoles = user.Guild.Roles.Where(x => rankMatches.Any(r => r.RoleId == x.Id) && x.Id != match.RoleId && x.IsEveryone == false && x.IsManaged == false && x.Position < user.Guild.CurrentUser.Hierarchy).ToList();
+                        // Ensure user has their max role.
+                        var roleToAdd = user.Guild.GetRole(toAdd.RoleId);
 
-                        var toRemove = ranks.Where(x => x.RoleId != match.RoleId);
-                        var toRemoveChecked = user.Guild.Roles.Where(x => toRemove.Any(r => r.RoleId == x.Id))
-
-                                                              //Bot cannot work with roles above it's permission level
-                                                              .Where(x => x.Position < user.Guild.CurrentUser.Hierarchy)
-
-                                                              //Bot cannot remove everyone or managed roles
-                                                              .Where(x => x.IsEveryone == false && x.IsManaged == false);
-                        if (toRemoveChecked.Any())
+                        if (roleToAdd != null && roleToAdd.Position < user.Guild.CurrentUser.Hierarchy)
                         {
-                            try
+                            if (currentRoles.All(x => x.Id != match.RoleId))
                             {
-                                await user.RemoveRolesAsync(toRemoveChecked);
-                            }
-                            catch (Exception e)
-                            {
-                                noted.Add($"There was an error removing a previous rank from {user.Mention}\n{string.Join(", ", toRemoveChecked.Select(x => x.Mention))}");
-                                Console.WriteLine(e);
-                            }
-                        }
-
-                        //Check to see if the player already has the role
-                        if (!user.Roles.Any(x => x.Id == match.RoleId))
-                        {
-                            //Try to retrieve the role in the server
-                            var role = user.Guild.GetRole(match.RoleId);
-                            if (role != null)
-                            {
-                                if (role.Position < user.Guild.CurrentUser.Hierarchy)
-                                {
-                                    try
-                                    {
-                                        await user.AddRoleAsync(role);
-                                        noted.Add($"{user.Mention} received the {(role.IsMentionable ? role.Mention : role.Name)} rank");
-                                    }
-                                    catch (Exception e)
-                                    {
-                                        noted.Add($"{user.Mention} could not recieve the {(role.IsMentionable ? role.Mention : role.Name)} due to missing permissions.");
-                                        Console.WriteLine(e);
-                                    }
-                                }
-                                else
-                                {
-                                    noted.Add($"The {(role.IsMentionable ? role.Mention : role.Name)} rank is above ELO bot's highest role and cannot be added to the user");
-                                }
-                            }
-                            else
-                            {
-                                using (var db = new Database())
-                                {
-                                    noted.Add($"A rank could not be found in the server and has been automatically removed. [{match.RoleId} w:{match.WinModifier} l:{match.LossModifier} p:{match.Points}]");
-                                    var rnk = db.Ranks.Find(match.GuildId, match.RoleId);
-                                    db.Ranks.Remove(rnk);
-                                }
+                                modifyRoles = true;
+                                toAdd = match;
                             }
                         }
                     }
 
+                    ulong? addRegisterRole = null;
+
                     //Ensure the user has the registerd role if it exists.
                     if (comp.RegisteredRankId.HasValue)
                     {
-                        if (!user.Roles.Any(x => x.Id == comp.RegisteredRankId))
+                        if (currentRoles.All(x => x.Id != comp.RegisteredRankId))
                         {
                             var role = user.Guild.GetRole(comp.RegisteredRankId.Value);
-                            if (role != null)
+                            if (role != null && role.Position < user.Guild.CurrentUser.Hierarchy)
                             {
-                                if (role.Position < user.Guild.CurrentUser.Hierarchy)
-                                {
-                                    try
-                                    {
-                                        await user.AddRoleAsync(role);
-                                        noted.Add($"{user.Mention} received the {(role.IsMentionable ? role.Mention : role.Name)} (`registered`) rank");
-                                    }
-                                    catch (Exception e)
-                                    {
-                                        noted.Add($"{user.Mention} could not recieve the {(role.IsMentionable ? role.Mention : role.Name)} (`registered`) role due to missing permissions.");
-                                        Console.WriteLine(e);
-                                    }
-                                }
+                                addRegisterRole = comp.RegisteredRankId.Value;
                             }
+                        }
+                    }
+
+                    if (modifyRoles)
+                    {
+                        try
+                        {
+                            var finalRoles = currentRoles.Select(x => x.Id).ToList();
+                            foreach (var role in toRemove)
+                            {
+                                finalRoles.Remove(role.Id);
+                            }
+
+                            if (toAdd != null)
+                            {
+                                finalRoles.Add(toAdd.RoleId);
+                            }
+
+                            if (addRegisterRole != null)
+                            {
+                                finalRoles.Add(addRegisterRole.Value);
+                            }
+
+                            await user.ModifyAsync(x => x.RoleIds = finalRoles);
+
+                            if (toRemove.Any(x => toAdd?.RoleId != x.Id))
+                            {
+                                noted.Add($"Removed rank(s): {toRemove.Select(x => MentionUtils.MentionRole(x.Id))}");
+                            }
+
+                            if (toAdd != null)
+                            {
+                                noted.Add($"Added rank: {MentionUtils.MentionRole(toAdd.RoleId)}");
+                            }
+
+                            if (addRegisterRole != null)
+                            {
+                                noted.Add($"{user.Mention} received the {MentionUtils.MentionRole(addRegisterRole.Value)} rank");
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            noted.Add($"There was an error updaing your roles.");
+                            Console.WriteLine(e);
                         }
                     }
                 }
