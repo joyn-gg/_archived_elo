@@ -17,6 +17,7 @@ namespace ELO.Services
                 if (user.Guild.CurrentUser.GuildPermissions.ManageRoles)
                 {
                     var rankMatches = ranks.Where(x => x.Points <= player.Points);
+
                     //Check if user is to recieve any role
                     if (rankMatches.Any())
                     {
@@ -29,8 +30,10 @@ namespace ELO.Services
 
                         var toRemove = ranks.Where(x => x.RoleId != match.RoleId);
                         var toRemoveChecked = user.Guild.Roles.Where(x => toRemove.Any(r => r.RoleId == x.Id))
+
                                                               //Bot cannot work with roles above it's permission level
                                                               .Where(x => x.Position < user.Guild.CurrentUser.Hierarchy)
+
                                                               //Bot cannot remove everyone or managed roles
                                                               .Where(x => x.IsEveryone == false && x.IsManaged == false);
                         if (toRemoveChecked.Any())
@@ -113,6 +116,7 @@ namespace ELO.Services
                     noted.Add("The bot requires manage roles permissions in order to modify user roles.");
                 }
 
+                /*
                 if (comp.UpdateNames)
                 {
                     var newName = comp.GetNickname(player);
@@ -145,6 +149,8 @@ namespace ELO.Services
                         }
                     }
                 }
+                */
+                noted.Add("Nickname updates are currently disabled for all servers with ELO as an attempt to mitigate ratelimiting issues.");
             }
             catch (Exception e)
             {
