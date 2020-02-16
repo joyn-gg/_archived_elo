@@ -80,7 +80,7 @@ namespace ELO.Modules
                 var comp = db.GetOrCreateCompetition(Context.Guild.Id);
                 if (!comp.AllowMultiQueueing)
                 {
-                    var queued = db.QueuedPlayers.Where(x => x.GuildId == Context.Guild.Id && x.UserId == Context.User.Id).ToArray();
+                    var queued = db.QueuedPlayers.Where(x => x.GuildId == Context.Guild.Id && x.UserId == Context.User.Id && x.ChannelId != Context.Channel.Id).ToArray();
                     if (queued.Length > 0)
                     {
                         var guildChannels = queued.Select(x => MentionUtils.MentionChannel(x.ChannelId));
