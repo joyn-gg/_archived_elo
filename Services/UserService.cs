@@ -111,7 +111,7 @@ namespace ELO.Services
 
                             if (toRemove.Any(x => toAdd?.RoleId != x.Id))
                             {
-                                noted.Add($"Removed rank(s): {toRemove.Select(x => MentionUtils.MentionRole(x.Id))}");
+                                noted.Add($"Removed rank(s): {string.Join(" ", toRemove.Select(x => MentionUtils.MentionRole(x.Id)))}");
                             }
 
                             if (toAdd != null)
