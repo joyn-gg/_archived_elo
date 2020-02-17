@@ -39,11 +39,8 @@ namespace ELO.Services
 
                         if (roleToAdd != null && roleToAdd.Position < user.Guild.CurrentUser.Hierarchy)
                         {
-                            if (currentRoles.All(x => x.Id != match.RoleId))
-                            {
-                                modifyRoles = true;
-                                toAdd = match;
-                            }
+                            modifyRoles = true;
+                            toAdd = match;
                         }
                     }
 
@@ -54,13 +51,11 @@ namespace ELO.Services
                     {
                         if (comp.RegisteredRankId.Value != toAdd?.RoleId)
                         {
-                            if (currentRoles.All(x => x.Id != comp.RegisteredRankId))
+                            var role = user.Guild.GetRole(comp.RegisteredRankId.Value);
+                            if (role != null && role.Position < user.Guild.CurrentUser.Hierarchy)
                             {
-                                var role = user.Guild.GetRole(comp.RegisteredRankId.Value);
-                                if (role != null && role.Position < user.Guild.CurrentUser.Hierarchy)
-                                {
-                                    addRegisterRole = comp.RegisteredRankId.Value;
-                                }
+                                modifyRoles = true;
+                                addRegisterRole = comp.RegisteredRankId.Value;
                             }
                         }
                     }
@@ -96,36 +91,49 @@ namespace ELO.Services
                         try
                         {
                             var finalRoles = currentRoles.Where(x => !x.IsEveryone).Select(x => x.Id).ToList();
-                            foreach (var role in toRemove)
+
+                            bool removedRanks = false;
+                            if (toRemove.Any())
                             {
-                                finalRoles.Remove(role.Id);
+                                removedRanks = true;
+                                foreach (var role in toRemove)
+                                {
+                                    finalRoles.Remove(role.Id);
+                                }
                             }
 
-                            if (toAdd != null)
+                            bool newRankAdded = false;
+                            if (toAdd != null && !finalRoles.Contains(toAdd.RoleId))
                             {
+                                newRankAdded = true;
                                 finalRoles.Add(toAdd.RoleId);
                             }
 
-                            if (addRegisterRole != null)
+                            bool registerRankAdded = false;
+                            if (addRegisterRole != null && !finalRoles.Contains(addRegisterRole.Value))
                             {
+                                registerRankAdded = true;
                                 finalRoles.Add(addRegisterRole.Value);
                             }
 
-                            await user.ModifyAsync(x => x.RoleIds = finalRoles);
-
-                            if (toRemove.Any(x => toAdd?.RoleId != x.Id))
+                            if (removedRanks || newRankAdded || registerRankAdded)
                             {
-                                noted.Add($"Removed rank(s): {string.Join(" ", toRemove.Select(x => MentionUtils.MentionRole(x.Id)))}");
-                            }
+                                await user.ModifyAsync(x => x.RoleIds = finalRoles);
 
-                            if (toAdd != null)
-                            {
-                                noted.Add($"Added rank: {MentionUtils.MentionRole(toAdd.RoleId)}");
-                            }
+                                if (removedRanks)
+                                {
+                                    noted.Add($"Removed rank(s): {string.Join(" ", toRemove.Select(x => MentionUtils.MentionRole(x.Id)))}");
+                                }
 
-                            if (addRegisterRole != null)
-                            {
-                                noted.Add($"{user.Mention} received the {MentionUtils.MentionRole(addRegisterRole.Value)} rank");
+                                if (newRankAdded)
+                                {
+                                    noted.Add($"Added rank: {MentionUtils.MentionRole(toAdd.RoleId)}");
+                                }
+
+                                if (registerRankAdded)
+                                {
+                                    noted.Add($"{user.Mention} received the {MentionUtils.MentionRole(addRegisterRole.Value)} rank");
+                                }
                             }
                         }
                         catch (Exception e)
