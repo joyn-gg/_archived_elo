@@ -24,31 +24,6 @@ namespace ELO.Services
 
                     bool modifyRoles = false;
 
-                    // Remove all ranks that are not the max
-                    foreach (var rank in ranks)
-                    {
-                        var roleMatch = currentRoles.FirstOrDefault(x => x.Id == rank.RoleId);
-                        if (roleMatch == null) continue;
-
-                        if (roleMatch.Position >= user.Guild.CurrentUser.Hierarchy)
-                        {
-                            // Cannot remove the role if it is higher than the bot's position.
-                            continue;
-                        }
-
-                        if (roleMatch.IsEveryone || roleMatch.IsManaged)
-                        {
-                            // Cannot remove/add managed or everyone role from user.
-                            continue;
-                        }
-
-                        if (currentRoles.RemoveAll(x => x.Id == rank.RoleId) > 0)
-                        {
-                            modifyRoles = true;
-                            toRemove.Add(roleMatch);
-                        }
-                    }
-
                     // Track the newly added role (if added)
                     Rank toAdd = null;
 
@@ -77,13 +52,42 @@ namespace ELO.Services
                     //Ensure the user has the registerd role if it exists.
                     if (comp.RegisteredRankId.HasValue)
                     {
-                        if (currentRoles.All(x => x.Id != comp.RegisteredRankId))
+                        if (comp.RegisteredRankId.Value != toAdd?.RoleId)
                         {
-                            var role = user.Guild.GetRole(comp.RegisteredRankId.Value);
-                            if (role != null && role.Position < user.Guild.CurrentUser.Hierarchy)
+                            if (currentRoles.All(x => x.Id != comp.RegisteredRankId))
                             {
-                                addRegisterRole = comp.RegisteredRankId.Value;
+                                var role = user.Guild.GetRole(comp.RegisteredRankId.Value);
+                                if (role != null && role.Position < user.Guild.CurrentUser.Hierarchy)
+                                {
+                                    addRegisterRole = comp.RegisteredRankId.Value;
+                                }
                             }
+                        }
+                    }
+
+                    // Remove all ranks that are not the max
+                    foreach (var rank in ranks)
+                    {
+                        if (rank.RoleId == toAdd?.RoleId || rank.RoleId == comp.RegisteredRankId) continue;
+                        var roleMatch = currentRoles.FirstOrDefault(x => x.Id == rank.RoleId);
+                        if (roleMatch == null) continue;
+
+                        if (roleMatch.Position >= user.Guild.CurrentUser.Hierarchy)
+                        {
+                            // Cannot remove the role if it is higher than the bot's position.
+                            continue;
+                        }
+
+                        if (roleMatch.IsEveryone || roleMatch.IsManaged)
+                        {
+                            // Cannot remove/add managed or everyone role from user.
+                            continue;
+                        }
+
+                        if (currentRoles.RemoveAll(x => x.Id == rank.RoleId) > 0)
+                        {
+                            modifyRoles = true;
+                            toRemove.Add(roleMatch);
                         }
                     }
 
