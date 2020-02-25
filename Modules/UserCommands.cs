@@ -20,8 +20,8 @@ namespace ELO.Modules
         }
 
         public PremiumService Premium { get; }
-        public UserService UserService { get; }
 
+        public UserService UserService { get; }
 
         [Command("ForceRegisterUsers", RunMode = RunMode.Sync)]
         [RavenRequireOwner]
@@ -50,6 +50,8 @@ namespace ELO.Modules
 
         public virtual async Task RegisterAsync(SocketGuildUser regUser, [Remainder]string name = null)
         {
+            if (regUser == null) return;
+
             if (name == null)
             {
                 name = regUser.Username;
@@ -117,7 +119,6 @@ namespace ELO.Modules
                 await SimpleEmbedAsync("To rename another user, use the `RenameUser` command instead.", Color.DarkBlue);
             }
         }
-
 
         [Command("Rename", RunMode = RunMode.Sync)]
         [Summary("Rename yourself.")]

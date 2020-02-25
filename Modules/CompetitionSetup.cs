@@ -80,7 +80,6 @@ namespace ELO.Modules
                     db.Update(guild);
                     db.SaveChanges();
                     await SimpleEmbedAsync("Token redeemed.", Color.Green);
-
                 }
             }
         }
@@ -108,7 +107,6 @@ namespace ELO.Modules
                     await SimpleEmbedAsync("This server does not have a legacy premium subscription.", Color.Red);
                 }
             }
-
         }
 
         [Command("RegistrationLimit", RunMode = RunMode.Async)]
@@ -142,6 +140,7 @@ namespace ELO.Modules
                             $"**Allow Self Rename:** {comp.AllowSelfRename}\n" +
                             $"**Allow Re-registering:** {comp.AllowReRegister}\n" +
                             $"**Requeue Delay:** {(comp.RequeueDelay.HasValue ? comp.RequeueDelay.Value.GetReadableLength() : "None")}");
+
                 //embed.AddField("Stats",
                 //            $"**Registered User Count:** {comp.RegistrationCount}\n" +
                 //            $"**Manual Game Count:** {comp.ManualGameCounter}");
@@ -393,7 +392,6 @@ namespace ELO.Modules
             }
         }
 
-
         [Command("AddRank", RunMode = RunMode.Sync)]
         [Alias("Add Rank", "UpdateRank")]
         [Summary("Adds a new rank with the specified amount of points and win/loss modifiers")]
@@ -472,10 +470,10 @@ namespace ELO.Modules
                 await SimpleEmbedAsync($"Allow Negative Score set to {allowNegative.Value}", Color.Green);
             }
         }
-        
+
         [Command("AllowMultiQueuing", RunMode = RunMode.Sync)]
-        [Alias("AllowMultiQueueing", "AllowMulti-Queuing", "AllowMulti-Queuing","AllowMultiQ", "AllowMultiQing")]
-        [Summary("Sets whether users are allowed to join multiple queues at once")] 
+        [Alias("AllowMultiQueueing", "AllowMulti-Queuing", "AllowMulti-Queuing", "AllowMultiQ", "AllowMultiQing")]
+        [Summary("Sets whether users are allowed to join multiple queues at once")]
         public virtual async Task AllowMultiQueueingAsync(bool? allowMulti = null)
         {
             using (var db = new Database())
@@ -589,6 +587,8 @@ namespace ELO.Modules
                 var missing = players.Where(x => Context.Guild.GetUser(x.UserId) == null).ToArray();
                 db.Players.RemoveRange(missing);
                 db.SaveChanges();
+                Extensions.Extensions.RegistrationCache.Clear();
+
                 await SimpleEmbedAsync($"Removed {missing.Length} registrations.", Color.Green);
             }
         }
@@ -707,7 +707,6 @@ namespace ELO.Modules
             }
         }
 
-
         [Command("CreateReactionRegistration", RunMode = RunMode.Sync)]
         [Summary("Creates a message which users can react to in order to register")]
         public virtual async Task CreateReactAsync([Remainder]string message = null)
@@ -723,7 +722,6 @@ namespace ELO.Modules
                 await response.AddReactionAsync(ReactiveMessageService.registrationConfirmEmoji);
             }
         }
-
 
         [Command("ReQueueDelay", RunMode = RunMode.Sync)]
         [Summary("Set or displays the amount of time required between joining queues.")]
