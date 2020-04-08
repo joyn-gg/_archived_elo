@@ -707,7 +707,7 @@ namespace ELO.Modules
             }
         }
 
-        [Command("CreateReactionRegistration", RunMode = RunMode.Sync)]
+        /*[Command("CreateReactionRegistration", RunMode = RunMode.Sync)]
         [Summary("Creates a message which users can react to in order to register")]
         public virtual async Task CreateReactAsync([Remainder]string message = null)
         {
@@ -721,7 +721,7 @@ namespace ELO.Modules
                 db.SaveChanges();
                 await response.AddReactionAsync(ReactiveMessageService.registrationConfirmEmoji);
             }
-        }
+        }*/
 
         [Command("ReQueueDelay", RunMode = RunMode.Sync)]
         [Summary("Set or displays the amount of time required between joining queues.")]
