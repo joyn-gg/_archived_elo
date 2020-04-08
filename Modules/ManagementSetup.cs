@@ -15,6 +15,7 @@ namespace ELO.Modules
     public class ManagementSetup : ReactiveBase
     {
         public CommandService CommandService { get; }
+
         public PermissionService Permissions { get; }
 
         public ManagementSetup(CommandService commandService, PermissionService permissions)
@@ -48,7 +49,7 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                var match = CommandService.Commands.FirstOrDefault(x => x.Name.Equals(commandName, System.StringComparison.OrdinalIgnoreCase) || x.Aliases.Any(a => a.Equals(commandName, System.StringComparison.OrdinalIgnoreCase)));
+                var match = CommandService.Commands.FirstOrDefault(x => x.Name.Equals(commandName, System.StringComparison.InvariantCultureIgnoreCase) || x.Aliases.Any(a => a.Equals(commandName, System.StringComparison.InvariantCultureIgnoreCase)));
 
                 if (match == null)
                 {
@@ -56,27 +57,35 @@ namespace ELO.Modules
                     return;
                 }
 
-                if (!match.Preconditions.Any(x => x is RequirePermission))
+                if (!match.Preconditions.Any(x => x is RequirePermission) && !match.Module.Preconditions.Any(x => x is RequirePermission))
                 {
                     await SimpleEmbedAsync("This command cannot have it's permission overwritten.");
                     return;
                 }
 
-                var permission = new CommandPermission
+                var dbMatch = db.Permissions.Find(Context.Guild.Id, match.Name.ToLower());
+                if (dbMatch != null)
                 {
-                    GuildId = Context.Guild.Id,
-                    CommandName = match.Name.ToLower(),
-                    Level = level
-                };
-                db.Permissions.Add(permission);
-                if (PermissionService.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
+                    dbMatch.Level = level;
+                    db.Permissions.Update(dbMatch);
+                }
+                else
                 {
-                    cache.Cache.Remove(match.Name.ToLower());
+                    var permission = new CommandPermission
+                    {
+                        GuildId = Context.Guild.Id,
+                        CommandName = match.Name.ToLower(),
+                        Level = level
+                    };
+                    db.Permissions.Add(permission);
+                    if (PermissionService.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
+                    {
+                        cache.Cache.Remove(match.Name.ToLower());
+                    }
                 }
                 db.SaveChanges();
                 await SimpleEmbedAsync($"{match.Name} permission level set to: {level}", Color.Blue);
             }
-
         }
 
         [Command("RemoveCommandPermission", RunMode = RunMode.Sync)]
@@ -85,7 +94,7 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                var match = CommandService.Commands.FirstOrDefault(x => x.Name.Equals(commandName, System.StringComparison.OrdinalIgnoreCase) || x.Aliases.Any(a => a.Equals(commandName, System.StringComparison.OrdinalIgnoreCase)));
+                var match = CommandService.Commands.FirstOrDefault(x => x.Name.Equals(commandName, System.StringComparison.InvariantCultureIgnoreCase) || x.Aliases.Any(a => a.Equals(commandName, System.StringComparison.InvariantCultureIgnoreCase)));
 
                 if (match == null)
                 {
@@ -106,7 +115,6 @@ namespace ELO.Modules
                 }
                 await SimpleEmbedAsync($"{match.Name} permission set back to default.", Color.Blue);
             }
-
         }
 
         [Command("SetModerator", RunMode = RunMode.Sync)]
@@ -132,7 +140,6 @@ namespace ELO.Modules
                     await SimpleEmbedAsync("Mod role is no longer set, only ELO Admins and users with a role that has `Administrator` permissions can run moderator commands now.", Color.DarkBlue);
                 }
             }
-
         }
 
         [Command("SetAdmin", RunMode = RunMode.Sync)]
