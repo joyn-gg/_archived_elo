@@ -22,6 +22,7 @@ namespace ELO.Modules
         }
 
         public PremiumService Premium { get; }
+
         public UserService UserService { get; }
 
         //TODO: Player specific ban lookup
@@ -41,7 +42,7 @@ namespace ELO.Modules
                 }
 
                 //Show bans in order of which is soonest to expire
-                var pages2 = bans.OrderBy(x => x.RemainingTime).Where(x => x.IsExpired == false).SplitList(5).Select(x =>
+                var pages2 = bans.Where(x => x.IsExpired == false).OrderBy(x => x.RemainingTime).SplitList(5).Select(x =>
                 {
                     var page = new ReactivePage();
 
