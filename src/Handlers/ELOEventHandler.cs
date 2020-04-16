@@ -15,11 +15,8 @@ namespace ELO.Handlers
 {
     public partial class ELOEventHandler
     {
-        public ELOEventHandler(ConfigManager configManager, IServiceProvider provider)
+        public ELOEventHandler(IServiceProvider provider)
         {
-            //Ensure lastconfig is populated
-            configManager.GetConfig();
-            ConfigManager = configManager;
             Logger = provider.GetService<Logger>() ?? new Logger();
             BaseLogger = provider.GetService<LogHandler>() ?? new LogHandler();
             Provider = provider;
@@ -40,8 +37,6 @@ namespace ELO.Handlers
         }
 
         private LogHandler BaseLogger { get; }
-
-        public ConfigManager ConfigManager { get; }
 
         public Logger Logger { get; }
 
@@ -66,7 +61,6 @@ namespace ELO.Handlers
         public async Task InitializeAsync(string token)
         {
             CommandService.AddTypeReader(typeof(Emoji), new EmojiTypeReader());
-
             await Client.LoginAsync(TokenType.Bot, token);
             await Client.StartAsync();
             await RegisterModulesAsync();
@@ -93,12 +87,6 @@ namespace ELO.Handlers
 
         public async Task JoinedGuildAsync(SocketGuild guild)
         {
-            //Check server whitelist
-            if (!ConfigManager.LastConfig.IsAcceptable(guild.Id))
-            {
-                return;
-            }
-
             //Try to find a channel the bot can send messages to with it's current permissions
             var firstChannel = guild.TextChannels.Where(x =>
             {
@@ -118,7 +106,7 @@ namespace ELO.Handlers
             await firstChannel?.SendMessageAsync("", false, new EmbedBuilder()
             {
                 Title = $"{Client.CurrentUser.Username}",
-                Description = $"Get started by using the help command: `{prefix ?? ConfigManager.LastConfig.Prefix}help`",
+                Description = $"Get started by using the help command: `{prefix ?? Program.Prefix}help`",
                 Color = Color.Green
             }.Build());
         }
@@ -130,6 +118,13 @@ namespace ELO.Handlers
                 return;
             }
 
+            //Still ignore messages from the bot to avoid recursive commands
+            if (message.Author.Id == Client.CurrentUser.Id)
+            {
+                return;
+            }
+
+            /*
             if (ConfigManager.LastConfig.IgnoreBotInput)
             {
                 if (message.Author.IsBot || message.Author.IsWebhook)
@@ -139,12 +134,8 @@ namespace ELO.Handlers
             }
             else
             {
-                //Still ignore messages from the bot to avoid recursive commands
-                if (message.Author.Id == Client.CurrentUser.Id)
-                {
-                    return;
-                }
             }
+            */
 
             ulong guildId = 0;
             if (message.Channel is IGuildChannel gChannel)
@@ -152,35 +143,36 @@ namespace ELO.Handlers
                 guildId = gChannel.GuildId;
             }
 
-            //Ensure the server is whitelisted or whitelist disabled
-            if (!ConfigManager.LastConfig.IsAcceptable(guildId))
-            {
-                return;
-            }
-
             var _ = Task.Run(async () =>
             {
                 var context = new ShardedCommandContext(Client, message);
                 var argPos = 0;
 
-                if (guildId != 0 && !ConfigManager.LastConfig.Developer)
+                if (guildId != 0)
                 {
                     //Check that the message was from a server and try to use a custom set prefix if available.
                     using (var db = new Database())
                     {
                         var comp = db.Competitions.FirstOrDefault(x => x.GuildId == guildId);
-                        var prefix = comp?.Prefix ?? ConfigManager.LastConfig.Prefix;
+                        var prefix = comp?.Prefix ?? Program.Prefix;
                         if (!message.HasStringPrefix(prefix, ref argPos, StringComparison.InvariantCultureIgnoreCase))
                         {
-                            return;
+                            if (!message.HasMentionPrefix(context.Client.CurrentUser, ref argPos))
+                            {
+                                return;
+                            }
                         }
                     }
                 }
                 else
                 {
                     //If the bot is in developer mode or dms use regular prefix or dev override prefix
-                    if (!message.HasStringPrefix(ConfigManager.LastConfig.Developer ? ConfigManager.LastConfig.DeveloperPrefix : ConfigManager.LastConfig.Prefix, ref argPos, StringComparison.InvariantCultureIgnoreCase))
+                    if (!message.HasStringPrefix(Program.Prefix, ref argPos, StringComparison.InvariantCultureIgnoreCase))
                     {
+                        if (!message.HasMentionPrefix(context.Client.CurrentUser, ref argPos))
+                        {
+                            return;
+                        }
                         return;
                     }
                 }

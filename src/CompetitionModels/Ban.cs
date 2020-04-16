@@ -6,6 +6,8 @@ namespace ELO.Models
 {
     public class Ban
     {
+        private TimeSpan length;
+
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int BanId { get; set; }
@@ -21,7 +23,31 @@ namespace ELO.Models
 
         public ulong Moderator { get; set; }
 
-        public TimeSpan Length { get; set; }
+        public TimeSpan Length
+        {
+            get
+            {
+                if (length > TimeSpan.FromDays(9999))
+                {
+                    return TimeSpan.FromDays(9999);
+                }
+                else
+                {
+                    return length;
+                }
+            }
+            set
+            {
+                if (value > TimeSpan.FromDays(9999))
+                {
+                    length = TimeSpan.FromDays(9999);
+                }
+                else
+                {
+                    length = value;
+                }
+            }
+        }
 
         public DateTime TimeOfBan { get; set; }
 

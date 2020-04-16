@@ -11,19 +11,24 @@ namespace ELO.Services
 {
     public class PremiumService
     {
-        public PremiumService(ConfigManager configManager, DiscordShardedClient client)
+        public PremiumService(DiscordShardedClient client, Config config)
         {
             Client = client;
-            PremiumConfig = configManager.LastConfig.GetConfig<Config>("PremiumConfig") ?? new Config();
+            PremiumConfig = config;
         }
 
         public DiscordShardedClient Client { get; }
+
         public Config PremiumConfig { get; }
 
         private PremiumRole GetPremiumRole(SocketGuildUser patreonUser)
         {
-            var userRole = PremiumConfig.Roles.OrderByDescending(x => x.Limit).FirstOrDefault(x => patreonUser.Roles.Any(r => r.Id == x.RoleId));
-            return userRole;
+            using (var db = new Database())
+            {
+                var roles = db.PremiumRoles.ToArray();
+                var userRole = roles.OrderByDescending(x => x.Limit).FirstOrDefault(x => patreonUser.Roles.Any(r => r.Id == x.RoleId));
+                return userRole;
+            }
         }
 
         public bool IsPremium(ulong guildId)
@@ -172,6 +177,7 @@ namespace ELO.Services
                                 else
                                 {
                                     await context.Channel.SendMessageAsync($"Another smaller upgrade was applied to this server, it has been replaced. The original license was for {guildClaimUserRole.Limit} users and was redeemed by {MentionUtils.MentionUser(config.PremiumRedeemer.Value)}");
+
                                     //Delete the smaller claim.
                                     config.PremiumRedeemer = null;
                                 }
@@ -203,20 +209,24 @@ namespace ELO.Services
         public class Config
         {
             public bool Enabled { get; set; } = true;
+
             public ulong GuildId { get; set; }
 
             public int DefaultLimit { get; set; } = 20;
+
             public int LobbyLimit { get; set; } = 3;
 
             public string ServerInvite { get; set; }
+
             public string AltLink { get; set; }
 
-            public List<PremiumRole> Roles { get; set; } = new List<PremiumRole>();
+            //public List<PremiumRole> Roles { get; set; } = new List<PremiumRole>();
         }
 
         public class PremiumRole
         {
             public ulong RoleId { get; set; }
+
             public int Limit { get; set; }
         }
     }

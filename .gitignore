@@ -8,6 +8,7 @@
 *.sln.docstates
 *.vscode/*
 *.json
+*Dockerfile*
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
