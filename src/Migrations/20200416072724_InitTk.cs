@@ -527,6 +527,7 @@ namespace ELO.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            /*
             migrationBuilder.DropTable(
                 name: "Bans");
 
@@ -579,7 +580,7 @@ namespace ELO.Migrations
                 name: "Lobbies");
 
             migrationBuilder.DropTable(
-                name: "Competitions");
+                name: "Competitions");*/
         }
     }
 }
