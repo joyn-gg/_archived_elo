@@ -4,11 +4,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace ELO.Migrations
 {
-    public partial class InitialCreate : Migration
+    public partial class InitTk : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            /*
             migrationBuilder.CreateTable(
                 name: "Competitions",
                 columns: table => new
@@ -35,6 +34,8 @@ namespace ELO.Migrations
                     DefaultLossModifier = table.Column<int>(nullable: false),
                     PremiumRedeemer = table.Column<decimal>(nullable: true),
                     LegacyPremiumExpiry = table.Column<DateTime>(nullable: true),
+                    PremiumBuffer = table.Column<DateTime>(nullable: true),
+                    BufferedPremiumCount = table.Column<int>(nullable: true),
                     ReactiveMessage = table.Column<decimal>(nullable: true)
                 },
                 constraints: table =>
@@ -52,6 +53,18 @@ namespace ELO.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_LegacyTokens", x => x.Key);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PremiumRoles",
+                columns: table => new
+                {
+                    RoleId = table.Column<decimal>(nullable: false),
+                    Limit = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PremiumRoles", x => x.RoleId);
                 });
 
             migrationBuilder.CreateTable(
@@ -510,11 +523,64 @@ namespace ELO.Migrations
                 name: "IX_Votes_ChannelId_GameId",
                 table: "Votes",
                 columns: new[] { "ChannelId", "GameId" });
-                */
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            /*
+            migrationBuilder.DropTable(
+                name: "Bans");
+
+            migrationBuilder.DropTable(
+                name: "LegacyTokens");
+
+            migrationBuilder.DropTable(
+                name: "ManualGameScoreUpdates");
+
+            migrationBuilder.DropTable(
+                name: "Maps");
+
+            migrationBuilder.DropTable(
+                name: "PartyMembers");
+
+            migrationBuilder.DropTable(
+                name: "Permissions");
+
+            migrationBuilder.DropTable(
+                name: "Players");
+
+            migrationBuilder.DropTable(
+                name: "PremiumRoles");
+
+            migrationBuilder.DropTable(
+                name: "QueuedPlayers");
+
+            migrationBuilder.DropTable(
+                name: "Ranks");
+
+            migrationBuilder.DropTable(
+                name: "ScoreUpdates");
+
+            migrationBuilder.DropTable(
+                name: "TeamCaptains");
+
+            migrationBuilder.DropTable(
+                name: "TeamPlayers");
+
+            migrationBuilder.DropTable(
+                name: "Votes");
+
+            migrationBuilder.DropTable(
+                name: "ManualGameResults");
+
+            migrationBuilder.DropTable(
+                name: "GameResults");
+
+            migrationBuilder.DropTable(
+                name: "Lobbies");
+
+            migrationBuilder.DropTable(
+                name: "Competitions");*/
         }
     }
 }

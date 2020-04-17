@@ -16,48 +16,51 @@ namespace ELO.Modules
     [Group("devcmd")]
     public class Developer : ReactiveBase
     {
-        public Developer(Random random, PremiumService prem, ConfigManager local)
+        public Developer(Random random, PremiumService prem)
         {
             Random = random;
             Prem = prem;
-            Local = local;
         }
 
         public Random Random { get; }
+
         public PremiumService Prem { get; }
-        public ConfigManager Local { get; }
 
         private string premKey = "PremiumConfig";
 
         [Command("AddPremiumRole", RunMode = RunMode.Sync)]
         public async Task AddRoleAsync(SocketRole role, int maxCount)
         {
-            var config = Local.GetConfig();
-
-            var premiumConfig = config.GetConfig<PremiumService.Config>(premKey) ?? new PremiumService.Config();
-
-            premiumConfig.GuildId = Context.Guild.Id;
-
-            premiumConfig.Roles.RemoveAll(x => x.RoleId == role.Id);
-            premiumConfig.Roles.Add(new PremiumService.PremiumRole
+            using (var db = new Database())
             {
-                RoleId = role.Id,
-                Limit = maxCount
-            });
+                var match = db.PremiumRoles.Find(role.Id);
+                if (match != null)
+                {
+                    match.Limit = maxCount;
+                }
+                else
+                {
+                    db.PremiumRoles.Add(new PremiumService.PremiumRole
+                    {
+                        RoleId = role.Id,
+                        Limit = maxCount
+                    });
+                }
 
-            config.AdditionalConfigs[premKey] = premiumConfig;
+                db.SaveChanges();
+            }
 
-            Local.SaveConfig(config);
             await ReplyAsync("Done.");
         }
 
         [Command("PremiumRoles")]
         public async Task ShowRolesAsync()
         {
-            var config = Local.GetConfig();
-
-            var premiumConfig = config.GetConfig<PremiumService.Config>(premKey) ?? new PremiumService.Config();
-            await SimpleEmbedAsync("Roles:\n" + string.Join("\n", premiumConfig.Roles.Select(x => MentionUtils.MentionRole(x.RoleId) + " - " + x.Limit)));
+            using (var db = new Database())
+            {
+                var roles = db.PremiumRoles.ToArray();
+                await SimpleEmbedAsync("Roles:\n" + string.Join("\n", roles.Select(x => MentionUtils.MentionRole(x.RoleId) + " - " + x.Limit)));
+            }
         }
 
         [Command("LastLegacyPremium", RunMode = RunMode.Async)]
@@ -71,6 +74,7 @@ namespace ELO.Modules
             }
         }
 
+        /*
         [Command("SetPatreonUrl", RunMode = RunMode.Async)]
         public async Task SetPatreonUrl([Remainder]string url)
         {
@@ -101,7 +105,7 @@ namespace ELO.Modules
 
             Local.SaveConfig(config);
             await ReplyAsync("Done.");
-        }
+        }*/
 
         [Command("PurgePermissionCache", RunMode = RunMode.Async)]
         public async Task PurgeCache([Remainder]string url)

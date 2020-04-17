@@ -3,15 +3,17 @@ using System;
 using ELO.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace ELO.Migrations
 {
     [DbContext(typeof(Database))]
-    partial class DatabaseModelSnapshot : ModelSnapshot
+    [Migration("20200416072724_InitTk")]
+    partial class InitTk
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -529,6 +531,20 @@ namespace ELO.Migrations
                     b.HasIndex("ChannelId", "GameNumber");
 
                     b.ToTable("TeamPlayers");
+                });
+
+            modelBuilder.Entity("ELO.Services.PremiumService+PremiumRole", b =>
+                {
+                    b.Property<decimal>("RoleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(20,0)");
+
+                    b.Property<int>("Limit")
+                        .HasColumnType("integer");
+
+                    b.HasKey("RoleId");
+
+                    b.ToTable("PremiumRoles");
                 });
 
             modelBuilder.Entity("ELO.Models.Ban", b =>

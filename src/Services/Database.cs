@@ -11,27 +11,53 @@ namespace ELO.Services
     {
         public static DatabaseConfig Config;
 
+        public static string Serverip;
+
+        public static string Dbname;
+
+        public static string Username;
+
+        public static string Password;
+
         public DbSet<Rank> Ranks { get; set; }
+
         public DbSet<CommandPermission> Permissions { get; set; }
+
         public DbSet<Competition> Competitions { get; set; }
+
         public DbSet<Lobby> Lobbies { get; set; }
+
         public DbSet<QueuedPlayer> QueuedPlayers { get; set; }
+
         public DbSet<Player> Players { get; set; }
+
         public DbSet<Ban> Bans { get; set; }
+
         public DbSet<GameResult> GameResults { get; set; }
+
         public DbSet<ScoreUpdate> ScoreUpdates { get; set; }
+
         public DbSet<TeamCaptain> TeamCaptains { get; set; }
+
         public DbSet<TeamPlayer> TeamPlayers { get; set; }
+
         public DbSet<Token> LegacyTokens { get; set; }
+
         public DbSet<ManualGameResult> ManualGameResults { get; set; }
+
         public DbSet<ManualGameScoreUpdate> ManualGameScoreUpdates { get; set; }
+
         public DbSet<Map> Maps { get; set; }
+
         public DbSet<GameVote> Votes { get; set; }
+
         public DbSet<PartyMember> PartyMembers { get; set; }
+
+        public DbSet<PremiumService.PremiumRole> PremiumRoles { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseNpgsql(Config?.PostgresConnectionString() ?? "Host={Server};Database={DatabaseName};Username={Username};Password={Password};");
+            optionsBuilder.UseNpgsql($"Host={Serverip};Database={Dbname};Username={Username};Password={Password};");
             /*.UseMySql(Config.ConnectionString(), mySqlOptions =>
             {
                 mySqlOptions.ServerVersion(Config.Version, ServerType.MySql);
@@ -55,38 +81,47 @@ namespace ELO.Services
         {
             return Lobbies.Where(x => x.ChannelId == channel.Id).Include(x => x.Queue).FirstOrDefault();
         }
+
         public Lobby GetLobby(ISocketMessageChannel channel)
         {
             return Lobbies.Find(channel.Id);
         }
+
         public Player GetUser(SocketGuildUser user)
         {
             return GetUser(user.Guild.Id, user.Id);
         }
+
         public Player GetUser(ulong guildId, ulong userId)
         {
             return Players.Find(guildId, userId);
         }
+
         public GameResult GetLatestGame(Lobby lobby)
         {
             return GameResults.Where(x => x.LobbyId == lobby.ChannelId).OrderByDescending(x => x.GameId).FirstOrDefault();
         }
+
         public TeamCaptain GetTeamCaptain(GameResult game, int teamId)
         {
             return TeamCaptains.FirstOrDefault(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == teamId);
         }
+
         public TeamCaptain GetTeamCaptain(ulong guildId, ulong channelId, int gameNumber, int teamId)
         {
             return TeamCaptains.FirstOrDefault(x => x.GuildId == guildId && x.ChannelId == channelId && x.GameNumber == gameNumber && x.TeamNumber == teamId);
         }
+
         public IEnumerable<TeamPlayer> GetTeamPlayers(ulong guildId, ulong channelId, int gameNumber, int teamId)
         {
             return TeamPlayers.Where(x => x.GuildId == guildId && x.ChannelId == channelId && x.GameNumber == gameNumber && x.TeamNumber == teamId);
         }
+
         public IEnumerable<TeamPlayer> GetTeam1(GameResult game)
         {
             return TeamPlayers.Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == 1);
         }
+
         public HashSet<ulong> GetTeamFull(GameResult game, int teamNumber)
         {
             var cap = TeamCaptains.FirstOrDefault(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == teamNumber);
@@ -97,22 +132,27 @@ namespace ELO.Services
             }
             return players;
         }
+
         public IEnumerable<TeamPlayer> GetTeam2(GameResult game)
         {
             return TeamPlayers.Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == 2);
         }
+
         public IEnumerable<QueuedPlayer> GetQueuedPlayers(ulong guildId, ulong channelId)
         {
             return QueuedPlayers.Where(x => x.GuildId == guildId && x.ChannelId == channelId);
         }
+
         public IEnumerable<QueuedPlayer> GetQueue(GameResult game)
         {
             return QueuedPlayers.Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId);
         }
+
         public IEnumerable<QueuedPlayer> GetQueue(Lobby lobby)
         {
             return QueuedPlayers.Where(x => x.GuildId == lobby.GuildId && x.ChannelId == lobby.ChannelId);
         }
+
         public IEnumerable<ScoreUpdate> GetScoreUpdates(ulong guildId, ulong channelId, int gameNumber)
         {
             return ScoreUpdates.Where(x => x.GuildId == guildId && x.ChannelId == channelId && x.GameNumber == gameNumber);
@@ -150,6 +190,11 @@ namespace ELO.Services
                     .HasForeignKey(e => e.GuildId);
             });
 
+            modelBuilder.Entity<PremiumService.PremiumRole>(entity =>
+            {
+                entity.HasKey(e => e.RoleId);
+            });
+
             modelBuilder.Entity<Competition>(entity =>
             {
                 entity.HasKey(e => e.GuildId);
@@ -162,7 +207,6 @@ namespace ELO.Services
                     .WithMany(e => e.Maps)
                     .HasForeignKey(e => e.ChannelId);
             });
-
 
             modelBuilder.Entity<CommandPermission>(entity =>
             {
@@ -185,7 +229,6 @@ namespace ELO.Services
                 entity.HasOne(e => e.Lobby)
                     .WithMany(e => e.GameResults)
                     .HasForeignKey(e => e.LobbyId);
-
             });
 
             modelBuilder.Entity<QueuedPlayer>(entity =>
