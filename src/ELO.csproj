@@ -18,8 +18,4 @@
     <PackageReference Include="RavenBOT.Services.Reactive" Version="2.0.0.4" />
     <PackageReference Include="System.Data.SqlClient" Version="4.7.0" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Migrations\" />
-  </ItemGroup>
 </Project>
