@@ -8,7 +8,6 @@
 *.sln.docstates
 *.vscode/*
 *.json
-*Dockerfile*
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -262,3 +261,4 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+*.priv
