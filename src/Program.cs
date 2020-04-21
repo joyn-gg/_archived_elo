@@ -128,21 +128,22 @@ namespace ELO
                 LogLevel = logLevel
             };
 
+            var shardCount = config.GetOptional("ShardCount", "1");
+            var shardId = config.GetOptional("ShardId", null);
+            if (shardCount == null && shardId == null)
+            {
+                throw new Exception("No shard configuration provided.");
+            }
+
+            int? shardCountValue = null;
+            if (shardCount != null) shardCountValue = int.Parse(shardCount);
+            int? shardIdValue = null;
+            if (shardId != null) shardIdValue = int.Parse(shardId);
+
             var socketConfig = new DiscordSocketConfig()
             {
-                TotalShards = int.Parse(config.GetOrAddEntry("ShardCount", () =>
-                {
-                    Console.WriteLine("Input shard count:");
-
-                    string count;
-                    do
-                    {
-                        count = Console.ReadLine();
-                    }
-                    while (!int.TryParse(count, out var _));
-
-                    return count;
-                })),
+                TotalShards = shardCountValue,
+                ShardId = shardIdValue,
                 LogLevel = logLevel,
                 ExclusiveBulkDelete = true,
                 AlwaysDownloadUsers = false,
