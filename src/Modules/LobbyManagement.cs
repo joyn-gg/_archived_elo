@@ -27,7 +27,9 @@ namespace ELO.Modules
         public Random Random { get; }
 
         public GameService GameService { get; }
+
         public LobbyService LobbyService { get; }
+
         public PremiumService PremiumService { get; }
 
         [Command("ClearQueue", RunMode = RunMode.Sync)]
@@ -457,7 +459,14 @@ namespace ELO.Modules
                         var channel = Context.Guild.GetTextChannel(lobby.GameReadyAnnouncementChannel.Value);
                         if (channel != null)
                         {
-                            await channel.SendMessageAsync(res.Item1, false, res.Item2.Build());
+                            try
+                            {
+                                await channel.SendMessageAsync(res.Item1, false, res.Item2.Build());
+                            }
+                            catch
+                            {
+                                //
+                            }
                         }
                     }
 
