@@ -9,12 +9,15 @@ namespace ELO.Services
 {
     public class TopggVoteService
     {
-        public TopggVoteService(string token)
+        public TopggVoteService(string token, int maxRegLimit)
         {
             Token = token;
+            MaxRegLimit = maxRegLimit;
         }
 
         public string Token { get; }
+
+        public int MaxRegLimit { get; }
 
         public DiscordBotsList.Api.AuthDiscordBotListApi TopClient { get; private set; } = null;
 
