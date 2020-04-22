@@ -205,7 +205,8 @@ namespace ELO
             var topggToken = config.GetOptional("TopGgToken", null);
             if (topggToken != null)
             {
-                collection.AddSingleton(new TopggVoteService(topggToken));
+                var voteLimit = int.Parse(config.GetOptional("RegVoteLimit", "40"));
+                collection.AddSingleton(new TopggVoteService(topggToken, voteLimit));
             }
 
             //Configure the service provider with all relevant and required services to be injected into other classes.

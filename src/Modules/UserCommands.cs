@@ -68,7 +68,6 @@ namespace ELO.Modules
                 {
                     var registered = ((IQueryable<Player>)db.Players).Count(x => x.GuildId == Context.Guild.Id);
                     var limit = Premium.GetRegistrationLimit(Context.Guild.Id);
-                    int voteRegCount = 40;
                     if (limit < registered)
                     {
                         var voteState = await VoteService.CheckAsync(Context.Client, regUser.Id);
@@ -82,17 +81,17 @@ namespace ELO.Modules
                             await SimpleEmbedAsync($"This server has exceeded the maximum registration count of {limit}, it must be upgraded to premium to allow additional registrations, " +
                                 $"you can get premium by subscribing at {Premium.PremiumConfig.AltLink} for support and to claim premium, " +
                                 $"a patron must join the ELO server: {Premium.PremiumConfig.ServerInvite}\n" +
-                                $"For up to {voteRegCount} registrations, you may also enable registration by voting at https://top.gg/bot/{Context.Client.CurrentUser.Id}", Color.DarkBlue);
+                                $"For up to {VoteService.MaxRegLimit} registrations, you may also enable registration by voting at https://top.gg/bot/{Context.Client.CurrentUser.Id}", Color.DarkBlue);
                             return;
                         }
                         else
                         {
-                            if (registered > 40)
+                            if (registered > VoteService.MaxRegLimit)
                             {
                                 await SimpleEmbedAsync($"This server has exceeded the maximum registration count of {limit} (Currently Registered {registered}), it must be upgraded to premium to allow additional registrations, " +
                                     $"you can get premium by subscribing at {Premium.PremiumConfig.AltLink} for support and to claim premium, " +
                                     $"a patron must join the ELO server: {Premium.PremiumConfig.ServerInvite}\n" +
-                                    $"For up to {voteRegCount} registrations, you may also enable registration by voting at https://top.gg/bot/{Context.Client.CurrentUser.Id}", Color.DarkBlue);
+                                    $"For up to {VoteService.MaxRegLimit} registrations, you may also enable registration by voting at https://top.gg/bot/{Context.Client.CurrentUser.Id}", Color.DarkBlue);
                                 return;
                             }
                         }
