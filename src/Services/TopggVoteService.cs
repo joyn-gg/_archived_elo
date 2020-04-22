@@ -20,10 +20,6 @@ namespace ELO.Services
 
         private static readonly SemaphoreSlim Locker = new SemaphoreSlim(1, 1);
 
-        public int RequestCounter = 0;
-
-        public DateTime LastReset = DateTime.UtcNow;
-
         public enum ResultType
         {
             Voted,
