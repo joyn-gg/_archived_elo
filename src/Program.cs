@@ -179,8 +179,7 @@ namespace ELO
                 db.SaveChanges();
             }
 
-            //Configure the service provider with all relevant and required services to be injected into other classes.
-            Provider = new ServiceCollection()
+            var collection = new ServiceCollection()
                             .AddSingleton(new DiscordShardedClient(socketConfig))
                             .AddSingleton(config)
                             .AddSingleton(new PremiumService.Config
@@ -201,8 +200,16 @@ namespace ELO
                             .AddSingleton<GameService>()
                             .AddSingleton<LobbyService>()
                             .AddSingleton<GameSubmissionService>()
-                            .AddSingleton<ELOJobs>()
-                            .BuildServiceProvider();
+                            .AddSingleton<ELOJobs>();
+
+            var topggToken = config.GetOptional("TopGgToken", null);
+            if (topggToken != null)
+            {
+                collection.AddSingleton(new TopggVoteService(topggToken));
+            }
+
+            //Configure the service provider with all relevant and required services to be injected into other classes.
+            Provider = collection.BuildServiceProvider();
 
             try
             {
