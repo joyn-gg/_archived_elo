@@ -13,15 +13,18 @@ namespace ELO.Modules
     [RavenRequireContext(ContextType.Guild)]
     public class UserCommands : ReactiveBase
     {
-        public UserCommands(PremiumService premium, UserService userService)
+        public UserCommands(PremiumService premium, UserService userService, TopggVoteService voteService)
         {
             Premium = premium;
             UserService = userService;
+            VoteService = voteService;
         }
 
         public PremiumService Premium { get; }
 
         public UserService UserService { get; }
+
+        public TopggVoteService VoteService { get; }
 
         [Command("ForceRegisterUsers", RunMode = RunMode.Sync)]
         [RavenRequireOwner]
@@ -67,8 +70,31 @@ namespace ELO.Modules
                     var limit = Premium.GetRegistrationLimit(Context.Guild.Id);
                     if (limit < registered)
                     {
-                        await SimpleEmbedAsync($"This server has exceeded the maximum registration count of {limit}, it must be upgraded to premium to allow additional registrations, you can get premium by subscribing at {Premium.PremiumConfig.AltLink} for support and to claim premium, a patron must join the ELO server: {Premium.PremiumConfig.ServerInvite}", Color.DarkBlue);
-                        return;
+                        var voteState = await VoteService.CheckAsync(Context.Client, regUser.Id);
+                        if (voteState == TopggVoteService.ResultType.NotConfigured)
+                        {
+                            await SimpleEmbedAsync($"This server has exceeded the maximum registration count of {limit}, it must be upgraded to premium to allow additional registrations, you can get premium by subscribing at {Premium.PremiumConfig.AltLink} for support and to claim premium, a patron must join the ELO server: {Premium.PremiumConfig.ServerInvite}", Color.DarkBlue);
+                            return;
+                        }
+                        else if (voteState == TopggVoteService.ResultType.NotVoted)
+                        {
+                            await SimpleEmbedAsync($"This server has exceeded the maximum registration count of {limit}, it must be upgraded to premium to allow additional registrations, " +
+                                $"you can get premium by subscribing at {Premium.PremiumConfig.AltLink} for support and to claim premium, " +
+                                $"a patron must join the ELO server: {Premium.PremiumConfig.ServerInvite}\n" +
+                                $"For up to {VoteService.MaxRegLimit} registrations, you may also enable registration by voting at https://top.gg/bot/{Context.Client.CurrentUser.Id}", Color.DarkBlue);
+                            return;
+                        }
+                        else
+                        {
+                            if (registered > VoteService.MaxRegLimit)
+                            {
+                                await SimpleEmbedAsync($"This server has exceeded the maximum registration count of {limit} (Currently Registered {registered}), it must be upgraded to premium to allow additional registrations, " +
+                                    $"you can get premium by subscribing at {Premium.PremiumConfig.AltLink} for support and to claim premium, " +
+                                    $"a patron must join the ELO server: {Premium.PremiumConfig.ServerInvite}\n" +
+                                    $"For up to {VoteService.MaxRegLimit} registrations, you may also enable registration by voting at https://top.gg/bot/{Context.Client.CurrentUser.Id}", Color.DarkBlue);
+                                return;
+                            }
+                        }
                     }
 
                     user = new Player(regUser.Id, Context.Guild.Id, name);
