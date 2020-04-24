@@ -15,6 +15,7 @@ namespace ELO.Services
     public class GameSubmissionService
     {
         public GameService GameService { get; }
+
         public UserService UserService { get; }
 
         public GameSubmissionService(GameService gameService, UserService userService)
@@ -22,6 +23,7 @@ namespace ELO.Services
             GameService = gameService;
             UserService = userService;
         }
+
         //returns a list of userIds and the amount of points they received/lost for the win/loss, and if the user lost/gained a rank
         //UserId, Points added/removed, rank before, rank modify state, rank after
         /// <summary>
@@ -87,6 +89,7 @@ namespace ELO.Services
                     player.Points -= updateVal;
                     if (!competition.AllowNegativeScore && player.Points < 0) player.Points = 0;
                     player.Losses++;
+
                     //Set the update value to a negative value for returning purposes.
                     updateVal = -Math.Abs(updateVal);
 
@@ -126,7 +129,6 @@ namespace ELO.Services
             return updates;
         }
 
-
         public string GetResponseContent(List<(Player, int, Rank, RankChangeState, Rank)> players)
         {
             var sb = new StringBuilder();
@@ -151,7 +153,6 @@ namespace ELO.Services
                 }
 
                 sb.AppendLine($"{player.Item1.GetDisplayNameSafe()} **Points:** {player.Item1.Points - player.Item2}{(player.Item2 >= 0 ? $" + {player.Item2}" : $" - {Math.Abs(player.Item2)}")} = {player.Item1.Points} **Rank:** {originalRole ?? "N.A"} => {newRole ?? "N/A"}");
-
             }
 
             return sb.ToString();
@@ -241,6 +242,7 @@ namespace ELO.Services
                 var response = new EmbedBuilder
                 {
                     Fields = new List<EmbedFieldBuilder> { winField, loseField },
+
                     //TODO: Remove this if from the vote command
                     Title = $"{lobbyChannel.Name} Game: #{gameNumber} Result called by {context.User.Username}#{context.User.Discriminator}".FixLength(127)
                 };
@@ -280,7 +282,6 @@ namespace ELO.Services
             var embed = GameService.GetGameEmbed(game);
             await AnnounceResultAsync(context, lobby, embed);
         }
-
 
         public virtual async Task DrawAsync(ShardedCommandContext context, int gameNumber, SocketTextChannel lobbyChannel = null, [Remainder]string comment = null)
         {
@@ -342,7 +343,6 @@ namespace ELO.Services
             return Task.CompletedTask;
         }
 
-
         public virtual async Task GameVoteAsync(ShardedCommandContext context, Database db, Lobby lobby, GameResult game, int gameNumber, TeamSelection winning_team, HashSet<ulong> team1, HashSet<ulong> team2, [Remainder]string comment = null)
         {
             if (game.GameState == GameState.Decided || game.GameState == GameState.Draw)
@@ -400,6 +400,7 @@ namespace ELO.Services
             var response = new EmbedBuilder
             {
                 Fields = new List<EmbedFieldBuilder> { winField, loseField },
+
                 //TODO: Remove this if from the vote command
                 Title = $"Game Id: {gameNumber}"
             };
@@ -438,14 +439,11 @@ namespace ELO.Services
                     return;
                 }
 
-
                 if (game.GameState != GameState.Undecided && game.GameState != GameState.Picking)
                 {
                     await context.Channel.SendMessageAsync("", false, $"Only games that are undecided or being picked can be cancelled.".QuickEmbed());
                     return;
                 }
-
-
 
                 if (game.GameState == GameState.Picking)
                 {
@@ -553,21 +551,25 @@ namespace ELO.Services
                     var cancelCount = votes.Count(x => x.UserVote == VoteState.Cancel);
 
                     var team1WinCount = votes
+
                                             //Get players in team 1 and count wins
                                             .Where(x => team1.Contains(x.UserId))
                                             .Count(x => x.UserVote == VoteState.Win)
                                         +
                                         votes
+
                                             //Get players in team 2 and count losses
                                             .Where(x => team2.Contains(x.UserId))
                                             .Count(x => x.UserVote == VoteState.Lose);
 
                     var team2WinCount = votes
+
                                             //Get players in team 2 and count wins
                                             .Where(x => team2.Contains(x.UserId))
                                             .Count(x => x.UserVote == VoteState.Win)
                                         +
                                         votes
+
                                             //Get players in team 1 and count losses
                                             .Where(x => team1.Contains(x.UserId))
                                             .Count(x => x.UserVote == VoteState.Lose);
@@ -606,8 +608,8 @@ namespace ELO.Services
                                 return $"{MentionUtils.MentionUser(x.UserId)} - {x.UserVote}";
                             }
                         });
-                        
-                        await context.Channel.SendMessageAsync("", false, $"Vote was not unanimous, game result must be decided by a moderator.\n{voteInfo}".QuickEmbed(Color.DarkBlue));
+
+                        await context.Channel.SendMessageAsync("", false, $"Vote was not unanimous, game result must be decided by a moderator.\n{string.Join("\n", voteInfo)}".QuickEmbed(Color.DarkBlue));
                         game.VoteComplete = true;
                         db.Update(game);
                         db.SaveChanges();
