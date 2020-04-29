@@ -200,7 +200,7 @@ namespace ELO.Modules
 
                     var queuedUsers = db.QueuedPlayers.Where(x => x.ChannelId == Context.Channel.Id);
                     var current = queuedUsers.SingleOrDefault(x => x.UserId == user.Id);
-                    if (current == null && t1c?.UserId != user.Id || t2c?.UserId != user.Id)
+                    if (current == null && t1c?.UserId != user.Id && t2c?.UserId != user.Id)
                     {
                         // Player is not present in queue team1 or team2 or captain
                         await SimpleEmbedAsync($"{user.Mention} is not present in the game.");
