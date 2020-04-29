@@ -285,6 +285,14 @@ namespace ELO.Modules
                         userGroups = users.ToList().OrderByDescending(x => x.Games).SplitList(20).ToArray();
                         break;
 
+                    case LeaderboardSortMode.kills:
+                        userGroups = users.ToList().OrderByDescending(x => x.Kills).SplitList(20).ToArray();
+                        break;
+
+                    case LeaderboardSortMode.kdr:
+                        userGroups = users.ToList().OrderByDescending(x => ((double)x.Kills / (x.Deaths == 0 ? 1 : x.Deaths))).SplitList(20).ToArray();
+                        break;
+
                     default:
                         return;
                 }
@@ -362,7 +370,14 @@ namespace ELO.Modules
 
                     case LeaderboardSortMode.games:
                         sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - `{player.Games}`");
+                        break;
 
+                    case LeaderboardSortMode.kills:
+                        sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - `{player.Kills}`");
+                        break;
+
+                    case LeaderboardSortMode.kdr:
+                        sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - `{(double)player.Kills / (player.Deaths == 0 ? 1 : player.Deaths)}`");
                         break;
                 }
 
