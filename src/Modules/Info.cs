@@ -236,7 +236,7 @@ namespace ELO.Modules
                     double kdr = Math.Round((double)player.Kills / deathCount, 2);
                     info += $"Kills: {player.Kills}\n" +
                         $"Deaths: {player.Deaths}\n" +
-                        $"KDR: {kdr}";
+                        $"KDR: {kdr}\n";
                 }
 
                 info += $"Registered At: {player.RegistrationDate.ToString("dd MMM yyyy")} {player.RegistrationDate.ToShortTimeString()}";
