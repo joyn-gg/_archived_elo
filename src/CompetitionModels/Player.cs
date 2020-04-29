@@ -13,17 +13,18 @@ namespace ELO.Models
             RegistrationDate = DateTime.UtcNow;
         }
 
-        public Player() { }
+        public Player()
+        {
+        }
 
         //TODO: Add display name logging
         public string DisplayName { get; set; }
 
-
         public ulong UserId { get; set; }
-
 
         [ForeignKey("GuildId")]
         public virtual Competition Competition { get; set; }
+
         public ulong GuildId { get; set; }
 
         public int Points { get; set; } = 0;
@@ -39,6 +40,34 @@ namespace ELO.Models
             set
             {
                 _Wins = NoNegative(value);
+            }
+        }
+
+        private int _Kills = 0;
+
+        public int Kills
+        {
+            get
+            {
+                return _Kills;
+            }
+            set
+            {
+                _Kills = NoNegative(value);
+            }
+        }
+
+        private int _Deaths = 0;
+
+        public int Deaths
+        {
+            get
+            {
+                return _Deaths;
+            }
+            set
+            {
+                _Deaths = NoNegative(value);
             }
         }
 

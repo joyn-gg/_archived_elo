@@ -22,10 +22,15 @@ namespace ELO.Modules
     public partial class Info : ReactiveBase
     {
         public HttpClient HttpClient { get; }
+
         public CommandService CommandService { get; }
+
         public HelpService HelpService { get; }
+
         public GameService GameService { get; }
+
         public PermissionService PermissionService { get; }
+
         public PremiumService Premium { get; }
 
         public Info(HttpClient httpClient, CommandService commandService, HelpService helpService, GameService gameService, PermissionService permissionService, PremiumService premium)
@@ -217,14 +222,26 @@ namespace ELO.Modules
                     rankStr = $"Rank: {MentionUtils.MentionRole(maxRank.RoleId)} ({maxRank.Points})\n";
                 }
 
-                await SimpleEmbedAsync($"{player.GetDisplayNameSafe()} Stats\n" + // Use Title?
+                var info = $"{player.GetDisplayNameSafe()} Stats\n" + // Use Title?
                             $"Points: {player.Points}\n" +
                             rankStr +
                             $"Wins: {player.Wins}\n" +
                             $"Losses: {player.Losses}\n" +
                             $"Draws: {player.Draws}\n" +
-                            $"Games: {player.Games}\n" +
-                            $"Registered At: {player.RegistrationDate.ToString("dd MMM yyyy")} {player.RegistrationDate.ToShortTimeString()}", Color.Blue);
+                            $"Games: {player.Games}\n";
+
+                if (player.Kills > 0 || player.Deaths > 0)
+                {
+                    int deathCount = player.Deaths == 0 ? 1 : player.Deaths;
+                    double kdr = Math.Round((double)player.Kills / deathCount, 2);
+                    info += $"Kills: {player.Kills}\n" +
+                        $"Deaths: {player.Deaths}\n" +
+                        $"KDR: {kdr}\n";
+                }
+
+                info += $"Registered At: {player.RegistrationDate.ToString("dd MMM yyyy")} {player.RegistrationDate.ToShortTimeString()}";
+
+                await SimpleEmbedAsync(info, Color.Blue);
             }
 
             //TODO: Add game history (last 5) to this response
@@ -251,18 +268,31 @@ namespace ELO.Modules
                     case LeaderboardSortMode.point:
                         userGroups = users.OrderByDescending(x => x.Points).SplitList(20).ToArray();
                         break;
+
                     case LeaderboardSortMode.wins:
                         userGroups = users.OrderByDescending(x => x.Wins).SplitList(20).ToArray();
                         break;
+
                     case LeaderboardSortMode.losses:
                         userGroups = users.OrderByDescending(x => x.Losses).SplitList(20).ToArray();
                         break;
+
                     case LeaderboardSortMode.wlr:
                         userGroups = users.OrderByDescending(x => x.Losses == 0 ? x.Wins : (double)x.Wins / x.Losses).SplitList(20).ToArray();
                         break;
+
                     case LeaderboardSortMode.games:
                         userGroups = users.ToList().OrderByDescending(x => x.Games).SplitList(20).ToArray();
                         break;
+
+                    case LeaderboardSortMode.kills:
+                        userGroups = users.ToList().OrderByDescending(x => x.Kills).SplitList(20).ToArray();
+                        break;
+
+                    case LeaderboardSortMode.kdr:
+                        userGroups = users.ToList().OrderByDescending(x => ((double)x.Kills / (x.Deaths == 0 ? 1 : x.Deaths))).SplitList(20).ToArray();
+                        break;
+
                     default:
                         return;
                 }
@@ -324,19 +354,30 @@ namespace ELO.Modules
                     case LeaderboardSortMode.point:
                         sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - `{player.Points}`");
                         break;
+
                     case LeaderboardSortMode.wins:
                         sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - `{player.Wins}`");
                         break;
+
                     case LeaderboardSortMode.losses:
                         sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - `{player.Losses}`");
                         break;
+
                     case LeaderboardSortMode.wlr:
                         var wlr = player.Losses == 0 ? player.Wins : (double)player.Wins / player.Losses;
                         sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - `{Math.Round(wlr, 2, MidpointRounding.AwayFromZero)}`");
                         break;
+
                     case LeaderboardSortMode.games:
                         sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - `{player.Games}`");
+                        break;
 
+                    case LeaderboardSortMode.kills:
+                        sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - `{player.Kills}`");
+                        break;
+
+                    case LeaderboardSortMode.kdr:
+                        sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - `{(double)player.Kills / (player.Deaths == 0 ? 1 : player.Deaths)}`");
                         break;
                 }
 
@@ -348,6 +389,7 @@ namespace ELO.Modules
         }
 
         private CommandInfo Command { get; set; }
+
         protected override void BeforeExecute(CommandInfo command)
         {
             Command = command;

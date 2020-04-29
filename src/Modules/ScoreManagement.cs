@@ -191,7 +191,88 @@ namespace ELO.Modules
             }
         }
 
+        [Command("Kills", RunMode = RunMode.Sync)]
+        [Summary("Modifies kills for the specified user.")]
+        public virtual async Task KillsAsync(SocketGuildUser user, ModifyState state, int amount)
+        {
+            await KillsAsync(state, amount, user);
+        }
+
+        [Command("Kills", RunMode = RunMode.Sync)]
+        [Summary("Modifies kills for the specified users.")]
+        public virtual async Task KillsAsync(ModifyState state, int amount, params SocketGuildUser[] users)
+        {
+            using (var db = new Database())
+            {
+                var userIds = users.Select(x => x.Id).ToArray();
+                var players = db.Players.Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId));
+                var responseString = "";
+                foreach (var player in players)
+                {
+                    var original = player.Kills;
+                    if (state == ModifyState.Set)
+                    {
+                        player.Kills = amount;
+                    }
+                    else if (state == ModifyState.Modify)
+                    {
+                        player.Kills += amount;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Unknown modify state");
+                    }
+
+                    responseString += $"{player.GetDisplayNameSafe()}: {original} => {player.Kills}\n";
+                }
+                db.UpdateRange(players);
+                db.SaveChanges();
+                await SimpleEmbedAsync(responseString, Color.Blue);
+            }
+        }
+
+        [Command("Deaths", RunMode = RunMode.Sync)]
+        [Summary("Modifies deaths for the specified user.")]
+        public virtual async Task DeathsAsync(SocketGuildUser user, ModifyState state, int amount)
+        {
+            await DeathsAsync(state, amount, user);
+        }
+
+        [Command("Deaths", RunMode = RunMode.Sync)]
+        [Summary("Modifies deaths for the specified users.")]
+        public virtual async Task DeathsAsync(ModifyState state, int amount, params SocketGuildUser[] users)
+        {
+            using (var db = new Database())
+            {
+                var userIds = users.Select(x => x.Id).ToArray();
+                var players = db.Players.Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId));
+                var responseString = "";
+                foreach (var player in players)
+                {
+                    var original = player.Deaths;
+                    if (state == ModifyState.Set)
+                    {
+                        player.Deaths = amount;
+                    }
+                    else if (state == ModifyState.Modify)
+                    {
+                        player.Deaths += amount;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Unknown modify state");
+                    }
+
+                    responseString += $"{player.GetDisplayNameSafe()}: {original} => {player.Deaths}\n";
+                }
+                db.UpdateRange(players);
+                db.SaveChanges();
+                await SimpleEmbedAsync(responseString, Color.Blue);
+            }
+        }
+
         public static List<ulong> RenameTasks { get; set; } = new List<ulong>();
+
         public UserService UserService { get; }
 
         [Command("ResetLeaderboard", RunMode = RunMode.Sync)]
