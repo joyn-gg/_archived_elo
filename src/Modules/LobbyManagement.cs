@@ -130,9 +130,9 @@ namespace ELO.Modules
             }
         }
 
-        //[Command("Sub")]
-        //[Summary("Replace a user in the specified game with another.")]
-        //[Preconditions.RequirePermission(PermissionLevel.Moderator)]
+        [Command("Sub")]
+        [Summary("Replace a user in the specified game with another.")]
+        [Preconditions.RequirePermission(PermissionLevel.Moderator)]
         public virtual async Task SubUserAsync(SocketGuildUser user, SocketGuildUser replacedWith)
         {
             using (var db = new Database())
@@ -145,9 +145,9 @@ namespace ELO.Modules
             }
         }
 
-        //[Command("Sub")]
-        //[Summary("Replace a user in the specified game with another.")]
-        //[Preconditions.RequirePermission(PermissionLevel.Moderator)]
+        [Command("Sub")]
+        [Summary("Replace a user in the specified game with another.")]
+        [Preconditions.RequirePermission(PermissionLevel.Moderator)]
         public virtual async Task SubUserAsync(int gameNumber, SocketGuildUser user, SocketGuildUser replacedWith)
         {
             using (var db = new Database())
@@ -189,14 +189,29 @@ namespace ELO.Modules
                     return;
                 }
 
-                if (game.GameState == GameState.Picking)
+                if (team1.All(x => x.UserId != user.Id) && team2.All(x => x.UserId != user.Id))
                 {
+                    // User is not present in either team and is not a team captain, check if the game is currently picking and replace the member in the queue.
+                    if (game.GameState != GameState.Picking)
+                    {
+                        await SimpleEmbedAsync($"{user.Mention} is not present in the game.");
+                        return;
+                    }
+
                     var queuedUsers = db.QueuedPlayers.Where(x => x.ChannelId == Context.Channel.Id);
                     var current = queuedUsers.SingleOrDefault(x => x.UserId == user.Id);
+                    if (current == null && t1c?.UserId != user.Id || t2c?.UserId != user.Id)
+                    {
+                        // Player is not present in queue team1 or team2 or captain
+                        await SimpleEmbedAsync($"{user.Mention} is not present in the game.");
+                        return;
+                    }
+
+                    // Ensure the user replacing the player is not queued.
                     var replacer = queuedUsers.SingleOrDefault(x => x.UserId == replacedWith.Id);
                     if (replacer != null)
                     {
-                        await SimpleEmbedAsync($"{replacedWith.Mention} is already queued for this game.");
+                        await SimpleEmbedAsync($"{replacedWith.Mention} is in the remaining player pool already.");
                         return;
                     }
 
@@ -210,9 +225,11 @@ namespace ELO.Modules
                             UserId = replacedWith.Id
                         });
                         db.SaveChanges();
+                        await SimpleEmbedAsync($"Player {user.Mention} was replaced with {replacedWith.Mention} in remaining player pool.");
                     }
                 }
 
+                // Find player in either team
                 var player = team1.SingleOrDefault(x => x.UserId == user.Id);
                 if (player == null)
                 {
@@ -232,7 +249,7 @@ namespace ELO.Modules
                     });
                     db.SaveChanges();
 
-                    await SimpleEmbedAsync($"Player {user.Mention} was replaced with {replacedWith.Mention}");
+                    await SimpleEmbedAsync($"Player {user.Mention} in team **{player.TeamNumber}** was replaced with {replacedWith.Mention}");
                 }
                 else
                 {
@@ -242,20 +259,15 @@ namespace ELO.Modules
                         t1c.UserId = replacedWith.Id;
                         db.TeamCaptains.Update(t1c);
                         db.SaveChanges();
+                        await SimpleEmbedAsync($"{user.Mention} as a team captain was replaced with {replacedWith.Mention}");
                     }
                     else if (t2c != null && t2c.UserId == user.Id)
                     {
                         t2c.UserId = replacedWith.Id;
                         db.TeamCaptains.Update(t2c);
                         db.SaveChanges();
+                        await SimpleEmbedAsync($"{user.Mention} as a team captain was replaced with {replacedWith.Mention}");
                     }
-                    else
-                    {
-                        await SimpleEmbedAsync($"{user.Mention} is not a member in the current game.");
-                        return;
-                    }
-
-                    await SimpleEmbedAsync($"{user.Mention} as a team captain was replaced with {replacedWith.Mention}");
                 }
             }
         }
