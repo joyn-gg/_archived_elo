@@ -189,6 +189,9 @@ namespace ELO.Modules
                     return;
                 }
 
+                var captainReplaced = false;
+                var queueUserReplaced = false;
+
                 if (team1.All(x => x.UserId != user.Id) && team2.All(x => x.UserId != user.Id))
                 {
                     // User is not present in either team and is not a team captain, check if the game is currently picking and replace the member in the queue.
@@ -225,7 +228,7 @@ namespace ELO.Modules
                             UserId = replacedWith.Id
                         });
                         db.SaveChanges();
-                        await SimpleEmbedAsync($"Player {user.Mention} was replaced with {replacedWith.Mention} in remaining player pool.");
+                        queueUserReplaced = true;
                     }
                 }
 
@@ -260,6 +263,7 @@ namespace ELO.Modules
                         db.TeamCaptains.Update(t1c);
                         db.SaveChanges();
                         await SimpleEmbedAsync($"{user.Mention} as a team captain was replaced with {replacedWith.Mention}");
+                        captainReplaced = true;
                     }
                     else if (t2c != null && t2c.UserId == user.Id)
                     {
@@ -267,7 +271,14 @@ namespace ELO.Modules
                         db.TeamCaptains.Update(t2c);
                         db.SaveChanges();
                         await SimpleEmbedAsync($"{user.Mention} as a team captain was replaced with {replacedWith.Mention}");
+                        captainReplaced = true;
                     }
+                }
+
+                // Used to avoid sending two messages for a captain replacement.
+                if (queueUserReplaced && !captainReplaced)
+                {
+                    await SimpleEmbedAsync($"Player {user.Mention} was replaced with {replacedWith.Mention} in remaining player pool.");
                 }
             }
         }
