@@ -37,6 +37,7 @@ namespace ELO.Services
                         cap1 = players[0].UserId;
                         cap2 = players[1].UserId;
                     }
+
                     //Select the two players at random.
                     else
                     {
@@ -74,6 +75,7 @@ namespace ELO.Services
             {
                 lobby = db.Lobbies.Find(lobby.ChannelId);
                 await context.Channel.SendMessageAsync("", false, "Queue is full. Picking teams...".QuickEmbed(Color.Blue));
+
                 //Increment the game counter as there is now a new game.
                 var vals = ((IQueryable<GameResult>)db.GameResults).Where(x => x.LobbyId == lobby.ChannelId).ToArray();
                 lobby.CurrentGameCount = vals.Length == 0 ? 1 : vals.Max(x => x.GameId) + 1;
@@ -113,6 +115,7 @@ namespace ELO.Services
                 var team2Players = new List<ulong>();
                 var t1Added = new List<ulong>();
                 var t2Added = new List<ulong>();
+
                 //Set team players/captains based on the team pick mode
                 switch (lobby.TeamPickMode)
                 {
@@ -144,7 +147,7 @@ namespace ELO.Services
                             Title = $"Game #{game.GameId} - Current Teams."
                         };
 
-                        var remainingPlayers = queue.Where(x => x.UserId != captains.Item1 && x.UserId != captains.Item2).Select(x => MentionUtils.MentionUser(x.UserId));                        
+                        var remainingPlayers = queue.Where(x => x.UserId != captains.Item1 && x.UserId != captains.Item2).Select(x => MentionUtils.MentionUser(x.UserId));
                         if (lobby.HostSelectionMode != HostSelection.None)
                         {
                             var qIds = queue.Select(x => x.UserId).ToList();
@@ -166,6 +169,7 @@ namespace ELO.Services
 
                         await context.Channel.SendMessageAsync($"Captains have been picked. Use the `pick` or `p` command to choose your players.\nCaptain 1: {MentionUtils.MentionUser(captains.Item1)}\nCaptain 2: {MentionUtils.MentionUser(captains.Item2)}", false, gameEmbed.Build());
                         break;
+
                     case PickMode.Random:
                         game.GameState = GameState.Undecided;
                         var shuffled = queue.OrderBy(x => Random.Next()).ToList();
@@ -189,7 +193,6 @@ namespace ELO.Services
                                 continue;
                             }
                             var partyIds = party.Select(x => x.UserId);
-
 
                             if (partySelection % 2 == 0)
                             {
@@ -223,7 +226,6 @@ namespace ELO.Services
                             }
                             partySelected.AddRange(partyIds);
                             partySelection++;
-
                         }
 
                         //Add remaining players to teams.
@@ -260,9 +262,58 @@ namespace ELO.Services
                         db.QueuedPlayers.RemoveRange(queue);
 
                         break;
+
                     case PickMode.TryBalance:
                         game.GameState = GameState.Undecided;
-                        var ordered = queue.OrderByDescending(x => db.Players.Find(context.Guild.Id, x.UserId).Points).ToList();
+
+                        var balPlayers = queue.Select(x => db.Players.Find(context.Guild.Id, x.UserId)).Where(x => x != null).ToList();
+                        int difference = int.MaxValue;
+                        int t1Count = balPlayers.Count / 2;
+                        List<Player> balancedT1 = balPlayers.Take(t1Count).ToList();
+                        List<Player> balancedT2 = balPlayers.Skip(t1Count).ToList();
+                        for (int i = 0; i < 5; i++)
+                        {
+                            var tempSet = balPlayers.OrderBy(x => Random.Next());
+
+                            var t1Members = tempSet.Take(t1Count).ToList();
+                            var t2Members = tempSet.Skip(t1Count).ToList();
+
+                            int t1Sum = t1Members.Sum(x => x.Points);
+                            int t2Sum = t2Members.Sum(x => x.Points);
+                            int dif = Math.Abs(t1Sum - t2Sum);
+                            if (dif < difference)
+                            {
+                                balancedT1 = t1Members;
+                                balancedT2 = t2Members;
+                                difference = dif;
+                            }
+                        }
+
+                        foreach (var balMem in balancedT1)
+                        {
+                            db.TeamPlayers.Add(new TeamPlayer
+                            {
+                                GuildId = context.Guild.Id,
+                                ChannelId = lobby.ChannelId,
+                                UserId = balMem.UserId,
+                                GameNumber = game.GameId,
+                                TeamNumber = 1
+                            });
+                        }
+                        foreach (var balMem in balancedT2)
+                        {
+                            db.TeamPlayers.Add(new TeamPlayer
+                            {
+                                GuildId = context.Guild.Id,
+                                ChannelId = lobby.ChannelId,
+                                UserId = balMem.UserId,
+                                GameNumber = game.GameId,
+                                TeamNumber = 2
+                            });
+                        }
+
+                        /*
+
                         //0-0
                         //1-0
                         //1-1
@@ -297,8 +348,7 @@ namespace ELO.Services
                                 t2Added.Add(user.UserId);
                             }
                         }
-
-
+                        */
                         db.QueuedPlayers.RemoveRange(queue);
 
                         break;
@@ -307,7 +357,7 @@ namespace ELO.Services
                 db.SaveChanges();
 
                 if (lobby.TeamPickMode == PickMode.TryBalance || lobby.TeamPickMode == PickMode.Random)
-                {                    
+                {
                     var res = GameService.GetGameMessage(game, $"Game #{game.GameId} Started",
                             GameFlag.lobby,
                             GameFlag.map,
@@ -376,7 +426,6 @@ namespace ELO.Services
 
                 db.SaveChanges();
             }
-
         }
 
         public Embed GetMsg(GameResult game, List<ulong> team1, ulong userid)
@@ -389,7 +438,6 @@ namespace ELO.Services
 
             var t1 = team1.Any(u => u == userid);
             var name = t1 ? "Team1" : "Team2";
-
 
             msg2.Item2.AddField("Game Info", $"Lobby: {MentionUtils.MentionChannel(game.LobbyId)}\nGame: {game.GameId}\nTeam: {name}\n{MentionUtils.MentionChannel(game.LobbyId)} {game.GameId} {name}");
             return msg2.Item2.Build();
@@ -423,8 +471,8 @@ namespace ELO.Services
             return (game, pickResponse);
         }
 
-
         public GameService GameService { get; }
+
         public Random Random { get; }
 
         public TeamPlayer GetPlayer(GameResult game, SocketGuildUser user, int team)
@@ -442,6 +490,7 @@ namespace ELO.Services
         public virtual async Task<(GameResult, string)> PickTwoAsync(Database db, ShardedCommandContext context, Lobby lobby, GameResult game, SocketGuildUser[] users, TeamCaptain cap1, TeamCaptain cap2)
         {
             var uc = users.Count();
+
             //Lay out custom logic for 1-2-2-1-1... pick order.
 
             var teamCaptain = game.Picks % 2 == 0 ? cap1 : cap2;
