@@ -9,6 +9,8 @@ namespace ELO.Extensions
     {
         public static Dictionary<ulong, Dictionary<ulong, bool>> RegistrationCache = new Dictionary<ulong, Dictionary<ulong, bool>>();
 
+        private static object cacheLock = new object();
+
         public static bool IsRegistered(this SocketGuildUser user, out Player player, bool required = true)
         {
             //Create a new db session.
@@ -48,16 +50,19 @@ namespace ELO.Extensions
                 else
                 {
                     //The user is not cached so populate the cache with if they are registered or not
-                    player = db.Players.Find(user.Guild.Id, user.Id);
-                    if (player == null)
+                    lock (cacheLock)
                     {
-                        guildCache.Add(user.Id, false);
-                        return false;
-                    }
-                    else
-                    {
-                        guildCache.Add(user.Id, true);
-                        return true;
+                        player = db.Players.Find(user.Guild.Id, user.Id);
+                        if (player == null)
+                        {
+                            guildCache.Add(user.Id, false);
+                            return false;
+                        }
+                        else
+                        {
+                            guildCache.Add(user.Id, true);
+                            return true;
+                        }
                     }
                 }
             }
