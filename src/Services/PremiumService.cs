@@ -55,20 +55,23 @@ namespace ELO.Services
                 var patreonRole = GetPremiumRole(patreonUser);
                 if (patreonRole == null)
                 {
+                    /*
                     if (match.PremiumBuffer != null && match.PremiumBuffer > DateTime.UtcNow)
                     {
                         return true;
                     }
-
+                    */
                     return false;
                 }
 
+                /*
                 if (match.BufferedPremiumCount != patreonRole.Limit)
                 {
                     match.BufferedPremiumCount = patreonRole.Limit;
                     db.Update(match);
                     db.SaveChanges();
                 }
+                */
                 return true;
             }
         }
@@ -97,20 +100,28 @@ namespace ELO.Services
                 var patreonRole = GetPremiumRole(patreonUser);
                 if (patreonRole == null)
                 {
+                    /*
                     if (match.PremiumBuffer != null && match.PremiumBuffer > DateTime.UtcNow)
                     {
                         return match.BufferedPremiumCount ?? PremiumConfig.DefaultLimit;
                     }
+                    */
                     return PremiumConfig.DefaultLimit;
                 }
 
+                /*
                 if (match.BufferedPremiumCount != patreonRole.Limit)
                 {
                     match.BufferedPremiumCount = patreonRole.Limit;
                     db.Update(match);
                     db.SaveChanges();
                 }
-                return patreonRole.Limit;
+                */
+
+                var allRedeemed = db.Competitions.Where(x => x.PremiumRedeemer == match.PremiumRedeemer).ToArray();
+                int limit = patreonRole.Limit / allRedeemed.Length;
+
+                return limit;
             }
         }
 
@@ -150,8 +161,8 @@ namespace ELO.Services
                     else if (config.PremiumRedeemer != null)
                     {
                         //Run checks and compare new vs old redeemer
-                        var guildClaimUser = patreonGuild.GetUser(config.PremiumRedeemer.Value);
-                        if (guildClaimUser == null)
+                        var oldClaimUser = patreonGuild.GetUser(config.PremiumRedeemer.Value);
+                        if (oldClaimUser == null)
                         {
                             //Delete the claim.
                             await context.Channel.SendMessageAsync($"An old upgrade by {MentionUtils.MentionUser(config.PremiumRedeemer.Value)} was removed as they could not be found in the patreon server.");
@@ -159,8 +170,8 @@ namespace ELO.Services
                         }
                         else
                         {
-                            var guildClaimUserRole = GetPremiumRole(guildClaimUser);
-                            if (guildClaimUserRole == null)
+                            var oldClaimUserRole = GetPremiumRole(oldClaimUser);
+                            if (oldClaimUserRole == null)
                             {
                                 //User no longer is patron, delete claim.
                                 await context.Channel.SendMessageAsync($"An old upgrade by {MentionUtils.MentionUser(config.PremiumRedeemer.Value)} was removed as they no longer have a patreon role.");
@@ -168,15 +179,29 @@ namespace ELO.Services
                             }
                             else
                             {
-                                if (guildClaimUserRole.Limit > currentRole.Limit)
+                                var oldUserClaims = db.Competitions.Where(x => x.PremiumRedeemer == config.PremiumRedeemer.Value).ToArray();
+                                int oldLimit = oldClaimUserRole.Limit;
+                                if (oldUserClaims.Length > 0)
+                                {
+                                    oldLimit = oldLimit / oldUserClaims.Length;
+                                }
+
+                                var newUserClaims = db.Competitions.Where(x => x.PremiumRedeemer == context.User.Id).ToArray();
+                                int newLimit = oldClaimUserRole.Limit;
+                                if (newUserClaims.Length > 0)
+                                {
+                                    newLimit = newLimit / newUserClaims.Length;
+                                }
+
+                                if (oldLimit > newLimit)
                                 {
                                     //This is larger than the current that is trying to be redeemed, discard the one being redeemed.
-                                    await context.Channel.SendMessageAsync($"There is already a license redeemed with a higher user count ({guildClaimUserRole.Limit}) in this server. Your upgrade will not be applied.");
+                                    await context.Channel.SendMessageAsync($"There is already a license redeemed with a higher user count ({oldLimit}) in this server. Your upgrade will not be applied.");
                                     return;
                                 }
                                 else
                                 {
-                                    await context.Channel.SendMessageAsync($"Another smaller upgrade was applied to this server, it has been replaced. The original license was for {guildClaimUserRole.Limit} users and was redeemed by {MentionUtils.MentionUser(config.PremiumRedeemer.Value)}");
+                                    await context.Channel.SendMessageAsync($"Another smaller upgrade was applied to this server, it has been replaced. The original license was for {oldLimit} users and was redeemed by {MentionUtils.MentionUser(config.PremiumRedeemer.Value)}");
 
                                     //Delete the smaller claim.
                                     config.PremiumRedeemer = null;
@@ -186,22 +211,33 @@ namespace ELO.Services
                     }
                 }
 
-                var prevClaims = db.Competitions.Where(x => x.PremiumRedeemer == context.User.Id);
-                foreach (var claim in prevClaims)
+                var claims = db.Competitions.Where(x => x.PremiumRedeemer == context.User.Id).ToArray();
+
+                // Use claims.length + 1 since current guild is not premium yet at this stage.
+                int remaining = claims.Length > 0 ? claims.Length + 1 : 1;
+
+                if (claims.Length >= PremiumConfig.ServerLimit)
                 {
-                    claim.PremiumRedeemer = null;
-                    claim.PremiumBuffer = null;
-                    claim.BufferedPremiumCount = null;
-                    await context.Channel.SendMessageAsync("You've already claimed a server, the old claim will be removed and applied to this server.");
+                    await context.Channel.SendMessageAsync($"You have already claimed the maximum amount of servers (`{PremiumConfig.ServerLimit}`) with this premium subscription, please remove one to continue.");
+                    db.SaveChanges();
+                    return;
                 }
 
-                db.UpdateRange(prevClaims);
                 config.PremiumRedeemer = context.User.Id;
-                config.PremiumBuffer = DateTime.UtcNow + TimeSpan.FromDays(28);
-                config.BufferedPremiumCount = currentRole.Limit;
+
+                //config.PremiumBuffer = DateTime.UtcNow + TimeSpan.FromDays(28);
+                //config.BufferedPremiumCount = currentRole.Limit;
 
                 db.Update(config);
-                await context.Channel.SendMessageAsync($"The server has been upgraded to {currentRole.Limit} users");
+
+                if (remaining <= 1)
+                {
+                    await context.Channel.SendMessageAsync($"The server has been upgraded to `{currentRole.Limit}` users");
+                }
+                else
+                {
+                    await context.Channel.SendMessageAsync($"The server has been upgraded to `{currentRole.Limit / remaining}` users, the premium subscription for `{currentRole.Limit}` registrations is currently being split over `{remaining}` servers");
+                }
                 db.SaveChanges();
             }
         }
@@ -215,6 +251,8 @@ namespace ELO.Services
             public int DefaultLimit { get; set; } = 20;
 
             public int LobbyLimit { get; set; } = 3;
+
+            public int ServerLimit { get; set; } = 3;
 
             public string ServerInvite { get; set; }
 

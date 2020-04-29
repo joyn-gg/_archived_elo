@@ -5,6 +5,7 @@ using ELO.Services;
 using RavenBOT.Common;
 using System;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace ELO.Modules
@@ -31,6 +32,83 @@ namespace ELO.Modules
                 db.Update(comp);
                 db.SaveChanges();
                 await SimpleEmbedAsync($"Prefix has been set to `{prefix ?? "Default"}`");
+            }
+        }
+
+        [Command("RemovePremium", RunMode = RunMode.Sync)]
+        [Summary("Remove a premium subscription")]
+        public virtual async Task RemovePremiumAsync(ulong? guildId = null)
+        {
+            if (guildId == null) guildId = Context.Guild.Id;
+
+            using (var db = new Database())
+            {
+                var compMatch = db.Competitions.Find(guildId);
+                if (compMatch == null) return;
+
+                if (compMatch.PremiumRedeemer != Context.User.Id) return;
+
+                compMatch.PremiumRedeemer = null;
+                compMatch.PremiumBuffer = null;
+                compMatch.BufferedPremiumCount = null;
+                db.Competitions.Update(compMatch);
+                db.SaveChanges();
+                await SimpleEmbedAsync("Premium subscription has been removed.");
+            }
+        }
+
+        [Command("MyPremium", RunMode = RunMode.Sync)]
+        [Summary("Display your premium servers")]
+        public virtual async Task MyPremiumAsync()
+        {
+            using (var db = new Database())
+            {
+                var comps = db.Competitions.Where(x => x.PremiumRedeemer == Context.User.Id).ToArray();
+                if (comps.Length == 0)
+                {
+                    await SimpleEmbedAsync("You do not have any premium redeemed servers.");
+                    return;
+                }
+
+                if (comps.Length == 1)
+                {
+                    var server = Context.Client.Guilds.FirstOrDefault(x => x.Id == comps[0].GuildId);
+                    if (server == null)
+                    {
+                        await SimpleEmbedAsync($"Server Not Found: {comps[0].GuildId}");
+                    }
+                    else
+                    {
+                        await SimpleEmbedAsync($"Premium Server: {server.Name} [{comps[0].GuildId}]");
+                    }
+                    return;
+                }
+
+                var builder = new StringBuilder();
+                bool notFound = false;
+                foreach (var comp in comps)
+                {
+                    var server = Context.Client.Guilds.FirstOrDefault(x => x.Id == comps.First().GuildId);
+                    if (server == null)
+                    {
+                        builder.AppendLine($"Server Not Found: {comp.GuildId}");
+                        notFound = true;
+                    }
+                    else
+                    {
+                        builder.AppendLine($"Premium Server: {server.Name} [{comp.GuildId}]");
+                    }
+                }
+
+                if (notFound)
+                {
+                    builder.AppendLine("You can remove a not found premium server by running the `RemovePremium` command, NOTE: this does not necessarily mean the server does not host the bot, it may indicate that the server is on a different shard of the bot.");
+                }
+
+                var premiumLimit = Premium.GetRegistrationLimit(comps[0].GuildId);
+                builder.AppendLine($"Premium limit for each server is `{premiumLimit}`");
+
+                await SimpleEmbedAsync(builder.ToString());
             }
         }
 
