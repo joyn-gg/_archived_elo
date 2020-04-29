@@ -273,7 +273,7 @@ namespace ELO.Services
                         List<Player> balancedT2 = balPlayers.Skip(t1Count).ToList();
                         for (int i = 0; i < 5; i++)
                         {
-                            var tempSet = balPlayers.OrderBy(x => Random.Next());
+                            var tempSet = balPlayers.OrderBy(x => Random.Next()).ToList();
 
                             var t1Members = tempSet.Take(t1Count).ToList();
                             var t2Members = tempSet.Skip(t1Count).ToList();
