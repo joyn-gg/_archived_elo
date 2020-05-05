@@ -203,11 +203,12 @@ namespace ELO
                             .AddSingleton<ELOJobs>();
 
             var topggToken = config.GetOptional("TopGgToken", null);
+            int voteLimit = 40;
             if (topggToken != null)
             {
-                var voteLimit = int.Parse(config.GetOptional("RegVoteLimit", "40"));
-                collection.AddSingleton(new TopggVoteService(topggToken, voteLimit));
+                voteLimit = int.Parse(config.GetOptional("RegVoteLimit", "40"));
             }
+            collection.AddSingleton(new TopggVoteService(topggToken, voteLimit));
 
             //Configure the service provider with all relevant and required services to be injected into other classes.
             Provider = collection.BuildServiceProvider();
