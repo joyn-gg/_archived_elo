@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using ELO.Extensions;
 using ELO.Models;
+using ELO.Preconditions;
 using ELO.Services;
 using RavenBOT.Common;
 using System.Linq;
@@ -37,7 +38,7 @@ namespace ELO.Modules
         }
 
         [Command("ForceRegister", RunMode = RunMode.Sync)]
-        [RavenRequireOwner]
+        [RequirePermission(PermissionLevel.ELOAdmin)]
         public virtual async Task ForceRegisterAsync(SocketGuildUser regUser, [Remainder]string name = null)
         {
             await RegisterAsync(regUser, name);
