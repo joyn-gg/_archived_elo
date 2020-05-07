@@ -5,6 +5,7 @@ using ELO.Entities;
 using ELO.Models;
 using ELO.Services;
 using RavenBOT.Common;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -370,6 +371,7 @@ namespace ELO.Modules
                 }
 
                 var currentMaps = db.Maps.Where(x => x.ChannelId == Context.Channel.Id).ToArray();
+                var addedMaps = new HashSet<string>(mapNames.Length);
 
                 foreach (var map in mapNames)
                 {
@@ -378,12 +380,18 @@ namespace ELO.Modules
                         // TODO: Log map not being added
                         continue;
                     }
-                    db.Maps.Add(new Map
+
+                    if (!addedMaps.Any(x => x.Equals(map, System.StringComparison.OrdinalIgnoreCase)))
                     {
-                        ChannelId = Context.Channel.Id,
-                        MapName = map
-                    });
+                        db.Maps.Add(new Map
+                        {
+                            ChannelId = Context.Channel.Id,
+                            MapName = map
+                        });
+                        addedMaps.Add(map);
+                    }
                 }
+
                 db.SaveChanges();
                 await SimpleEmbedAsync("Map(s) added.", Color.Green);
             }
