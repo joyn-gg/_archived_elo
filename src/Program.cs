@@ -95,6 +95,11 @@ namespace ELO
                 Console.WriteLine("DB Server IP:");
                 return Console.ReadLine();
             });
+            Database.Port = config.GetOrAddEntry("DbPort", () =>
+            {
+                Console.WriteLine("DB Server Port:");
+                return Console.ReadLine();
+            });
             Database.Dbname = config.GetOrAddEntry("DbName", () =>
             {
                 Console.WriteLine("DB Name:");

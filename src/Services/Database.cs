@@ -19,6 +19,8 @@ namespace ELO.Services
 
         public static string Password;
 
+        public static string Port;
+
         public DbSet<Rank> Ranks { get; set; }
 
         public DbSet<CommandPermission> Permissions { get; set; }
@@ -57,11 +59,7 @@ namespace ELO.Services
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseNpgsql($"Host={Serverip};Database={Dbname};Username={Username};Password={Password};");
-            /*.UseMySql(Config.ConnectionString(), mySqlOptions =>
-            {
-                mySqlOptions.ServerVersion(Config.Version, ServerType.MySql);
-            });*/
+            optionsBuilder.UseNpgsql($"Host={Serverip};Port={Port};Database={Dbname};Username={Username};Password={Password};");
         }
 
         public Competition GetOrCreateCompetition(ulong guildId)
