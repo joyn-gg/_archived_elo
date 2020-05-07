@@ -371,13 +371,14 @@ namespace ELO.Modules
                 }
 
                 var currentMaps = db.Maps.Where(x => x.ChannelId == Context.Channel.Id).ToArray();
+                var mapViolations = new HashSet<string>(mapNames.Length);
                 var addedMaps = new HashSet<string>(mapNames.Length);
 
                 foreach (var map in mapNames)
                 {
                     if (currentMaps.Any(x => x.MapName.Equals(map, System.StringComparison.OrdinalIgnoreCase)))
                     {
-                        // TODO: Log map not being added
+                        mapViolations.Add(map);
                         continue;
                     }
 
@@ -391,9 +392,18 @@ namespace ELO.Modules
                         addedMaps.Add(map);
                     }
                 }
-
                 db.SaveChanges();
-                await SimpleEmbedAsync("Map(s) added.", Color.Green);
+
+                if (mapViolations.Count > 0)
+                {
+                    await SimpleEmbedAsync($"Added Maps: {string.Join(", ", addedMaps)}\n" +
+                                            $"Failed to Add: {string.Join(", ", mapViolations)}\n" +
+                                            $"Duplicate maps found and ignored.");
+                }
+                else
+                {
+                    await SimpleEmbedAsync("Map(s) added.", Color.Green);
+                }
             }
         }
 
