@@ -61,6 +61,58 @@ namespace ELO.Modules
             await RegisterAsync(Context.User as SocketGuildUser, name);
         }
 
+        /*[Command("TestReg", RunMode = RunMode.Sync)]
+        [Summary("Register for the ELO competition.")]
+        public virtual async Task TestRegAsync(TopggVoteService.ResultType voteState)
+        {
+            var registrationLimitEmbed = new EmbedBuilder
+            {
+                Title = "Registration Limit Exceeded",
+                Url = Premium.PremiumConfig.AltLink,
+                ThumbnailUrl = Context.Client.CurrentUser.GetAvatarUrl(),
+                Color = Color.DarkBlue
+            }
+            .AddField("Subscribe", $"You can upgrade your registration limit by subscribing at [Patreon]({Premium.PremiumConfig.AltLink})\n" +
+            $"For Support, visit the ELO [Support Server]({Premium.PremiumConfig.ServerInvite})", true);
+
+            bool displayVoteInfo = false;
+
+            if (voteState == TopggVoteService.ResultType.NotVoted)
+            {
+                displayVoteInfo = true;
+            }
+            else if (voteState == TopggVoteService.ResultType.Voted)
+            {
+                // Check registration count against new vote limit
+                if (true)
+                {
+                    displayVoteInfo = true;
+                }
+                else
+                {
+                    // Allow registration
+                }
+            }
+
+            if (displayVoteInfo)
+            {
+                registrationLimitEmbed.AddField("Voting", $"For up to {VoteService.MaxRegLimit} registrations, " +
+                    $"individuals may register by voting at [ELO](https://top.gg/bot/{Context.Client.CurrentUser.Id}) and then running the `register` command", true);
+            }
+
+            using (var db = new Database())
+            {
+                var registered = ((IQueryable<Player>)db.Players).Count(x => x.GuildId == Context.Guild.Id);
+                var limit = Premium.GetRegistrationLimit(Context.Guild.Id);
+
+                registrationLimitEmbed.AddField("Limits",
+                    $"**Currently Registered:** {registered}/{limit} users" +
+                    (displayVoteInfo ? $"\n**Voted Registration Limit:** {VoteService.MaxRegLimit} users" : ""));
+
+                await ReplyAsync("", false, registrationLimitEmbed.Build());
+            }
+        }*/
+
         public virtual async Task<bool> RegisterAsync(SocketGuildUser regUser, [Remainder]string name = null)
         {
             if (regUser == null) return false;
@@ -81,29 +133,51 @@ namespace ELO.Modules
                     if (limit < registered)
                     {
                         var voteState = await VoteService.CheckAsync(Context.Client, regUser.Id);
-                        if (voteState == TopggVoteService.ResultType.NotConfigured)
+
+                        var registrationLimitEmbed = new EmbedBuilder
                         {
-                            await SimpleEmbedAsync($"This server has exceeded the maximum registration count of {limit}, it must be upgraded to premium to allow additional registrations, you can get premium by subscribing at {Premium.PremiumConfig.AltLink} for support and to claim premium, a patron must join the ELO server: {Premium.PremiumConfig.ServerInvite}", Color.DarkBlue);
-                            return false;
+                            Title = "Registration Limit Exceeded",
+                            Url = Premium.PremiumConfig.AltLink,
+                            ThumbnailUrl = Context.Client.CurrentUser.GetAvatarUrl(),
+                            Color = Color.DarkBlue
                         }
-                        else if (voteState == TopggVoteService.ResultType.NotVoted)
+                        .AddField("Subscribe", $"You can upgrade your registration limit by subscribing at [Patreon]({Premium.PremiumConfig.AltLink})\n" +
+                        $"For Support, visit the ELO [Support Server]({Premium.PremiumConfig.ServerInvite})", true);
+
+                        bool displayVoteInfo = false;
+                        bool allowRegistrationForVote = false;
+
+                        if (voteState == TopggVoteService.ResultType.NotVoted)
                         {
-                            await SimpleEmbedAsync($"This server has exceeded the maximum registration count of {limit}, it must be upgraded to premium to allow additional registrations, " +
-                                $"you can get premium by subscribing at {Premium.PremiumConfig.AltLink} for support and to claim premium, " +
-                                $"a patron must join the ELO server: {Premium.PremiumConfig.ServerInvite}\n" +
-                                $"For up to {VoteService.MaxRegLimit} registrations, you may also enable registration by voting at https://top.gg/bot/{Context.Client.CurrentUser.Id}", Color.DarkBlue);
-                            return false;
+                            displayVoteInfo = true;
                         }
-                        else
+                        else if (voteState == TopggVoteService.ResultType.Voted)
                         {
-                            if (registered > VoteService.MaxRegLimit)
+                            // Check registration count against new vote limit
+                            if (registered >= VoteService.MaxRegLimit)
                             {
-                                await SimpleEmbedAsync($"This server has exceeded the maximum registration count of {limit} (Currently Registered {registered}), it must be upgraded to premium to allow additional registrations, " +
-                                    $"you can get premium by subscribing at {Premium.PremiumConfig.AltLink} for support and to claim premium, " +
-                                    $"a patron must join the ELO server: {Premium.PremiumConfig.ServerInvite}\n" +
-                                    $"For up to {VoteService.MaxRegLimit} registrations, you may also enable registration by voting at https://top.gg/bot/{Context.Client.CurrentUser.Id}", Color.DarkBlue);
-                                return false;
+                                displayVoteInfo = true;
                             }
+                            else
+                            {
+                                allowRegistrationForVote = true;
+                            }
+                        }
+
+                        if (displayVoteInfo)
+                        {
+                            registrationLimitEmbed.AddField("Voting", $"For up to {VoteService.MaxRegLimit} registrations, " +
+                                $"individuals may register by voting at [ELO](https://top.gg/bot/{Context.Client.CurrentUser.Id}) and then running the `register` command", true);
+                        }
+
+                        if (!allowRegistrationForVote)
+                        {
+                            registrationLimitEmbed.AddField("Limits",
+                                $"**Currently Registered:** {registered}/{limit} users" +
+                                (displayVoteInfo ? $"\n**Voted Registration Limit:** {VoteService.MaxRegLimit} users" : ""));
+
+                            await ReplyAsync("", false, registrationLimitEmbed.Build());
+                            return false;
                         }
                     }
 
