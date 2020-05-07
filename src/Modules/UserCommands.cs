@@ -28,12 +28,16 @@ namespace ELO.Modules
         public TopggVoteService VoteService { get; }
 
         [Command("ForceRegisterUsers", RunMode = RunMode.Sync)]
-        [RavenRequireOwner]
+        [RequirePermission(PermissionLevel.ELOAdmin)]
         public virtual async Task ForceRegisterAsync(params SocketGuildUser[] users)
         {
             foreach (var user in users)
             {
-                await RegisterAsync(user);
+                if (!await RegisterAsync(user))
+                {
+                    await SimpleEmbedAsync($"Exited on forceregister for user {user.Mention}, unable to register.");
+                    break;
+                }
             }
         }
 
@@ -52,9 +56,9 @@ namespace ELO.Modules
             await RegisterAsync(Context.User as SocketGuildUser, name);
         }
 
-        public virtual async Task RegisterAsync(SocketGuildUser regUser, [Remainder]string name = null)
+        public virtual async Task<bool> RegisterAsync(SocketGuildUser regUser, [Remainder]string name = null)
         {
-            if (regUser == null) return;
+            if (regUser == null) return false;
 
             if (name == null)
             {
@@ -75,7 +79,7 @@ namespace ELO.Modules
                         if (voteState == TopggVoteService.ResultType.NotConfigured)
                         {
                             await SimpleEmbedAsync($"This server has exceeded the maximum registration count of {limit}, it must be upgraded to premium to allow additional registrations, you can get premium by subscribing at {Premium.PremiumConfig.AltLink} for support and to claim premium, a patron must join the ELO server: {Premium.PremiumConfig.ServerInvite}", Color.DarkBlue);
-                            return;
+                            return false;
                         }
                         else if (voteState == TopggVoteService.ResultType.NotVoted)
                         {
@@ -83,7 +87,7 @@ namespace ELO.Modules
                                 $"you can get premium by subscribing at {Premium.PremiumConfig.AltLink} for support and to claim premium, " +
                                 $"a patron must join the ELO server: {Premium.PremiumConfig.ServerInvite}\n" +
                                 $"For up to {VoteService.MaxRegLimit} registrations, you may also enable registration by voting at https://top.gg/bot/{Context.Client.CurrentUser.Id}", Color.DarkBlue);
-                            return;
+                            return false;
                         }
                         else
                         {
@@ -93,7 +97,7 @@ namespace ELO.Modules
                                     $"you can get premium by subscribing at {Premium.PremiumConfig.AltLink} for support and to claim premium, " +
                                     $"a patron must join the ELO server: {Premium.PremiumConfig.ServerInvite}\n" +
                                     $"For up to {VoteService.MaxRegLimit} registrations, you may also enable registration by voting at https://top.gg/bot/{Context.Client.CurrentUser.Id}", Color.DarkBlue);
-                                return;
+                                return false;
                             }
                         }
                     }
@@ -108,7 +112,7 @@ namespace ELO.Modules
                     if (!comp.AllowReRegister)
                     {
                         await SimpleEmbedAndDeleteAsync("You are not allowed to re-register.", Color.Red);
-                        return;
+                        return true;
                     }
 
                     user.DisplayName = name;
@@ -131,6 +135,8 @@ namespace ELO.Modules
                     await SimpleEmbedAsync(string.Join("\n", responses), Color.Red);
                 }
             }
+
+            return true;
         }
 
         [Command("Rename", RunMode = RunMode.Sync)]
