@@ -131,7 +131,7 @@ namespace ELO.Modules
                 {
                     var registered = ((IQueryable<Player>)db.Players).Count(x => x.GuildId == Context.Guild.Id);
                     var limit = Premium.GetRegistrationLimit(Context.Guild.Id);
-                    if (limit < registered)
+                    if (limit <= registered)
                     {
                         var voteState = await VoteService.CheckAsync(Context.Client, regUser.Id);
 
