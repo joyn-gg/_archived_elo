@@ -180,7 +180,7 @@ namespace ELO.Services
                     }
                     catch (Exception e)
                     {
-                        noted.Add($"There was an error updaing your roles.");
+                        noted.Add($"There was an error updaing roles for {user.Mention}");
                         Console.WriteLine(e);
                     }
                 }
