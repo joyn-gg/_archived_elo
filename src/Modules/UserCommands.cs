@@ -111,7 +111,14 @@ namespace ELO.Modules
                 {
                     if (!comp.AllowReRegister)
                     {
-                        await SimpleEmbedAndDeleteAsync("You are not allowed to re-register.", Color.Red);
+                        if (regUser.Id != Context.User.Id)
+                        {
+                            await SimpleEmbedAndDeleteAsync($"{regUser.Mention} is already registered.", Color.Red);
+                        }
+                        else
+                        {
+                            await SimpleEmbedAndDeleteAsync("You are not allowed to re-register.", Color.Red);
+                        }
                         return true;
                     }
 
