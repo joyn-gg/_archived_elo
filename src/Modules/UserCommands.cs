@@ -46,12 +46,13 @@ namespace ELO.Modules
             }
         }
 
+        /*
         [Command("ForceRegister", RunMode = RunMode.Sync)]
         [RequirePermission(PermissionLevel.ELOAdmin)]
         public virtual async Task ForceRegisterAsync(SocketGuildUser regUser, [Remainder]string name = null)
         {
             await RegisterAsync(regUser, name);
-        }
+        }*/
 
         [Command("Register", RunMode = RunMode.Sync)]
         [Alias("reg")]
