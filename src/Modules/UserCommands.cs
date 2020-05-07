@@ -31,6 +31,11 @@ namespace ELO.Modules
         [RequirePermission(PermissionLevel.ELOAdmin)]
         public virtual async Task ForceRegisterAsync(params SocketGuildUser[] users)
         {
+            if (users.Length > 5)
+            {
+                await SimpleEmbedAsync($"You may only force register 5 members at a time.");
+                return;
+            }
             foreach (var user in users)
             {
                 if (!await RegisterAsync(user))
