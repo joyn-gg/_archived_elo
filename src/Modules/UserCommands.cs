@@ -141,7 +141,15 @@ namespace ELO.Modules
                 var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
                 var responses = await UserService.UpdateUserAsync(comp, user, ranks, regUser);
 
-                await SimpleEmbedAsync(comp.FormatRegisterMessage(user), Color.Blue);
+                if (regUser.Id == Context.User.Id)
+                {
+                    await SimpleEmbedAsync(comp.FormatRegisterMessage(user), Color.Blue);
+                }
+                else
+                {
+                    await SimpleEmbedAsync($"{regUser.Mention} was registered as `{Format.Sanitize(name)}` by {Context.User.Mention}", Color.Blue);
+                }
+
                 if (responses.Count > 0)
                 {
                     await SimpleEmbedAsync(string.Join("\n", responses), Color.Red);
