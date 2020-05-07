@@ -107,12 +107,12 @@ namespace ELO.Services
                             }
                             else
                             {
-                                noted.Add("You have a higher permission level than the bot and therefore it cannot edit your nickname.");
+                                noted.Add($"{user.Mention} have a higher permission level than the bot and therefore it cannot edit their nickname.");
                             }
                         }
                         else
                         {
-                            noted.Add("The bot cannot edit your nickname as it does not have the `ManageNicknames` permission");
+                            noted.Add($"The bot cannot edit nicknames as it does not have the `ManageNicknames` permission");
                         }
                     }
                 }
