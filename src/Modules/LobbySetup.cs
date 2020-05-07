@@ -128,6 +128,7 @@ namespace ELO.Modules
 
         [Command("PickModes", RunMode = RunMode.Async)]
         [Summary("Displays all pick modes to use with the SetPickMode command")]
+
         //[Alias("Pick Modes")] ignore this as it can potentially conflict with the lobby Pick command.
         public virtual async Task DisplayPickModesAsync()
         {
@@ -368,8 +369,15 @@ namespace ELO.Modules
                     return;
                 }
 
+                var currentMaps = db.Maps.Where(x => x.ChannelId == Context.Channel.Id).ToArray();
+
                 foreach (var map in mapNames)
                 {
+                    if (currentMaps.Any(x => x.MapName.Equals(map, System.StringComparison.OrdinalIgnoreCase)))
+                    {
+                        // TODO: Log map not being added
+                        continue;
+                    }
                     db.Maps.Add(new Map
                     {
                         ChannelId = Context.Channel.Id,
