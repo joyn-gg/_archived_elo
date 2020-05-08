@@ -16,17 +16,89 @@ namespace ELO.Modules
     [Group("devcmd")]
     public class Developer : ReactiveBase
     {
-        public Developer(Random random, PremiumService prem)
+        public Developer(Random random, PremiumService prem, CommandService cmd)
         {
             Random = random;
             Prem = prem;
+            Cmd = cmd;
         }
 
         public Random Random { get; }
 
         public PremiumService Prem { get; }
 
+        public CommandService Cmd { get; }
+
         private string premKey = "PremiumConfig";
+
+        [Command("ConsoleDoc", RunMode = RunMode.Async)]
+        public async Task ConsoleDocs()
+        {
+            var builder = new StringBuilder();
+            builder.AppendLine("# Commands");
+
+            foreach (var module in Cmd.Modules)
+            {
+                builder.AppendLine($"## {module.Name}");
+                if (module.Preconditions.Count > 0)
+                {
+                    var mPreconditionString = string.Join("\n", module.Preconditions.Select(x =>
+                    {
+                        if (x is PreconditionBase preBase)
+                        {
+                            return $"__{preBase.Name()}__ {preBase.PreviewText()}";
+                        }
+                        else
+                        {
+                            return x.GetType().Name;
+                        }
+                    }).Distinct().ToArray());
+                    builder.AppendLine("Preconditions:\n" + mPreconditionString);
+                }
+                builder.AppendLine("|Name|Description|Parameters|Example|Aliases|Permissions|Remarks|\n|--|--|--|--|--|--|--|");
+
+                foreach (var command in module.Commands)
+                {
+                    var preconditionString = string.Join("<hr>", command.Preconditions.Select(x =>
+                    {
+                        if (x is PreconditionBase preBase)
+                        {
+                            return $"__{preBase.Name()}__ {preBase.PreviewText()}";
+                        }
+                        else
+                        {
+                            return x.GetType().Name;
+                        }
+                    }).Distinct().ToArray());
+
+                    builder.AppendLine($"|{command.Name}|{command.Summary}|" + string.Join(" ", command.Parameters.Select(parameter =>
+                     {
+                         var initial = parameter.Name + (parameter.Summary == null ? "" : $"({parameter.Summary})");
+                         var isAttributed = false;
+                         if (parameter.IsOptional)
+                         {
+                             initial += $":optional({parameter.DefaultValue ?? "null"})";
+                         }
+
+                         if (parameter.IsMultiple)
+                         {
+                             initial += ":multiple";
+                         }
+
+                         if (parameter.IsRemainder)
+                         {
+                             initial += ":remainder";
+                         }
+
+                         return "{" + initial + "}";
+                     }))
+                    +
+                    $"|N/A|{string.Join(", ", command.Aliases)}|{preconditionString}|{command.Remarks}|");
+                }
+            }
+
+            Console.WriteLine(builder.ToString());
+        }
 
         [Command("AddPremiumRole", RunMode = RunMode.Sync)]
         public async Task AddRoleAsync(SocketRole role, int maxCount)
