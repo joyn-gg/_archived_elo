@@ -213,6 +213,7 @@ namespace ELO.Handlers
                         }
                     }
 
+                    bool sendMessage = true;
                     if (context.Channel is IGuildChannel ch)
                     {
                         try
@@ -221,25 +222,23 @@ namespace ELO.Handlers
                             if (context.Guild != null)
                                 guildUser = await context.Guild.GetCurrentUserAsync().ConfigureAwait(false);
 
-                            ChannelPermissions perms;
-                            if (context.Channel is IGuildChannel guildChannel)
-                                perms = guildUser.GetPermissions(guildChannel);
-                            else
-                                perms = ChannelPermissions.All(context.Channel);
+                            ChannelPermissions perms = guildUser.GetPermissions(ch);
 
                             if (!perms.Has(ChannelPermission.SendMessages))
-                                return;
+                                sendMessage = false;
                         }
                         catch (Exception e)
                         {
                             Logger.Log($"Issue checking channel permissions for user\n{e}", LogSeverity.Error);
+                            sendMessage = false;
                         }
                     }
 
+                    Embed embed = null;
                     if (result is ExecuteResult exResult)
                     {
                         BaseLogger.Log($"{context.Message.Content}\n{result.Error}\n{result.ErrorReason}\n{exResult.Exception}", context, LogSeverity.Error);
-                        await context.Channel.SendMessageAsync("", false, new EmbedBuilder
+                        embed = new EmbedBuilder
                         {
                             Title = $"Command Execution Error{(result.Error.HasValue ? $": {result.Error.Value}" : "")}",
                             Description = $"Message: {context.Message.Content.FixLength(512)}\n" +
@@ -247,33 +246,33 @@ namespace ELO.Handlers
                                 $"{result.ErrorReason.FixLength(512)}\n" +
                                 $"{exResult.Exception}".FixLength(1024),
                             Color = Color.LightOrange
-                        }.Build());
+                        }.Build();
                     }
                     else if (result is PreconditionResult preResult)
                     {
                         BaseLogger.Log($"{context.Message.Content}\n{result.Error}\n{result.ErrorReason}", context, LogSeverity.Error);
-                        await context.Channel.SendMessageAsync("", false, new EmbedBuilder
+                        embed = new EmbedBuilder
                         {
                             Title = $"Command Precondition Error{(result.Error.HasValue ? $": {result.Error.Value}" : "")}",
                             Description = $"Message: {context.Message.Content.FixLength(512)}\n" +
                                 "__**Error**__\n" +
                                 $"{result.ErrorReason.FixLength(512)}\n".FixLength(1024),
                             Color = Color.LightOrange
-                        }.Build());
+                        }.Build();
                     }
                     else if (result is RuntimeResult runResult)
                     {
                         BaseLogger.Log($"{context.Message.Content}\n{result.Error}\n{result.ErrorReason}", context, LogSeverity.Error);
 
                         //Post execution result. Ie. returned by developer
-                        await context.Channel.SendMessageAsync("", false, new EmbedBuilder
+                        embed = new EmbedBuilder
                         {
                             Title = $"Command Runtime Error{(result.Error.HasValue ? $": {result.Error.Value}" : "")}",
                             Description = $"Message: {context.Message.Content.FixLength(512)}\n" +
                                 "__**Error**__\n" +
                                 $"{runResult.Reason.FixLength(512)}\n".FixLength(1024),
                             Color = Color.LightOrange
-                        }.Build());
+                        }.Build();
                     }
                     else if (result is SearchResult sResult)
                     {
@@ -307,13 +306,13 @@ namespace ELO.Handlers
                             }
                         }
 
-                        await context.Channel.SendMessageAsync("", false, new EmbedBuilder()
+                        embed = new EmbedBuilder()
                         {
                             Title = $"Unknown Command",
                             Description = $"Message: {context.Message.Content.FixLength(512)}\n" +
                                 $"Similar commands: \n{string.Join("\n", toDisplay.Select(x => x.Item2))}",
                             Color = Color.Red
-                        }.Build());
+                        }.Build();
                     }
                     else if (result is ParseResult pResult)
                     {
@@ -328,7 +327,7 @@ namespace ELO.Handlers
                         //typeReaderResults
                         if (pResult.Error.Value == CommandError.BadArgCount && commandInfo.IsSpecified)
                         {
-                            await context.Channel.SendMessageAsync("", false, new EmbedBuilder
+                            embed = new EmbedBuilder
                             {
                                 Title = $"Argument Error {result.Error.Value}",
                                 Description = $"`{commandInfo.Value.Aliases.First()} {string.Join(" ", commandInfo.Value.Parameters.Select(x => x.ParameterInformation()))}`\n" +
@@ -336,31 +335,36 @@ namespace ELO.Handlers
                                     "__**Error**__\n" +
                                     $"{result.ErrorReason.FixLength(512)}",
                                 Color = Color.DarkRed
-                            }.Build());
+                            }.Build();
                         }
                         else
                         {
-                            await context.Channel.SendMessageAsync("", false, new EmbedBuilder
+                            embed = new EmbedBuilder
                             {
                                 Title = $"Command Parse Error{(result.Error.HasValue ? $": {result.Error.Value}" : "")}",
                                 Description = $"Message: {context.Message.Content.FixLength(512)}\n" +
                                     "__**Error**__\n" +
                                     $"{result.ErrorReason.FixLength(512)}\n".FixLength(1024),
                                 Color = Color.LightOrange
-                            }.Build());
+                            }.Build();
                         }
                     }
                     else
                     {
                         BaseLogger.Log($"{context.Message.Content}\n{result.Error}\n{result.ErrorReason}", context, LogSeverity.Error);
-                        await context.Channel.SendMessageAsync("", false, new EmbedBuilder
+                        embed = new EmbedBuilder
                         {
                             Title = $"Command Error{(result.Error.HasValue ? $": {result.Error.Value}" : "")}",
                             Description = $"Message: {context.Message.Content.FixLength(512)}\n" +
                                 "__**Error**__\n" +
                                 $"{result.ErrorReason.FixLength(512)}\n".FixLength(1024),
                             Color = Color.LightOrange
-                        }.Build());
+                        }.Build();
+                    }
+
+                    if (embed != null && sendMessage)
+                    {
+                        await context.Channel.SendMessageAsync("", false, embed);
                     }
                 }
                 catch (Exception e)
