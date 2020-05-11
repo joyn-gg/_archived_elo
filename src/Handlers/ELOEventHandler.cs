@@ -213,6 +213,29 @@ namespace ELO.Handlers
                         }
                     }
 
+                    if (context.Channel is IGuildChannel ch)
+                    {
+                        try
+                        {
+                            IGuildUser guildUser = null;
+                            if (context.Guild != null)
+                                guildUser = await context.Guild.GetCurrentUserAsync().ConfigureAwait(false);
+
+                            ChannelPermissions perms;
+                            if (context.Channel is IGuildChannel guildChannel)
+                                perms = guildUser.GetPermissions(guildChannel);
+                            else
+                                perms = ChannelPermissions.All(context.Channel);
+
+                            if (!perms.Has(ChannelPermission.SendMessages))
+                                return;
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Log($"Issue checking channel permissions for user\n{e}", LogSeverity.Error);
+                        }
+                    }
+
                     if (result is ExecuteResult exResult)
                     {
                         BaseLogger.Log($"{context.Message.Content}\n{result.Error}\n{result.ErrorReason}\n{exResult.Exception}", context, LogSeverity.Error);
