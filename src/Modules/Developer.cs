@@ -38,6 +38,10 @@ namespace ELO.Modules
             var builder = new StringBuilder();
             builder.AppendLine("# Commands");
 
+            var seenEnums = new List<Type>();
+            var enumBuilder = new StringBuilder();
+            enumBuilder.AppendLine("# Types");
+
             foreach (var module in Cmd.Modules)
             {
                 builder.AppendLine($"## {module.Name}");
@@ -75,6 +79,7 @@ namespace ELO.Modules
                     builder.AppendLine($"|{command.Name}|{command.Summary}|" + string.Join(" ", command.Parameters.Select(parameter =>
                      {
                          var initial = parameter.Name + (parameter.Summary == null ? "" : $"({parameter.Summary})");
+
                          if (parameter.IsOptional)
                          {
                              if (parameter.DefaultValue == null)
@@ -92,12 +97,15 @@ namespace ELO.Modules
                              initial += ":multiple";
                          }
 
-                         /*
-                         if (parameter.IsRemainder)
+                         if (parameter.Type.IsEnum)
                          {
-                             initial += ":remainder";
+                             if (seenEnums.All(x => !x.Equals(parameter.Type)))
+                             {
+                                 seenEnums.Add(parameter.Type);
+                                 enumBuilder.AppendLine($"## {parameter.Type.Name}");
+                                 enumBuilder.AppendLine(string.Join("\n\n", parameter.Type.GetEnumNames().Select(x => $"`{x}`")));
+                             }
                          }
-                         */
 
                          return "{" + initial + "}";
                      }))
@@ -107,6 +115,7 @@ namespace ELO.Modules
             }
 
             Console.WriteLine(builder.ToString());
+            Console.WriteLine(enumBuilder.ToString());
         }
 
         [Command("DeveloperUsers", RunMode = RunMode.Sync)]
