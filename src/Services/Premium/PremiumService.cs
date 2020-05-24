@@ -20,15 +20,10 @@ namespace ELO.Services
 
         private async Task MessageReceivedAsync(SocketMessage arg)
         {
-            if (!(arg is SocketUserMessage message))
-            {
-                return;
-            }
-
-            await TryParseWebhookResponse(message);
+            await TryParseWebhookResponse(arg);
         }
 
-        public async Task TryParseWebhookResponse(SocketUserMessage message)
+        public async Task TryParseWebhookResponse(IMessage message)
         {
             // Ensure method variables are configured first.
             if (PremiumConfig.DeletionWebhookChannel == null || PremiumConfig.DeletionWebhookClientId == null)

@@ -126,6 +126,19 @@ namespace ELO.Modules
             await ReplyAsync("Done.");
         }
 
+        [Command("ScanWebhookDeleteMessage", RunMode = RunMode.Sync)]
+        public async Task ScanWebhookDeleteAsync(ulong messageId)
+        {
+            var message = await Context.Channel.GetMessageAsync(messageId);
+            if (message == null)
+            {
+                await ReplyAsync("Message not found.");
+                return;
+            }
+
+            await Prem.TryParseWebhookResponse(message);
+        }
+
         [Command("AddPremiumRole", RunMode = RunMode.Sync)]
         public async Task AddRoleAsync(SocketRole role, int maxCount)
         {
