@@ -6,7 +6,7 @@ using Newtonsoft.Json.Converters;
 
 namespace ELO.Services.Premium
 {
-    public partial class TopLevel
+    public partial class DeletionResponse
     {
         [JsonProperty("name")]
         public string Name { get; set; }
@@ -30,14 +30,14 @@ namespace ELO.Services.Premium
         public string LastPaymentStatus { get; set; }
     }
 
-    public partial class TopLevel
+    public partial class DeletionResponse
     {
-        public static TopLevel FromJson(string json) => JsonConvert.DeserializeObject<TopLevel>(json, Converter.Settings);
+        public static DeletionResponse FromJson(string json) => JsonConvert.DeserializeObject<DeletionResponse>(json, Converter.Settings);
     }
 
     public static class Serialize
     {
-        public static string ToJson(this TopLevel self) => JsonConvert.SerializeObject(self, Converter.Settings);
+        public static string ToJson(this DeletionResponse self) => JsonConvert.SerializeObject(self, Converter.Settings);
     }
 
     internal static class Converter
