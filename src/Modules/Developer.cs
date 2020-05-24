@@ -92,10 +92,12 @@ namespace ELO.Modules
                              initial += ":multiple";
                          }
 
+                         /*
                          if (parameter.IsRemainder)
                          {
                              initial += ":remainder";
                          }
+                         */
 
                          return "{" + initial + "}";
                      }))
