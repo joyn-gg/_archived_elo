@@ -137,6 +137,33 @@ namespace ELO.Services
                     // This is the role the user should have for the tier they're currently paying for.
                     // This will be used to configure the user's registration limit for their servers for now.
                     var maxMatch = matched.OrderByDescending(x => x.Limit).First();
+
+                    var pUser = db.DeletedPremiumUsers.FirstOrDefault(x => x.UserId == userId);
+                    if (pUser == null)
+                    {
+                        // User is not found in db, so add to db.
+                        pUser = new Premium.DeletedPremiumUser()
+                        {
+                            UserId = userId.Value,
+                            EntitledRegistrationCount = maxMatch.Limit,
+                            EntitledRoleId = maxMatch.RoleId,
+                            LastSuccessfulKnownPayment = paymentDate
+                        };
+
+                        db.DeletedPremiumUsers.Add(pUser);
+                    }
+                    else
+                    {
+                        // User is found in db, so update the current entry.
+                        pUser.EntitledRegistrationCount = maxMatch.Limit;
+                        pUser.EntitledRoleId = maxMatch.RoleId;
+                        pUser.LastSuccessfulKnownPayment = paymentDate;
+                        db.DeletedPremiumUsers.Update(pUser);
+                    }
+
+                    db.SaveChanges();
+
+                    // TODO: Announce that the user has had their premium buffered.
                 }
             }
             catch (Exception e)

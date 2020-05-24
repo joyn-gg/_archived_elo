@@ -57,6 +57,8 @@ namespace ELO.Services
 
         public DbSet<PremiumService.PremiumRole> PremiumRoles { get; set; }
 
+        public DbSet<Premium.DeletedPremiumUser> DeletedPremiumUsers { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseNpgsql($"Host={Serverip};Port={Port};Database={Dbname};Username={Username};Password={Password};");
@@ -280,6 +282,11 @@ namespace ELO.Services
                 entity.HasOne(e => e.Comp)
                     .WithMany(e => e.ManualGames)
                     .HasForeignKey(e => e.GuildId);
+            });
+
+            modelBuilder.Entity<Premium.DeletedPremiumUser>(entity =>
+            {
+                entity.HasKey(e => e.UserId);
             });
         }
     }
