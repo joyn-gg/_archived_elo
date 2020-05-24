@@ -101,6 +101,31 @@ namespace ELO.Modules
             Console.WriteLine(builder.ToString());
         }
 
+        [Command("AddDeveloperUser", RunMode = RunMode.Sync)]
+        public async Task AddRoleAsync(SocketUser user)
+        {
+            using (var db = new Database())
+            {
+                var match = db.WhitelistedDevelopers.Find(user.Id);
+                if (match != null)
+                {
+                    await ReplyAsync("User is already whitelisted.");
+                    return;
+                }
+                else
+                {
+                    db.WhitelistedDevelopers.Add(new Preconditions.Dev.WhitelistedUser
+                    {
+                        UserId = user.Id
+                    });
+                }
+
+                db.SaveChanges();
+            }
+
+            await ReplyAsync("Done.");
+        }
+
         [Command("AddPremiumRole", RunMode = RunMode.Sync)]
         public async Task AddRoleAsync(SocketRole role, int maxCount)
         {
