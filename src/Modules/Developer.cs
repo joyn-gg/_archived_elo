@@ -101,6 +101,16 @@ namespace ELO.Modules
             Console.WriteLine(builder.ToString());
         }
 
+        [Command("DeveloperUsers", RunMode = RunMode.Sync)]
+        public async Task ShowDevelopersAsync()
+        {
+            using (var db = new Database())
+            {
+                var devs = db.WhitelistedDevelopers.ToArray();
+                await ReplyAsync("Devs:\n" + string.Join("\n", devs.Select(x => Discord.MentionUtils.MentionUser(x.UserId)).ToArray()));
+            }
+        }
+
         [Command("AddDeveloperUser", RunMode = RunMode.Sync)]
         public async Task AddRoleAsync(SocketUser user)
         {
