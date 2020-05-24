@@ -1,5 +1,6 @@
 ﻿using Discord.Commands;
 using ELO.Services;
+using Passive.Discord.Setup;
 using RavenBOT.Common;
 using System;
 using System.Linq;
@@ -11,6 +12,19 @@ namespace ELO.Preconditions
     {
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
+            Config config = (Config)services.GetService(typeof(Config));
+            if (config != null)
+            {
+                var envDefault = config.GetOptional("DevId", null);
+                if (envDefault != null && ulong.TryParse(envDefault, out var defaultId))
+                {
+                    if (context.User.Id == defaultId)
+                    {
+                        return PreconditionResult.FromSuccess();
+                    }
+                }
+            }
+
             using (var db = new Database())
             {
                 if (db.WhitelistedDevelopers.FirstOrDefault(x => x.UserId == context.User.Id) != null)
