@@ -15,6 +15,134 @@ namespace ELO.Services
         {
             Client = client;
             PremiumConfig = config;
+            Client.MessageReceived += MessageReceivedAsync;
+        }
+
+        private async Task MessageReceivedAsync(SocketMessage arg)
+        {
+            if (!(arg is SocketUserMessage message))
+            {
+                return;
+            }
+
+            await TryParseWebhookResponse(message);
+        }
+
+        public async Task TryParseWebhookResponse(SocketUserMessage message)
+        {
+            // Ensure method variables are configured first.
+            if (PremiumConfig.DeletionWebhookChannel == null || PremiumConfig.DeletionWebhookClientId == null)
+            {
+                return;
+            }
+
+            // Ensure message is from the authorized webhook only.
+            if (message.Author.Id != PremiumConfig.DeletionWebhookClientId)
+            {
+                return;
+            }
+
+            // Ensure message is sent in the authorized channel only.
+            if (message.Channel.Id != PremiumConfig.DeletionWebhookChannel)
+            {
+                return;
+            }
+
+            try
+            {
+                var model = Premium.DeletionResponse.FromJson(message.Content);
+                if (model == null) return;
+
+                ulong? userId = null;
+
+                // Try to parse main userId field, if not found, try to fallback to secondary
+                if (!string.IsNullOrWhiteSpace(model.DiscordUserId))
+                {
+                    if (ulong.TryParse(model.DiscordUserId, out var uId))
+                    {
+                        userId = uId;
+                    }
+                }
+
+                if (userId == null)
+                {
+                    if (!string.IsNullOrWhiteSpace(model.DiscordId))
+                    {
+                        if (ulong.TryParse(model.DiscordId, out var uId))
+                        {
+                            userId = uId;
+                        }
+                    }
+                }
+
+                // Parse failed or userId not found.
+                if (userId == null)
+                {
+                    // TODO: Notify in webhook channel.
+                    return;
+                }
+
+                if (!model.LastPaymentStatus.Equals("paid", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    // TODO: Notify not parsed due to no successful payment made.
+                    return;
+                }
+
+                var roleIdStrings = model.RoleIds.Split(",").Select(x => x.Trim()).ToArray();
+                List<ulong> roleIds = new List<ulong>();
+                foreach (var roleId in roleIdStrings)
+                {
+                    if (ulong.TryParse(roleId, out var rId))
+                    {
+                        roleIds.Add(rId);
+                    }
+                }
+
+                if (roleIds.Count == 0)
+                {
+                    // TODO: Notify not parsed due to no roles available
+                    return;
+                }
+
+                var paymentDate = model.LastPayment.UtcDateTime;
+                var now = DateTime.UtcNow;
+                if (paymentDate.Month != now.Month || paymentDate.Year != now.Year)
+                {
+                    // TODO: Notify not parsed due to payment being made outside of current payment period.
+                    // Potentially still use this even if outside of current month for consistency.
+                    return;
+                }
+
+                using (var db = new Database())
+                {
+                    var premiumRoles = db.PremiumRoles.ToArray();
+                    var matched = new List<PremiumRole>();
+
+                    // Find all users entitled premium roles.
+                    foreach (var id in roleIds)
+                    {
+                        var match = premiumRoles.FirstOrDefault(x => x.RoleId == id);
+                        if (match != null)
+                        {
+                            matched.Add(match);
+                        }
+                    }
+
+                    if (matched.Count == 0)
+                    {
+                        // No entitled roles found? this shouldnt happen but could if the config changes.
+                        return;
+                    }
+
+                    // This is the role the user should have for the tier they're currently paying for.
+                    // This will be used to configure the user's registration limit for their servers for now.
+                    var maxMatch = matched.OrderByDescending(x => x.Limit).First();
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
         public DiscordShardedClient Client { get; }
@@ -29,6 +157,16 @@ namespace ELO.Services
                 var userRole = roles.OrderByDescending(x => x.Limit).FirstOrDefault(x => patreonUser.Roles.Any(r => r.Id == x.RoleId));
                 return userRole;
             }
+        }
+
+        private async Task DownloadMembers()
+        {
+            var _ = Task.Run(async () =>
+            {
+                var patreonGuild = Client.GetGuild(PremiumConfig.GuildId);
+                if (patreonGuild == null) return;
+                await patreonGuild.DownloadUsersAsync();
+            });
         }
 
         public bool IsPremium(ulong guildId)
@@ -49,6 +187,7 @@ namespace ELO.Services
                 }
 
                 var patreonGuild = Client.GetGuild(PremiumConfig.GuildId);
+                patreonGuild.DownloadUsersAsync();
                 var patreonUser = patreonGuild?.GetUser(match.PremiumRedeemer.Value);
                 if (patreonUser == null) return false;
 
@@ -253,6 +392,10 @@ namespace ELO.Services
             public int LobbyLimit { get; set; } = 3;
 
             public int ServerLimit { get; set; } = 3;
+
+            public ulong? DeletionWebhookChannel { get; set; } = null;
+
+            public ulong? DeletionWebhookClientId { get; set; } = null;
 
             public string ServerInvite { get; set; }
 
