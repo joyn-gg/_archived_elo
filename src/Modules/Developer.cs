@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using ELO.Preconditions;
 using ELO.Services;
 using Microsoft.EntityFrameworkCore;
 using RavenBOT.Common;
@@ -12,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace ELO.Modules
 {
-    [RavenRequireOwner]
+    [DevWhitelist]
     [Group("devcmd")]
     public class Developer : ReactiveBase
     {
