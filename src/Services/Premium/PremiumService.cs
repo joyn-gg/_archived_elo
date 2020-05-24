@@ -216,29 +216,62 @@ namespace ELO.Services
                 var patreonGuild = Client.GetGuild(PremiumConfig.GuildId);
                 patreonGuild.DownloadUsersAsync();
                 var patreonUser = patreonGuild?.GetUser(match.PremiumRedeemer.Value);
-                if (patreonUser == null) return false;
+
+                // If user not found, fall back to check for deleted premium sub.
+                if (patreonUser == null) return IsDeletedPremiumBuffered(match.PremiumRedeemer.Value);
 
                 var patreonRole = GetPremiumRole(patreonUser);
                 if (patreonRole == null)
                 {
-                    /*
-                    if (match.PremiumBuffer != null && match.PremiumBuffer > DateTime.UtcNow)
-                    {
-                        return true;
-                    }
-                    */
-                    return false;
+                    // Is user role is not found, fall back to check for deleted premium buffer.
+                    return IsDeletedPremiumBuffered(match.PremiumRedeemer.Value);
                 }
 
-                /*
-                if (match.BufferedPremiumCount != patreonRole.Limit)
-                {
-                    match.BufferedPremiumCount = patreonRole.Limit;
-                    db.Update(match);
-                    db.SaveChanges();
-                }
-                */
                 return true;
+            }
+        }
+
+        private bool IsDeletedPremiumBuffered(ulong userId)
+        {
+            if (!PremiumConfig.Enabled) return true;
+            using (var db = new Database())
+            {
+                var match = db.DeletedPremiumUsers.FirstOrDefault(x => x.UserId == userId);
+                if (match == null) return false;
+
+                var now = DateTime.UtcNow;
+                if (match.LastSuccessfulKnownPayment.Month == now.Month && match.LastSuccessfulKnownPayment.Year == now.Year)
+                {
+                    return true;
+                }
+
+                return false;
+            }
+        }
+
+        private int GetDeletedPremiumLimit(ulong userId)
+        {
+            if (!PremiumConfig.Enabled) return int.MaxValue;
+            using (var db = new Database())
+            {
+                var match = db.DeletedPremiumUsers.FirstOrDefault(x => x.UserId == userId);
+
+                // If no deleted found, return default
+                if (match == null) return PremiumConfig.DefaultLimit;
+
+                var now = DateTime.UtcNow;
+
+                // Not sure if I should also check for future months, there shouldn't be a case for that but not entirely sure.
+                if (match.LastSuccessfulKnownPayment.Month == now.Month && match.LastSuccessfulKnownPayment.Year == now.Year)
+                {
+                    // Divide limit across all user claimed servers.
+                    var allRedeemed = db.Competitions.Where(x => x.PremiumRedeemer == match.UserId).ToArray();
+                    int limit = match.EntitledRegistrationCount / allRedeemed.Length;
+                    return match.EntitledRegistrationCount;
+                }
+
+                // If last payment is outside of current month
+                return PremiumConfig.DefaultLimit;
             }
         }
 
@@ -261,28 +294,17 @@ namespace ELO.Services
 
                 var patreonGuild = Client.GetGuild(PremiumConfig.GuildId);
                 var patreonUser = patreonGuild?.GetUser(match.PremiumRedeemer.Value);
-                if (patreonUser == null) return PremiumConfig.DefaultLimit;
+
+                // If user not found, fall back to search for deleted limits.
+                if (patreonUser == null) return GetDeletedPremiumLimit(match.PremiumRedeemer.Value);
 
                 var patreonRole = GetPremiumRole(patreonUser);
+
+                // If role not found, fall back to search for deleted limits.
                 if (patreonRole == null)
                 {
-                    /*
-                    if (match.PremiumBuffer != null && match.PremiumBuffer > DateTime.UtcNow)
-                    {
-                        return match.BufferedPremiumCount ?? PremiumConfig.DefaultLimit;
-                    }
-                    */
-                    return PremiumConfig.DefaultLimit;
+                    return GetDeletedPremiumLimit(match.PremiumRedeemer.Value);
                 }
-
-                /*
-                if (match.BufferedPremiumCount != patreonRole.Limit)
-                {
-                    match.BufferedPremiumCount = patreonRole.Limit;
-                    db.Update(match);
-                    db.SaveChanges();
-                }
-                */
 
                 var allRedeemed = db.Competitions.Where(x => x.PremiumRedeemer == match.PremiumRedeemer).ToArray();
                 int limit = patreonRole.Limit / allRedeemed.Length;
