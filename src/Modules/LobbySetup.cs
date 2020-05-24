@@ -629,9 +629,9 @@ namespace ELO.Modules
             }
         }
 
-        [Command("SetReductionPercent", RunMode = RunMode.Sync)]
+        [Command("SetHighLimitMultiplier", RunMode = RunMode.Sync)]
         [Summary("Sets a multiplier for users who have a higher amount of points than what is defined in the SetHighLimit command.")]
-        public virtual async Task SetReductionPercent(double percent = 0.5)
+        public virtual async Task SetHighLimitMultiplier(double multiplier = 0.5)
         {
             using (var db = new Database())
             {
@@ -642,16 +642,18 @@ namespace ELO.Modules
                     return;
                 }
 
-                lobby.ReductionPercent = percent;
+                lobby.ReductionPercent = multiplier;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Reduction percent set.", Color.Green);
+                await SimpleEmbedAsync($"High Limit multiplier set, when users exceed `{(lobby.HighLimit.HasValue ? lobby.HighLimit.Value.ToString() : "N/A (Configure using the SetHighLimit command)")}` points, " +
+                    $"their points received will be multiplied by `{multiplier}`, it is recommended to set this to a value such as `0.5` in for lower ranked lobbies " +
+                    $"so higher ranked players are not rewarded as much for winning in lower ranked lobbies.", Color.Green);
             }
         }
 
         [Command("SetHighLimit", RunMode = RunMode.Sync)]
         [Summary("Sets max user points before point reduction multiplier is applied.")]
-        public virtual async Task SetReductionPercent(int? highLimit = null)
+        public virtual async Task SetHighLimit(int? highLimit = null)
         {
             using (var db = new Database())
             {
