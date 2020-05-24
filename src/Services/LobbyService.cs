@@ -387,18 +387,25 @@ namespace ELO.Services
                         var channel = context.Guild.GetTextChannel(lobby.GameReadyAnnouncementChannel.Value);
                         if (channel != null)
                         {
-                            if (lobby.MentionUsersInReadyAnnouncement)
+                            try
                             {
-                                await channel.SendMessageAsync(res.Item1, false, res.Item2.Build());
+                                if (lobby.MentionUsersInReadyAnnouncement)
+                                {
+                                    await channel.SendMessageAsync(res.Item1, false, res.Item2.Build());
+                                }
+                                else
+                                {
+                                    var res2 = GameService.GetGameMessage(game, $"Game #{game.GameId} Started",
+                                        GameFlag.lobby,
+                                        GameFlag.map,
+                                        GameFlag.time,
+                                        GameFlag.gamestate);
+                                    await channel.SendMessageAsync(res2.Item1, false, res2.Item2.Build());
+                                }
                             }
-                            else
+                            catch (Exception e)
                             {
-                                var res2 = GameService.GetGameMessage(game, $"Game #{game.GameId} Started",
-                                    GameFlag.lobby,
-                                    GameFlag.map,
-                                    GameFlag.time,
-                                    GameFlag.gamestate);
-                                await channel.SendMessageAsync(res2.Item1, false, res2.Item2.Build());
+                                //
                             }
                         }
                     }
