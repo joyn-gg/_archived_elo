@@ -1,6 +1,7 @@
 ﻿using Discord.WebSocket;
 using ELO.CompetitionModels.Legacy;
 using ELO.Models;
+using ELO.Preconditions.Dev;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
@@ -58,6 +59,8 @@ namespace ELO.Services
         public DbSet<PremiumService.PremiumRole> PremiumRoles { get; set; }
 
         public DbSet<Premium.DeletedPremiumUser> DeletedPremiumUsers { get; set; }
+
+        public DbSet<WhitelistedUser> WhitelistedDevelopers { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -285,6 +288,11 @@ namespace ELO.Services
             });
 
             modelBuilder.Entity<Premium.DeletedPremiumUser>(entity =>
+            {
+                entity.HasKey(e => e.UserId);
+            });
+
+            modelBuilder.Entity<WhitelistedUser>(entity =>
             {
                 entity.HasKey(e => e.UserId);
             });
