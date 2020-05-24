@@ -77,7 +77,14 @@ namespace ELO.Modules
                          var initial = parameter.Name + (parameter.Summary == null ? "" : $"({parameter.Summary})");
                          if (parameter.IsOptional)
                          {
-                             initial += $":optional({parameter.DefaultValue ?? "null"})";
+                             if (parameter.DefaultValue == null)
+                             {
+                                 initial += $":optional";
+                             }
+                             else
+                             {
+                                 initial += $":optional({parameter.DefaultValue})";
+                             }
                          }
 
                          if (parameter.IsMultiple)
