@@ -43,7 +43,7 @@ namespace ELO.Modules
                 builder.AppendLine($"## {module.Name}");
                 if (module.Preconditions.Count > 0)
                 {
-                    var mPreconditionString = string.Join("\n", module.Preconditions.Select(x =>
+                    var mPreconditionString = string.Join("\n\n", module.Preconditions.Select(x =>
                     {
                         if (x is PreconditionBase preBase)
                         {
@@ -54,11 +54,11 @@ namespace ELO.Modules
                             return x.GetType().Name;
                         }
                     }).Distinct().ToArray());
-                    builder.AppendLine("Preconditions:\n" + mPreconditionString);
+                    builder.AppendLine("Preconditions:\n\n" + mPreconditionString);
                 }
                 builder.AppendLine("|Name|Description|Parameters|Example|Aliases|Permissions|Remarks|\n|--|--|--|--|--|--|--|");
 
-                foreach (var command in module.Commands)
+                foreach (var command in module.Commands.OrderBy(x => x.Name))
                 {
                     var preconditionString = string.Join("<hr>", command.Preconditions.Select(x =>
                     {
@@ -75,7 +75,6 @@ namespace ELO.Modules
                     builder.AppendLine($"|{command.Name}|{command.Summary}|" + string.Join(" ", command.Parameters.Select(parameter =>
                      {
                          var initial = parameter.Name + (parameter.Summary == null ? "" : $"({parameter.Summary})");
-                         var isAttributed = false;
                          if (parameter.IsOptional)
                          {
                              initial += $":optional({parameter.DefaultValue ?? "null"})";
