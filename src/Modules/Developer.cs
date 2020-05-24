@@ -105,6 +105,8 @@ namespace ELO.Modules
                                  enumBuilder.AppendLine($"## {parameter.Type.Name}");
                                  enumBuilder.AppendLine(string.Join("\n\n", parameter.Type.GetEnumNames().Select(x => $"`{x}`")));
                              }
+
+                             initial = $"[{initial}](#{parameter.Type.Name})";
                          }
 
                          return "{" + initial + "}";
