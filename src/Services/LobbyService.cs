@@ -387,6 +387,8 @@ namespace ELO.Services
                         var channel = context.Guild.GetTextChannel(lobby.GameReadyAnnouncementChannel.Value);
                         if (channel != null)
                         {
+                            // TODO: Check channel permissions before trying this.
+
                             try
                             {
                                 if (lobby.MentionUsersInReadyAnnouncement)
