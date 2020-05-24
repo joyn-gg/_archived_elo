@@ -176,6 +176,16 @@ namespace ELO
                 Console.WriteLine("PremiumGuildId:");
                 return Console.ReadLine();
             }));
+            var premiumDeletionChannelId = ulong.Parse(config.GetOrAddEntry("PremiumDeletionWebhookChannelId", () =>
+            {
+                Console.WriteLine("PremiumDeletionWebhookChannelId:");
+                return Console.ReadLine();
+            }));
+            var premiumDeletionWebhookId = ulong.Parse(config.GetOrAddEntry("PremiumDeletionWebhookClientId", () =>
+            {
+                Console.WriteLine("PremiumDeletionWebhookClientId: (Can be found in the webhook url)");
+                return Console.ReadLine();
+            }));
 
             //Ensure the database is created. This should also verify connection
             using (var db = new Database())
@@ -191,7 +201,9 @@ namespace ELO
                             {
                                 ServerInvite = serverInvite,
                                 AltLink = altLink,
-                                GuildId = guildId
+                                GuildId = guildId,
+                                DeletionWebhookChannel = premiumDeletionChannelId,
+                                DeletionWebhookClientId = premiumDeletionWebhookId
                             })
                             .AddSingleton<HelpService>()
                             .AddSingleton(new CommandService(commandConfig))
