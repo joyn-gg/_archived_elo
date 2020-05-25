@@ -10,13 +10,17 @@ namespace ELO.Handlers
     public partial class ELOEventHandler
     {
         public Dictionary<ulong, CommandSchedule> CommandScheduler = new Dictionary<ulong, CommandSchedule>();
+
         public class CommandSchedule
         {
             public static CommandService Service;
+
             public static IServiceProvider Provider;
 
             public ulong GuildId;
+
             private Queue<(ICommandContext, int)> Queue = new Queue<(ICommandContext, int)>();
+
             public void AddTask(ICommandContext message, int argPos)
             {
                 var commandMatch = Service.Search(message, argPos);
@@ -36,12 +40,13 @@ namespace ELO.Handlers
 
                 //Check and attempt to run the command processor
                 if (!Running)
-                {                   
+                {
                     Task.Run(() => RunProcessor());
                 }
             }
 
             public bool Running = false;
+
             public async Task RunProcessor()
             {
                 Running = true;
@@ -57,13 +62,13 @@ namespace ELO.Handlers
                         }
                         catch (Exception e)
                         {
-                            Console.WriteLine(e);
+                            //
                         }
                     }
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
+                    // Console.WriteLine(e);
                 }
                 finally
                 {
@@ -72,6 +77,5 @@ namespace ELO.Handlers
                 }
             }
         }
-
     }
 }
