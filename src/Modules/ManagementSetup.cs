@@ -78,9 +78,11 @@ namespace ELO.Modules
                         Level = level
                     };
                     db.Permissions.Add(permission);
-                    PermissionService.PermissionCache.Remove(Context.Guild.Id);
                 }
+
                 db.SaveChanges();
+                PermissionService.PermissionCache.Remove(Context.Guild.Id);
+
                 await SimpleEmbedAsync($"{match.Name} permission level set to: {level}", Color.Blue);
             }
         }
