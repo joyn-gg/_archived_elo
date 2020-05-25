@@ -78,10 +78,7 @@ namespace ELO.Modules
                         Level = level
                     };
                     db.Permissions.Add(permission);
-                    if (PermissionService.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
-                    {
-                        cache.Cache.Remove(match.Name.ToLower());
-                    }
+                    PermissionService.PermissionCache.Remove(Context.Guild.Id);
                 }
                 db.SaveChanges();
                 await SimpleEmbedAsync($"{match.Name} permission level set to: {level}", Color.Blue);
@@ -109,10 +106,8 @@ namespace ELO.Modules
                     return;
                 }
                 db.Permissions.Remove(permission);
-                if (PermissionService.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
-                {
-                    cache.Cache.Remove(match.Name.ToLower());
-                }
+                db.SaveChanges();
+                PermissionService.PermissionCache.Remove(Context.Guild.Id);
                 await SimpleEmbedAsync($"{match.Name} permission set back to default.", Color.Blue);
             }
         }
@@ -126,11 +121,9 @@ namespace ELO.Modules
             {
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);
                 competition.ModeratorRole = modRole?.Id;
-                if (PermissionService.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
-                {
-                    cache.ModId = modRole?.Id;
-                }
+                db.Competitions.Update(competition);
                 db.SaveChanges();
+                PermissionService.PermissionCache.Remove(Context.Guild.Id);
                 if (modRole != null)
                 {
                     await SimpleEmbedAsync("Moderator role set.", Color.Green);
@@ -150,11 +143,9 @@ namespace ELO.Modules
             {
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);
                 competition.AdminRole = adminRole?.Id;
-                if (PermissionService.PermissionCache.TryGetValue(Context.Guild.Id, out var cache))
-                {
-                    cache.AdminId = adminRole?.Id;
-                }
+                db.Competitions.Update(competition);
                 db.SaveChanges();
+                PermissionService.PermissionCache.Remove(Context.Guild.Id);
                 if (adminRole != null)
                 {
                     await SimpleEmbedAsync("Admin role set.", Color.Green);
