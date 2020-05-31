@@ -181,7 +181,7 @@ namespace ELO.Modules
 
             if (destinationChannel.Id == Context.Channel.Id)
             {
-                await SimpleEmbedAsync("You cannot send announcements to the current channel.", Color.Red);
+                await SimpleEmbedAsync("You cannot send announcements to the current channel, instead run it in a lobby channel and mention the ready announcement channel.", Color.Red);
                 return;
             }
 
@@ -190,7 +190,7 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await SimpleEmbedAsync("This command must be run from within a lobby channel.", Color.Red);
                     return;
                 }
                 lobby.GameReadyAnnouncementChannel = destinationChannel.Id;
@@ -213,7 +213,7 @@ namespace ELO.Modules
 
             if (destinationChannel.Id == Context.Channel.Id)
             {
-                await SimpleEmbedAsync("You cannot send announcements to the current channel.", Color.Red);
+                await SimpleEmbedAsync("You cannot send announcements to the current channel, instead run it in a lobby channel and mention the result announcement channel.", Color.Red);
                 return;
             }
 
@@ -222,7 +222,7 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await SimpleEmbedAsync("This command must be run from within a lobby channel.", Color.Red);
                     return;
                 }
                 lobby.GameResultAnnouncementChannel = destinationChannel.Id;
