@@ -387,7 +387,7 @@ namespace ELO.Services
                         var channel = context.Guild.GetTextChannel(lobby.GameReadyAnnouncementChannel.Value);
                         if (channel != null)
                         {
-                            var perms = (context.User as SocketGuildUser)?.GetPermissions(channel);
+                            var perms = context.Guild.CurrentUser?.GetPermissions(channel);
                             if (perms.HasValue && perms.Value.SendMessages && perms.Value.ViewChannel)
                             {
                                 try
