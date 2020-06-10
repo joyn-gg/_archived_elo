@@ -30,7 +30,92 @@ namespace ELO.Modules
 
         public CommandService Cmd { get; }
 
-        private string premKey = "PremiumConfig";
+        [Command("AnalyzePatrons")]
+        public async Task PatreonTestAsync(string apiKey = null, string campaignId = null)
+        {
+            if (apiKey == null || campaignId == null)
+            {
+                await ReplyAsync("Must supply api key and campaign ID when running this command.");
+                return;
+            }
+
+            var guild = Context.Client.GetGuild(Prem.PremiumConfig.GuildId);
+            var client = new Patreon.NET.PatreonClient(apiKey);
+            var pledges = await client.GetCampaignPledges(campaignId);
+
+            var rewardMissing = pledges.Users.Count(x => x.Reward == null);
+            var userMissing = pledges.Users.Count(x => x.UserIncluded == null);
+
+            int uidMissing = 0;
+            var premiumUsers = new List<(ulong, List<ulong>)>();
+
+            PremiumService.PremiumRole[] roles;
+            using (var db = new Database())
+            {
+                roles = db.PremiumRoles.ToArray();
+            }
+
+            foreach (var pledge in pledges.Users)
+            {
+                var userId = pledge.UserIncluded.Attributes.SocialConnections.Discord?.UserId;
+                if (userId == null)
+                {
+                    uidMissing++;
+                }
+                else
+                {
+                    var roleIds = pledge.Reward.Attributes.DiscordRoleIds;
+                    var entitledRoles = new List<ulong>();
+                    foreach (var role in roleIds)
+                    {
+                        entitledRoles.Add(ulong.Parse(role));
+                    }
+
+                    var uid = ulong.Parse(userId);
+                    premiumUsers.Add((uid, entitledRoles));
+                    var gUser = guild.GetUser(uid);
+                    if (gUser != null)
+                    {
+                        var userPremiumRoles = gUser.Roles.Where(x => roles.Any(y => y.RoleId == x.Id)).ToArray();
+                        if (userPremiumRoles.Length > 0)
+                        {
+                            // User has premium but wrong roles.
+                            if (userPremiumRoles.Any(r => !entitledRoles.Contains(r.Id)))
+                            {
+                                Console.WriteLine($"{gUser.GetDisplayName()} has role when only entitled to {string.Join(" ", entitledRoles)}");
+                            }
+                        }
+                    }
+                }
+            }
+
+            var gUsersWithPremiumRoles = guild.Users.Where(u => u.Roles.Any(r => roles.Any(y => y.RoleId == r.Id))).ToArray();
+            var builder = new StringBuilder();
+            foreach (var user in gUsersWithPremiumRoles)
+            {
+                var uPremiumRoles = user.Roles.Where(x => roles.Any(r => r.RoleId == x.Id)).ToArray();
+                var uEntitledRoles = premiumUsers.FirstOrDefault(x => x.Item1 == user.Id).Item2;
+                if (uPremiumRoles.Length > 0)
+                {
+                    if (uEntitledRoles == null)
+                    {
+                        // User has prem roles but no prem
+                        builder.AppendLine($"{user.GetDisplayName()} {user.Mention} has premium roles but no premium");
+                    }
+                    else
+                    {
+                        var notEntitled = uPremiumRoles.Where(r => !uEntitledRoles.Contains(r.Id)).ToArray();
+                        if (notEntitled.Length > 0)
+                        {
+                            // User has prem roles but not entitled to them.
+                            builder.AppendLine($"{user.GetDisplayName()} {user.Mention} has premium roles that they are not entitled to {string.Join(" ", notEntitled.Select(x => x.Mention))}");
+                        }
+                    }
+                }
+            }
+
+            await ReplyAsync(builder.ToString());
+        }
 
         [Command("ConsoleDoc", RunMode = RunMode.Async)]
         public async Task ConsoleDocs()
