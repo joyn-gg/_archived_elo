@@ -291,6 +291,8 @@ namespace ELO.Modules
                     player.Draws = 0;
                     player.Wins = 0;
                     player.Losses = 0;
+                    player.Deaths = 0;
+                    player.Kills = 0;
                 }
                 db.UpdateRange(players);
                 db.SaveChanges();
