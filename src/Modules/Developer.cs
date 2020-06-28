@@ -121,7 +121,11 @@ namespace ELO.Modules
         public async Task ConsoleDocs()
         {
             var builder = new StringBuilder();
-            builder.AppendLine("# Commands");
+            builder.AppendLine("# Modules");
+            foreach (var module in Cmd.Modules)
+            {
+                builder.AppendLine($"[{module.Name}](#{module.Name}) - {module.Commands.Count} commands\n");
+            }
 
             var seenEnums = new List<Type>();
             var enumBuilder = new StringBuilder();
@@ -136,7 +140,7 @@ namespace ELO.Modules
                     {
                         if (x is PreconditionBase preBase)
                         {
-                            return $"__{preBase.Name()}__ {preBase.PreviewText()}";
+                            return $"__{preBase.Name()}__: {preBase.PreviewText()}";
                         }
                         else
                         {
@@ -145,7 +149,7 @@ namespace ELO.Modules
                     }).Distinct().ToArray());
                     builder.AppendLine("Preconditions:\n\n" + mPreconditionString);
                 }
-                builder.AppendLine("|Name|Description|Parameters|Example|Aliases|Permissions|Remarks|\n|--|--|--|--|--|--|--|");
+                builder.AppendLine("|Name|Description|Parameters|Aliases|Permissions|Remarks|\n|--|--|--|--|--|--|");
 
                 foreach (var command in module.Commands.OrderBy(x => x.Name))
                 {
@@ -197,7 +201,7 @@ namespace ELO.Modules
                          return "{" + initial + "}";
                      }))
                     +
-                    $"|N/A|{string.Join(", ", command.Aliases)}|{preconditionString}|{command.Remarks}|");
+                    $"|{string.Join(", ", command.Aliases)}|{preconditionString}|{command.Remarks}|");
                 }
             }
 
