@@ -253,7 +253,7 @@ namespace ELO.Modules
         [Alias("lb", "top20")]
         [Summary("Shows the current server-wide leaderboard.")]
         [RequirePermission(PermissionLevel.Registered)]
-        [RateLimit(1, 10, Measure.Seconds, RateLimitFlags.ApplyPerGuild | RateLimitFlags.NoLimitForAdmins)]
+        [RateLimit(1, 10, Measure.Seconds, RateLimitFlags.ApplyPerGuild)]
         public virtual async Task LeaderboardAsync(LeaderboardSortMode mode = LeaderboardSortMode.points)
         {
             using (var db = new Database())

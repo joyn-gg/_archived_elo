@@ -190,6 +190,19 @@ namespace ELO.Handlers
             });
         }
 
+        private class CommandRatelimitInfo
+        {
+            public ulong GuildId;
+
+            public ulong UserId;
+
+            public int Count;
+
+            public DateTime LastNotification;
+        }
+
+        private Dictionary<ulong, CommandRatelimitInfo> RatelimitMessageChecks = new Dictionary<ulong, CommandRatelimitInfo>();
+
         public virtual async Task CommandExecutedAsync(Optional<CommandInfo> commandInfo, ICommandContext context, IResult result)
         {
             if (result.IsSuccess)
@@ -251,14 +264,61 @@ namespace ELO.Handlers
                     else if (result is PreconditionResult preResult)
                     {
                         BaseLogger.Log($"{context.Message.Content}\n{result.Error}\n{result.ErrorReason}", context, LogSeverity.Error);
-                        embed = new EmbedBuilder
+
+                        bool respond = true;
+                        if (preResult.Error.HasValue)
                         {
-                            Title = $"Command Precondition Error{(result.Error.HasValue ? $": {result.Error.Value}" : "")}",
-                            Description = $"Message: {context.Message.Content.FixLength(512)}\n" +
-                                "__**Error**__\n" +
-                                $"{result.ErrorReason.FixLength(512)}\n".FixLength(1024),
-                            Color = Color.LightOrange
-                        }.Build();
+                            if (preResult.Error.Value == CommandError.UnmetPrecondition)
+                            {
+                                if (preResult.ErrorReason.Contains("You are currently in Timeout for", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    if (RatelimitMessageChecks.TryGetValue(context.User.Id, out var messageCheck))
+                                    {
+                                        // Do checks
+                                        messageCheck.Count++;
+                                        if (messageCheck.Count > 3)
+                                        {
+                                            if (DateTime.UtcNow - messageCheck.LastNotification > TimeSpan.FromSeconds(30))
+                                            {
+                                                // Last notif was more than 30 seconds ago.
+                                                messageCheck.Count = 0;
+                                                messageCheck.LastNotification = DateTime.UtcNow;
+                                            }
+                                            else
+                                            {
+                                                respond = false;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            messageCheck.LastNotification = DateTime.UtcNow;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        RatelimitMessageChecks.Add(context.User.Id, new CommandRatelimitInfo
+                                        {
+                                            GuildId = context.Guild?.Id ?? 0,
+                                            UserId = context.User.Id,
+                                            Count = 1,
+                                            LastNotification = DateTime.UtcNow
+                                        });
+                                    }
+                                }
+                            }
+                        }
+
+                        if (respond)
+                        {
+                            embed = new EmbedBuilder
+                            {
+                                Title = $"Command Precondition Error{(result.Error.HasValue ? $": {result.Error.Value}" : "")}",
+                                Description = $"Message: {context.Message.Content.FixLength(512)}\n" +
+                                    "__**Error**__\n" +
+                                    $"{result.ErrorReason.FixLength(512)}\n".FixLength(1024),
+                                Color = Color.LightOrange
+                            }.Build();
+                        }
                     }
                     else if (result is RuntimeResult runResult)
                     {

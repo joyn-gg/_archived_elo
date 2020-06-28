@@ -12,7 +12,6 @@ namespace ELO.Modules
 {
     public partial class LobbyManagement
     {
-        
         [Command("Maps", RunMode = RunMode.Async)]
         [Alias("MapList")]
         [Summary("Displays map information")]
@@ -90,7 +89,6 @@ namespace ELO.Modules
                     return;
                 }
 
-
                 var game = db.GetLatestGame(lobby);
                 if (game != null)
                 {
@@ -166,6 +164,7 @@ namespace ELO.Modules
 
         [Command("LobbyLeaderboard", RunMode = RunMode.Async)]
         [Summary("Displays a leaderboard with stats for the current lobby only.")]
+        [RateLimit(1, 10, Measure.Seconds, RateLimitFlags.ApplyPerGuild)]
         public virtual async Task ShowLobbyLeaderboardAsync(ISocketMessageChannel channel = null)
         {
             if (channel == null)
@@ -204,6 +203,7 @@ namespace ELO.Modules
                 {
                     var playerGroup = group.ToArray();
                     var lines = group.Select(x => $"{index++}: {MentionUtils.MentionUser(x.Key)} - `{x.Value}`").ToArray();
+
                     //index += lines.Length;
                     var page = new ReactivePage();
                     page.Color = Color.Blue;

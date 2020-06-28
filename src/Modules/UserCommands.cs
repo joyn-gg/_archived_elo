@@ -57,6 +57,7 @@ namespace ELO.Modules
         [Command("Register", RunMode = RunMode.Sync)]
         [Alias("reg")]
         [Summary("Register for the ELO competition.")]
+        [RateLimit(1, 20, Measure.Seconds)]
         public virtual async Task RegisterAsync([Remainder]string name = null)
         {
             await RegisterAsync(Context.User as SocketGuildUser, name);
