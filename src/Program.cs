@@ -152,7 +152,7 @@ namespace ELO
                 LogLevel = logLevel,
                 ExclusiveBulkDelete = true,
                 AlwaysDownloadUsers = false,
-                MessageCacheSize = 50
+                MessageCacheSize = 10
             };
 
             var token = config.GetOrAddEntry("Token", () =>
