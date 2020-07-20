@@ -31,6 +31,7 @@ namespace ELO.Services
 
             var winners = db.Players.Where(x => x.GuildId == competition.GuildId && winnerIds.Contains(x.UserId)).ToArray();
             var losers = db.Players.Where(x => x.GuildId == competition.GuildId && loserIds.Contains(x.UserId)).ToArray();
+            var scoreUpdates = db.ScoreUpdates.Where(x => x.ChannelId == lobby.ChannelId && x.GameNumber == game.GameId).ToArray();
             foreach (var player in winners)
             {
                 var maxRank = ranks.Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
@@ -62,7 +63,7 @@ namespace ELO.Services
                 }
 
                 winnerUpdates.Add((player, updateVal, maxRank, state, newRank));
-                var oldUpdate = db.ScoreUpdates.FirstOrDefault(x => x.ChannelId == lobby.ChannelId && x.GameNumber == game.GameId && x.UserId == player.UserId);
+                var oldUpdate = scoreUpdates.FirstOrDefault(x => x.UserId == player.UserId);
                 if (oldUpdate == null)
                 {
                     var update = new ScoreUpdate
@@ -115,7 +116,7 @@ namespace ELO.Services
                 }
 
                 loserUpdates.Add((player, updateVal, maxRank, state, newRank));
-                var oldUpdate = db.ScoreUpdates.FirstOrDefault(x => x.ChannelId == lobby.ChannelId && x.GameNumber == game.GameId && x.UserId == player.UserId);
+                var oldUpdate = scoreUpdates.FirstOrDefault(x => x.UserId == player.UserId);
                 if (oldUpdate == null)
                 {
                     var update = new ScoreUpdate
