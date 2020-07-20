@@ -93,127 +93,133 @@ namespace ELO.Modules
             }
         }
 
-
         public virtual async Task UpdateTeamScoresAsync(bool win, HashSet<ulong> userIds)
         {
             using (var db = new Database())
             {
-                var competition = db.GetOrCreateCompetition(Context.Guild.Id);
-                var updates = new List<(Player, int, Rank, RankChangeState, Rank)>();
-                var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
-                var embed = new EmbedBuilder
+                using (var transaction = db.Database.BeginTransaction())
                 {
-                    Title = (win ? "Win" : "Lose") + $" Manual Game: #{competition.ManualGameCounter + 1}",
-                    Color = win ? Color.Green : Color.Red,
-                };
-
-                var sb = new StringBuilder();
-                foreach (var userId in userIds)
-                {
-                    var player = db.Players.Find(Context.Guild.Id, userId);
-                    if (player == null) continue;
-
-                    //This represents the current user's rank
-                    var maxRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
-
-                    int updateVal;
-                    RankChangeState state = RankChangeState.None;
-                    Rank newRank = null;
-
-                    if (win)
+                    try
                     {
-                        updateVal = maxRank?.WinModifier ?? competition.DefaultWinModifier;
-                        player.Points += updateVal;
-                        player.Wins++;
-                        newRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
-                        if (newRank != null)
+                        var competition = db.GetOrCreateCompetition(Context.Guild.Id);
+                        var updates = new List<(Player, int, Rank, RankChangeState, Rank)>();
+                        var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                        var embed = new EmbedBuilder
                         {
-                            if (maxRank == null)
-                            {
-                                state = RankChangeState.RankUp;
-                            }
-                            else if (newRank.RoleId != maxRank.RoleId)
-                            {
-                                state = RankChangeState.RankUp;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        //Loss modifier is always positive so subtract it
-                        updateVal = maxRank?.LossModifier ?? competition.DefaultLossModifier;
+                            Title = (win ? "Win" : "Lose") + $" Manual Game: #{competition.ManualGameCounter + 1}",
+                            Color = win ? Color.Green : Color.Red,
+                        };
+                        var players = db.Players.Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId)).ToArray();
 
-                        player.Points -= updateVal;
-                        if (!competition.AllowNegativeScore && player.Points < 0) player.Points = 0;
-                        player.Losses++;
-                        //Set the update value to a negative value for returning purposes.
-                        updateVal = -Math.Abs(updateVal);
-
-                        if (maxRank != null)
+                        var sb = new StringBuilder();
+                        foreach (var player in players)
                         {
-                            if (player.Points < maxRank.Points)
+                            //This represents the current user's rank
+                            var maxRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+
+                            int updateVal;
+                            RankChangeState state = RankChangeState.None;
+                            Rank newRank = null;
+
+                            if (win)
                             {
-                                state = RankChangeState.DeRank;
+                                updateVal = maxRank?.WinModifier ?? competition.DefaultWinModifier;
+                                player.Points += updateVal;
+                                player.Wins++;
                                 newRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                                if (newRank != null)
+                                {
+                                    if (maxRank == null)
+                                    {
+                                        state = RankChangeState.RankUp;
+                                    }
+                                    else if (newRank.RoleId != maxRank.RoleId)
+                                    {
+                                        state = RankChangeState.RankUp;
+                                    }
+                                }
                             }
+                            else
+                            {
+                                //Loss modifier is always positive so subtract it
+                                updateVal = maxRank?.LossModifier ?? competition.DefaultLossModifier;
+
+                                player.Points -= updateVal;
+                                if (!competition.AllowNegativeScore && player.Points < 0) player.Points = 0;
+                                player.Losses++;
+
+                                //Set the update value to a negative value for returning purposes.
+                                updateVal = -Math.Abs(updateVal);
+
+                                if (maxRank != null)
+                                {
+                                    if (player.Points < maxRank.Points)
+                                    {
+                                        state = RankChangeState.DeRank;
+                                        newRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                                    }
+                                }
+                            }
+
+                            updates.Add((player, updateVal, maxRank, state, newRank));
+                            db.Update(player);
+
+                            //Ignore user updates if they aren't found in the server.
+                            var gUser = Context.Guild.GetUser(player.UserId);
+                            if (gUser == null) continue;
+
+                            _ = Task.Run(async () => await UserService.UpdateUserAsync(competition, player, ranks, gUser));
+
+                            var rankUpdate = "";
+                            if (maxRank != null || newRank != null)
+                            {
+                                var oldRoleMention = maxRank == null ? "N/A" : MentionUtils.MentionRole(maxRank.RoleId);
+                                var newRoleMention = newRank == null ? "N/A" : MentionUtils.MentionRole(newRank.RoleId);
+                                rankUpdate = $" Rank: {oldRoleMention} => {newRoleMention}";
+                            }
+
+                            sb.AppendLine($"{gUser.Mention} Points: {player.Points} {(win ? "Added:" : "Removed:")} {updateVal}{rankUpdate}");
                         }
+
+                        //Update counter and save new competition config
+
+                        //Create new game info
+                        var vals = ((IQueryable<ManualGameResult>)db.ManualGameResults).Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                        var count = vals.Length == 0 ? 0 : vals.Max(x => x.GameId);
+                        var game = new ManualGameResult
+                        {
+                            GuildId = Context.Guild.Id,
+                            GameId = count + 1
+                        };
+
+                        competition.ManualGameCounter = game.GameId;
+                        db.Update(competition);
+                        game.Submitter = Context.User.Id;
+                        game.GameState = win ? ManualGameState.Win : ManualGameState.Lose;
+                        db.ManualGameResults.Add(game);
+                        db.SaveChanges();
+                        var maxId = db.ManualGameResults.Where(x => x.GuildId == Context.Guild.Id).Max(x => x.GameId);
+                        foreach (var upd in updates)
+                        {
+                            db.ManualGameScoreUpdates.Add(new ManualGameScoreUpdate
+                            {
+                                GuildId = Context.Guild.Id,
+                                ManualGameId = maxId,
+                                ModifyAmount = upd.Item2,
+                                UserId = upd.Item1.UserId
+                            });
+                        }
+
+                        embed.Description = sb.ToString();
+                        await ReplyAsync(embed);
+                        db.SaveChanges();
+                        transaction.Commit();
                     }
-
-                    updates.Add((player, updateVal, maxRank, state, newRank));
-                    db.Update(player);
-
-                    //Ignore user updates if they aren't found in the server.
-                    var gUser = Context.Guild.GetUser(userId);
-                    if (gUser == null) continue;
-
-                    var _ = Task.Run(async () => await UserService.UpdateUserAsync(competition, player, ranks, gUser));
-
-                    var rankUpdate = "";
-                    if (maxRank != null || newRank != null)
+                    catch (Exception)
                     {
-                        var oldRoleMention = maxRank == null ? "N/A" : MentionUtils.MentionRole(maxRank.RoleId);
-                        var newRoleMention = newRank == null ? "N/A" : MentionUtils.MentionRole(newRank.RoleId);
-                        rankUpdate = $" Rank: {oldRoleMention} => {newRoleMention}";
+                        await ReplyAsync("Error submitting game result");
                     }
-
-                    sb.AppendLine($"{gUser.Mention} Points: {player.Points} {(win ? "Added:" : "Removed:")} {updateVal}{rankUpdate}");
                 }
-
-                //Update counter and save new competition config
-
-
-                //Create new game info
-                var vals = ((IQueryable<ManualGameResult>)db.ManualGameResults).Where(x => x.GuildId == Context.Guild.Id).ToArray();
-                var count = vals.Length == 0 ? 0 : vals.Max(x => x.GameId);
-                var game = new ManualGameResult
-                {
-                    GuildId = Context.Guild.Id,
-                    GameId = count + 1 
-                };
-
-                competition.ManualGameCounter = game.GameId;
-                db.Update(competition);
-                game.Submitter = Context.User.Id;
-                game.GameState = win ? ManualGameState.Win : ManualGameState.Lose;
-                db.ManualGameResults.Add(game);
-                db.SaveChanges();
-                game = db.ManualGameResults.Where(x => x.GuildId == Context.Guild.Id).OrderByDescending(x => x.GameId).First();
-
-                foreach (var upd in updates)
-                {
-                    db.ManualGameScoreUpdates.Add(new ManualGameScoreUpdate
-                    {
-                        GuildId = Context.Guild.Id,
-                        ManualGameId = game.GameId,
-                        ModifyAmount = upd.Item2,
-                        UserId = upd.Item1.UserId
-                    });
-                }
-
-                embed.Description = sb.ToString();
-                db.SaveChanges();
-                //save scores
-                await ReplyAsync(embed);
             }
         }
     }
