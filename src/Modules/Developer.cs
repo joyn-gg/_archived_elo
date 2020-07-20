@@ -337,10 +337,17 @@ namespace ELO.Modules
         }*/
 
         [Command("PurgePermissionCache", RunMode = RunMode.Async)]
-        public async Task PurgeCache([Remainder]string url)
+        public async Task PurgeCache()
         {
-            ELO.Extensions.Extensions.RegistrationCache = new Dictionary<ulong, Dictionary<ulong, bool>>();
-            ELO.Services.PermissionService.PermissionCache = new Dictionary<ulong, PermissionService.CachedPermissions>();
+            ELO.Extensions.Extensions.RegCache.Clear();
+            ELO.Services.PermissionService.PermissionCache.Clear();
+            await ReplyAsync("Done.");
+        }
+
+        [Command("PurgePrefixCache", RunMode = RunMode.Async)]
+        public async Task PurgePrefixCache()
+        {
+            ELO.Handlers.ELOEventHandler.ClearPrefixCache();
             await ReplyAsync("Done.");
         }
 

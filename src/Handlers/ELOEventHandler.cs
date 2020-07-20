@@ -44,6 +44,31 @@ namespace ELO.Handlers
 
         public DiscordShardedClient Client { get; }
 
+        private static object pcLock = new object();
+
+        public static Dictionary<ulong, string> PrefixCache { get; set; } = new Dictionary<ulong, string>();
+
+        public static void ClearPrefixCache()
+        {
+            lock (pcLock)
+            {
+                PrefixCache.Clear();
+            }
+        }
+
+        public static void UpdatePrefix(ulong guildId, string prefix)
+        {
+            if (prefix == null)
+            {
+                prefix = Program.Prefix;
+            }
+
+            lock (pcLock)
+            {
+                PrefixCache[guildId] = prefix;
+            }
+        }
+
         public CommandService CommandService { get; }
 
         public ShardChecker ShardChecker { get; }
@@ -150,17 +175,32 @@ namespace ELO.Handlers
 
                 if (guildId != 0)
                 {
-                    //Check that the message was from a server and try to use a custom set prefix if available.
-                    using (var db = new Database())
+                    bool hasPrefixCached;
+                    string prefix;
+                    lock (PrefixCache)
                     {
-                        var comp = db.Competitions.FirstOrDefault(x => x.GuildId == guildId);
-                        var prefix = comp?.Prefix ?? Program.Prefix;
-                        if (!message.HasStringPrefix(prefix, ref argPos, StringComparison.InvariantCultureIgnoreCase))
+                        hasPrefixCached = PrefixCache.TryGetValue(guildId, out prefix);
+                    }
+
+                    if (!hasPrefixCached)
+                    {
+                        //Check that the message was from a server and try to use a custom set prefix if available.
+                        using (var db = new Database())
                         {
-                            if (!message.HasMentionPrefix(context.Client.CurrentUser, ref argPos))
+                            var comp = db.Competitions.FirstOrDefault(x => x.GuildId == guildId);
+                            prefix = comp?.Prefix ?? Program.Prefix;
+                            lock (PrefixCache)
                             {
-                                return;
+                                PrefixCache.Add(guildId, prefix);
                             }
+                        }
+                    }
+
+                    if (!message.HasStringPrefix(prefix, ref argPos, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        if (!message.HasMentionPrefix(context.Client.CurrentUser, ref argPos))
+                        {
+                            return;
                         }
                     }
                 }
