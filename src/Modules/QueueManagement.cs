@@ -47,17 +47,21 @@ namespace ELO.Modules
                     return;
                 }
 
-                var bans = db.Bans.Where(x => x.UserId == Context.User.Id && x.GuildId == Context.Guild.Id).ToArray().Where(x => !x.IsExpired).OrderByDescending(x => x.ExpiryTime).ToArray();
-                if (bans.Length != 0)
+                var now = DateTime.UtcNow;
+
+                var lastBan = db.Bans.Where(x => x.UserId == Context.User.Id && x.GuildId == Context.Guild.Id).ToArray()
+                    .Where(x => x.ManuallyDisabled == false && x.TimeOfBan + x.Length > now)
+                    .OrderByDescending(x => x.ExpiryTime)
+                    .FirstOrDefault();
+                if (lastBan != null)
                 {
-                    var latest = bans.First();
                     if (lobby.HideQueue)
                     {
                         await Context.Message.DeleteAsync();
-                        await SimpleEmbedAndDeleteAsync($"You are still banned from matchmaking for another: {RavenBOT.Common.Extensions.GetReadableLength(latest.RemainingTime)}", Color.Red, TimeSpan.FromSeconds(5));
+                        await SimpleEmbedAndDeleteAsync($"You are still banned from matchmaking for another: {lastBan.RemainingTime.GetReadableLength()}", Color.Red, TimeSpan.FromSeconds(5));
                         return;
                     }
-                    await SimpleEmbedAsync($"{Context.User.Mention} - You are still banned from matchmaking for another: {RavenBOT.Common.Extensions.GetReadableLength(latest.RemainingTime)}", Color.Red);
+                    await SimpleEmbedAsync($"{Context.User.Mention} - You are still banned from matchmaking for another: {lastBan.RemainingTime.GetReadableLength()}", Color.Red);
                     return;
                 }
 
