@@ -53,46 +53,39 @@ namespace ELO.Extensions
             lock (cacheLock)
             {
                 containsKey = RegCache.TryGetValue(key, out registered);
-            }
 
-            // User is not cached so query db and store result.
-            if (!containsKey)
-            {
-                using (var db = new Database())
+                // User is not cached so query db and store result.
+                if (!containsKey)
                 {
-                    player = db.Players.FirstOrDefault(x => x.GuildId == user.Guild.Id && x.UserId == user.Id);
-                }
+                    using (var db = new Database())
+                    {
+                        player = db.Players.FirstOrDefault(x => x.GuildId == user.Guild.Id && x.UserId == user.Id);
+                    }
 
-                lock (cacheLock)
-                {
                     registered = player != null;
                     RegCache[key] = registered;
                     return registered;
                 }
-            }
 
-            // Cached user is considered registered
-            if (registered)
-            {
-                using (var db = new Database())
+                // Cached user is considered registered
+                if (registered)
                 {
-                    player = db.Players.FirstOrDefault(x => x.GuildId == user.Guild.Id && x.UserId == user.Id);
-                }
+                    using (var db = new Database())
+                    {
+                        player = db.Players.FirstOrDefault(x => x.GuildId == user.Guild.Id && x.UserId == user.Id);
+                    }
 
-                // This will refresh the registration status of the user
-                registered = player != null;
+                    // This will refresh the registration status of the user
+                    registered = player != null;
 
-                lock (cacheLock)
-                {
                     RegCache[key] = registered;
+                    return registered;
                 }
 
-                return registered;
+                // Cached user is not registered so do not populate.
+                player = null;
+                return false;
             }
-
-            // Cached user is not registered so do not populate.
-            player = null;
-            return false;
         }
 
         /*
