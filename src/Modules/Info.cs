@@ -254,95 +254,82 @@ namespace ELO.Modules
         [Summary("Shows the current server-wide leaderboard.")]
         [RequirePermission(PermissionLevel.Registered)]
         [RateLimit(1, 10, Measure.Seconds, RateLimitFlags.ApplyPerGuild)]
-        public virtual async Task LeaderboardAsync(LeaderboardSortMode mode = LeaderboardSortMode.points)
+        public virtual async Task LeaderboardAsync(LeaderboardSortMode mode = LeaderboardSortMode.points, int page = 1)
         {
+            if (page <= 0)
+            {
+                page = 1;
+            }
+            else if (page > 1)
+            {
+                if (!Premium.IsPremium(Context.Guild.Id))
+                {
+                    await SimpleEmbedAsync($"In order to access a complete leaderboard, consider joining ELO premium at {Premium.PremiumConfig.AltLink}, " +
+                        $"patrons must also be members of the ELO server at: {Premium.PremiumConfig.ServerInvite}\n" +
+                        $"Free servers are limited to just the first page.");
+                    page = 1;
+                }
+            }
+
             using (var db = new Database())
             {
                 //Retrieve players in the current guild from database
                 var users = db.Players.AsNoTracking().Where(x => x.GuildId == Context.Guild.Id);
+                int pageSize = 20;
+                int skipCount = (page - 1) * pageSize;
 
                 //Order players by score and then split them into groups of 20 for pagination
-                IEnumerable<Player>[] userGroups;
+                Player[] players;
                 switch (mode)
                 {
                     case LeaderboardSortMode.point:
-                        userGroups = users.OrderByDescending(x => x.Points).SplitList(20).ToArray();
+                        players = users.OrderByDescending(x => x.Points).Skip(skipCount).Take(pageSize).ToArray();
                         break;
 
                     case LeaderboardSortMode.wins:
-                        userGroups = users.OrderByDescending(x => x.Wins).SplitList(20).ToArray();
+                        players = users.OrderByDescending(x => x.Wins).Skip(skipCount).Take(pageSize).ToArray();
                         break;
 
                     case LeaderboardSortMode.losses:
-                        userGroups = users.OrderByDescending(x => x.Losses).SplitList(20).ToArray();
+                        players = users.OrderByDescending(x => x.Losses).Skip(skipCount).Take(pageSize).ToArray();
                         break;
 
                     case LeaderboardSortMode.wlr:
-                        userGroups = users.OrderByDescending(x => x.Losses == 0 ? x.Wins : (double)x.Wins / x.Losses).SplitList(20).ToArray();
+                        players = users.OrderByDescending(x => x.Losses == 0 ? x.Wins : (double)x.Wins / x.Losses).Skip(skipCount).Take(pageSize).ToArray();
                         break;
 
                     case LeaderboardSortMode.games:
-                        userGroups = users.ToList().OrderByDescending(x => x.Games).SplitList(20).ToArray();
+                        players = users.OrderByDescending(x => x.Games).Skip(skipCount).Take(pageSize).ToArray();
                         break;
 
                     case LeaderboardSortMode.kills:
-                        userGroups = users.ToList().OrderByDescending(x => x.Kills).SplitList(20).ToArray();
+                        players = users.OrderByDescending(x => x.Kills).Skip(skipCount).Take(pageSize).ToArray();
                         break;
 
                     case LeaderboardSortMode.kdr:
-                        userGroups = users.ToList().OrderByDescending(x => ((double)x.Kills / (x.Deaths == 0 ? 1 : x.Deaths))).SplitList(20).ToArray();
+                        players = users.OrderByDescending(x => (double)x.Kills / (x.Deaths == 0 ? 1 : x.Deaths)).Skip(skipCount).Take(pageSize).ToArray();
                         break;
 
                     default:
                         return;
                 }
-                if (userGroups.Length == 0)
+                if (players.Length == 0)
                 {
-                    await SimpleEmbedAsync("There are no registered users in this server yet.", Color.Blue);
+                    await SimpleEmbedAsync("There are no players to display for this page of the leaderboard.", Color.Blue);
                     return;
                 }
 
-                //Convert the groups into formatted pages for the response message
-                var pages = GetPages(userGroups, mode);
+                var embed = new EmbedBuilder();
+                embed.Title = $"{Context.Guild.Name} - Leaderboard [{page}]";
+                embed.Color = Color.Blue;
+                embed.Description = GetPlayerLines(players, skipCount + 1, mode);
 
-                if (!Premium.IsPremium(Context.Guild.Id))
-                {
-                    pages = pages.Take(1).ToList();
-                    pages.Add(new ReactivePage
-                    {
-                        Description = $"In order to access a complete leaderboard, consider joining ELO premium at {Premium.PremiumConfig.AltLink}, patrons must also be members of the ELO server at: {Premium.PremiumConfig.ServerInvite}"
-                    });
-                }
-
-                //Construct a paginated message with each of the leaderboard pages
-                var callback = new ReactivePager(pages).ToCallBack();
-                callback.Precondition = async (x, y) => y.UserId == Context.User.Id;
-                await PagedReplyAsync(callback.WithDefaultPagerCallbacks().WithJump());
+                await ReplyAsync(embed.Build());
             }
-        }
-
-        public List<ReactivePage> GetPages(IEnumerable<Player>[] groups, LeaderboardSortMode mode)
-        {
-            //Start the index at 1 because we are ranking players here ie. first place.
-            int index = 1;
-            var pages = new List<ReactivePage>(groups.Length);
-            foreach (var group in groups)
-            {
-                var playerGroup = group.ToArray();
-                var lines = GetPlayerLines(playerGroup, index, mode);
-                index = lines.Item1;
-                var page = new ReactivePage();
-                page.Color = Color.Blue;
-                page.Title = $"{Context.Guild.Name} - Leaderboard";
-                page.Description = lines.Item2;
-                pages.Add(page);
-            }
-
-            return pages;
         }
 
         //Returns the updated index and the formatted player lines
-        public (int, string) GetPlayerLines(Player[] players, int startValue, LeaderboardSortMode mode)
+        public string GetPlayerLines(Player[] players, int startValue, LeaderboardSortMode mode)
         {
             var sb = new StringBuilder();
 
@@ -385,7 +372,7 @@ namespace ELO.Modules
             }
 
             //Return the updated start value and the list of player lines.
-            return (startValue, sb.ToString());
+            return sb.ToString();
         }
 
         private CommandInfo Command { get; set; }
