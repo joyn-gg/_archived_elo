@@ -69,7 +69,7 @@ namespace ELO.Services
 
         public Competition GetOrCreateCompetition(ulong guildId)
         {
-            var comp = Competitions.Find(guildId);
+            var comp = Competitions.FirstOrDefault(x => x.GuildId == guildId);
             if (comp == null)
             {
                 comp = new Competition(guildId);
@@ -103,6 +103,11 @@ namespace ELO.Services
         public GameResult GetLatestGame(Lobby lobby)
         {
             return GameResults.Where(x => x.LobbyId == lobby.ChannelId).OrderByDescending(x => x.GameId).FirstOrDefault();
+        }
+
+        public bool IsCurrentlyPicking(Lobby lobby)
+        {
+            return GameResults.FirstOrDefault(x => x.LobbyId == lobby.ChannelId && x.GameId == lobby.CurrentGameCount)?.GameState == GameState.Picking;
         }
 
         public TeamCaptain GetTeamCaptain(GameResult game, int teamId)
