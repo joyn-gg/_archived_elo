@@ -40,6 +40,7 @@ namespace ELO.Modules
 
         [Command("Lobby", RunMode = RunMode.Async)]
         [Summary("Displays information about the current lobby.")]
+        [RateLimit(1, 30, Measure.Seconds)]
         public virtual async Task LobbyInfoAsync()
         {
             using (var db = new Database())
@@ -57,9 +58,25 @@ namespace ELO.Modules
                 };
 
                 embed.AddField("Settings",
-                    $"**Players Per Team:** {lobby.PlayersPerTeam}\n" +
-                    $"**Pick Mode:** {lobby.TeamPickMode}\n" +
-                    $"{(lobby.MinimumPoints != null ? $"**Minimum Points to Queue:** {lobby.MinimumPoints}\n" : "")}");
+                    $"**Players per team:** {lobby.PlayersPerTeam}\n" +
+                    $"**Pick mode:** {lobby.TeamPickMode}\n" +
+                    $"**Host selection mode:** {lobby.HostSelectionMode}\n" +
+                    $"**Captain pick order:** {lobby.CaptainPickOrder}\n" +
+                    $"**Hide queue:** {lobby.HideQueue}\n\n" +
+
+                    $"**Minimum points to queue:** {(lobby.MinimumPoints.HasValue ? lobby.MinimumPoints.Value.ToString() : "N/A")}\n" +
+                    $"**Max Points before reduction multiplier (high limit):** {(lobby.HighLimit.HasValue ? lobby.HighLimit.Value.ToString() : "N/A")}\n" +
+                    $"**Reduction multiplier (high limit):** {lobby.ReductionPercent}\n\n" +
+
+                    $"**Apply points multiplier to lost points:** {lobby.MultiplyLossValue}\n" +
+                    $"**Points multiplier:** {lobby.LobbyMultiplier}\n\n" +
+
+                    $"**DM users on game ready:** {lobby.DmUsersOnGameReady}\n" +
+                    $"**Mention users in ready announcement:** {lobby.MentionUsersInReadyAnnouncement}\n" +
+                    $"**Ready announcement channel:** " +
+                    $"{(lobby.GameReadyAnnouncementChannel.HasValue ? MentionUtils.MentionChannel(lobby.GameReadyAnnouncementChannel.Value) : "N/A")}\n" +
+                    $"**Result announcement channel:** " +
+                    $"{(lobby.GameResultAnnouncementChannel.HasValue ? MentionUtils.MentionChannel(lobby.GameResultAnnouncementChannel.Value) : "N/A")}\n");
 
                 var maps = db.Maps.Where(x => x.ChannelId == Context.Channel.Id).AsNoTracking().ToArray();
                 if (maps.Length != 0)

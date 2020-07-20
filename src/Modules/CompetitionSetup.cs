@@ -197,6 +197,7 @@ namespace ELO.Modules
         [Command("CompetitionInfo", RunMode = RunMode.Async)]
         [Alias("CompetitionSettings")]
         [Summary("Displays information about the current servers competition settings")]
+        [RateLimit(1, 1, Measure.Minutes, RateLimitFlags.ApplyPerGuild)]
         public virtual async Task CompetitionInfo()
         {
             using (var db = new Database())
@@ -206,6 +207,12 @@ namespace ELO.Modules
                 {
                     Color = Color.Blue
                 };
+
+                var registered = ((IQueryable<Player>)db.Players).Count(x => x.GuildId == Context.Guild.Id);
+                var gameCount = ((IQueryable<GameResult>)db.GameResults).Count(x => x.GuildId == Context.Guild.Id);
+                var decGameCount = ((IQueryable<GameResult>)db.GameResults).Count(x => x.GuildId == Context.Guild.Id && (x.GameState == GameState.Decided || x.GameState == GameState.Draw));
+                var manualGameCount = ((IQueryable<ManualGameResult>)db.ManualGameResults).Count(x => x.GuildId == Context.Guild.Id);
+
                 embed.AddField("Roles",
                             $"**Register Role:** {(comp.RegisteredRankId == null ? "N/A" : MentionUtils.MentionRole(comp.RegisteredRankId.Value))}\n" +
                             $"**Admin Role:** {(comp.AdminRole == null ? "N/A" : MentionUtils.MentionRole(comp.AdminRole.Value))}\n" +
@@ -217,13 +224,27 @@ namespace ELO.Modules
                             $"**Display Error Messages:** {comp.DisplayErrors}\n" +
                             $"**Allow Self Rename:** {comp.AllowSelfRename}\n" +
                             $"**Allow Re-registering:** {comp.AllowReRegister}\n" +
-                            $"**Requeue Delay:** {(comp.RequeueDelay.HasValue ? comp.RequeueDelay.Value.GetReadableLength() : "None")}");
+                            $"**Requeue Delay:** {(comp.RequeueDelay.HasValue ? comp.RequeueDelay.Value.GetReadableLength() : "None")}\n" +
+                            $"**Voting Enabled:** {comp.AllowVoting}\n" +
+                            $"**Custom Prefix:** {comp.Prefix ?? "N/A"}\n" +
+                            $"**Auto Queue Timeout:** {(comp.QueueTimeout.HasValue ? comp.QueueTimeout.Value.GetReadableLength() : "None")}");
 
-                //embed.AddField("Stats",
-                //            $"**Registered User Count:** {comp.RegistrationCount}\n" +
-                //            $"**Manual Game Count:** {comp.ManualGameCounter}");
+                embed.AddField("Premium",
+                            $"**Premium Buffer Until:** " +
+                            $"{(comp.PremiumBuffer.HasValue ? comp.PremiumBuffer.Value.ToShortDateString() + " " + comp.PremiumBuffer.Value.ToShortTimeString() : "N/A")}\n" +
+                            $"**Premium Buffer Count:** {(comp.BufferedPremiumCount.HasValue ? comp.BufferedPremiumCount.Value.ToString() : "N/A")}\n" +
+                            $"**Premium Redeemer:** {(comp.PremiumRedeemer.HasValue ? MentionUtils.MentionUser(comp.PremiumRedeemer.Value) : "N/A")}\n" +
+                            $"**Registration Limit:** {Premium.GetRegistrationLimit(Context.Guild.Id)}");
+
+                embed.AddField("Stats",
+                    $"**Registrations:** {registered}\n" +
+                    $"**Games Created:** {gameCount}\n" +
+                    $"**Games Submitted:** {decGameCount}\n" +
+                    $"**Manual Games:** {manualGameCount}");
+
                 embed.AddField("Formatting", $"**Nickname Format:** {comp.NameFormat}\n" +
-                            $"**Registration Message:** {comp.RegisterMessageTemplate}");
+                            $"**Registration Message:** {comp.RegisterMessageTemplate.FixLength(128)}");
+
                 embed.AddField("Rank Info",
                 $"**Default Win Amount:** +{comp.DefaultWinModifier}\n" +
                 $"**Default Loss Amount:** -{comp.DefaultLossModifier}\n" +
