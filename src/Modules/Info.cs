@@ -286,6 +286,7 @@ namespace ELO.Modules
             {
                 //Retrieve players in the current guild from database
                 var users = db.Players.AsNoTracking().Where(x => x.GuildId == Context.Guild.Id);
+                int count = users.Count();
                 int pageSize = 20;
                 int skipCount = (page - 1) * pageSize;
 
@@ -310,7 +311,7 @@ namespace ELO.Modules
                         break;
 
                     case LeaderboardSortMode.games:
-                        players = users.OrderByDescending(x => x.Games).Skip(skipCount).Take(pageSize).ToArray();
+                        players = users.OrderByDescending(x => x.Draws + x.Wins + x.Losses).Skip(skipCount).Take(pageSize).ToArray();
                         break;
 
                     case LeaderboardSortMode.kills:
@@ -334,6 +335,7 @@ namespace ELO.Modules
                 embed.Title = $"{Context.Guild.Name} - Leaderboard [{page}]";
                 embed.Color = Color.Blue;
                 embed.Description = GetPlayerLines(players, skipCount + 1, mode);
+                embed.WithFooter($"{count} users");
 
                 await ReplyAsync(embed.Build());
             }
