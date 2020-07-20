@@ -20,7 +20,6 @@ namespace ELO.Services
                 {
                     resStr += $"Players: {string.Join("\n", RavenBOT.Common.Extensions.GetUserMentionList(players))}";
                 }
-
             }
             else
             {
@@ -29,7 +28,7 @@ namespace ELO.Services
 
             if (string.IsNullOrWhiteSpace(resStr))
             {
-                resStr = "UwU";
+                resStr = "This team is empty.";
             }
             return resStr;
         }
@@ -95,18 +94,22 @@ namespace ELO.Services
                             desc += "**State:** Cancelled\n";
                             embed.Color = Color.DarkOrange;
                             break;
+
                         case GameState.Draw:
                             desc += "**State:** Draw\n";
                             embed.Color = Color.Gold;
                             break;
+
                         case GameState.Picking:
                             remainingPlayers = true;
                             embed.Color = Color.Magenta;
                             break;
+
                         case GameState.Decided:
                             winningteam = true;
                             embed.Color = Color.Green;
                             break;
+
                         case GameState.Undecided:
                             break;
                     }
@@ -151,11 +154,10 @@ namespace ELO.Services
 
                 embed.Description = desc;
 
-
-
                 return (message, embed);
             }
         }
+
         public (string, EmbedBuilder) GetGameMessage(GameResult game, HashSet<ulong> queue, HashSet<ulong> team1p, HashSet<ulong> team2p, string title = null, params GameFlag[] flags)
         {
             bool usermentions = flags.Contains(GameFlag.usermentions);
@@ -211,18 +213,22 @@ namespace ELO.Services
                         desc += "**State:** Cancelled\n";
                         embed.Color = Color.DarkOrange;
                         break;
+
                     case GameState.Draw:
                         desc += "**State:** Draw\n";
                         embed.Color = Color.Gold;
                         break;
+
                     case GameState.Picking:
                         remainingPlayers = true;
                         embed.Color = Color.Magenta;
                         break;
+
                     case GameState.Decided:
                         winningteam = true;
                         embed.Color = Color.Green;
                         break;
+
                     case GameState.Undecided:
                         break;
                 }
@@ -263,10 +269,7 @@ namespace ELO.Services
 
             embed.Description = desc;
 
-
-
             return (message, embed);
-
         }
 
         public EmbedBuilder GetGameEmbed(ManualGameResult game)
