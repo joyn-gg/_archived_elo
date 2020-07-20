@@ -60,15 +60,22 @@ namespace ELO.Handlers
                             //Wait for either the command to finish or 30 seconds to pass.
                             Task.WaitAny(Service.ExecuteAsync(context.Item1, context.Item2, Provider), Task.Delay(30000));
                         }
-                        catch (Exception e)
+                        catch
                         {
-                            //
+                            Console.WriteLine($"Exception thrown in command processor loop for guild: {GuildId}");
+                        }
+
+                        if (Queue.Count > 100)
+                        {
+                            Queue.Clear();
+                            Console.WriteLine($"Execution delay for guild {GuildId} too long, cleared queue");
                         }
                     }
                 }
-                catch (Exception e)
+                catch
                 {
                     // Console.WriteLine(e);
+                    Console.WriteLine($"Exception thrown in command processor for guild: {GuildId}");
                 }
                 finally
                 {
