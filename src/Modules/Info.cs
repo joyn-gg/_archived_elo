@@ -254,6 +254,17 @@ namespace ELO.Modules
         [Summary("Shows the current server-wide leaderboard.")]
         [RequirePermission(PermissionLevel.Registered)]
         [RateLimit(1, 10, Measure.Seconds, RateLimitFlags.ApplyPerGuild)]
+        [Priority(1)]
+        public virtual Task LeaderboardAsync(int page = 1)
+        {
+            return LeaderboardAsync(LeaderboardSortMode.points, page);
+        }
+
+        [Command("Leaderboard", RunMode = RunMode.Async)]
+        [Alias("lb", "top20")]
+        [Summary("Shows the current server-wide leaderboard.")]
+        [RequirePermission(PermissionLevel.Registered)]
+        [RateLimit(1, 10, Measure.Seconds, RateLimitFlags.ApplyPerGuild)]
         public virtual async Task LeaderboardAsync(LeaderboardSortMode mode = LeaderboardSortMode.points, int page = 1)
         {
             if (page <= 0)
