@@ -334,6 +334,13 @@ namespace ELO.Modules
         [Summary("Picks the specified player(s) for your team.")]
         public virtual async Task PickPlayersAsync(params SocketGuildUser[] users)
         {
+            var ids = users.Select(x => x.Id).ToHashSet();
+            if (ids.Count != users.Length)
+            {
+                await SimpleEmbedAsync("You cannot specify the same user multiple times.");
+                return;
+            }
+
             using (var db = new Database())
             {
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
