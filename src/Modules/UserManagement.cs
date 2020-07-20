@@ -7,6 +7,7 @@ using ELO.Preconditions;
 using ELO.Services;
 using RavenBOT.Common;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -41,35 +42,37 @@ namespace ELO.Modules
                     return;
                 }
 
-                //Show bans in order of which is soonest to expire
-                var pages2 = bans.Where(x => x.IsExpired == false).OrderBy(x => x.RemainingTime).SplitList(5).Select(x =>
-                {
-                    var page = new ReactivePage();
+                var bansS = bans.Where(x => x.IsExpired == false).OrderBy(x => x.RemainingTime).SplitList(5).ToArray();
 
-                    page.Fields = x.Select(p =>
-                    {
-                        var user = db.Players.Find(Context.Guild.Id, p.UserId);
-                        var field = new EmbedFieldBuilder
-                        {
-                            Name = user?.GetDisplayNameSafe() ?? p.UserId.ToString(),
-                            Value = $"**User:** {MentionUtils.MentionUser(p.UserId)}\n" +
-                            $"**Banned at:**  {p.ExpiryTime.ToString("dd MMM yyyy")}\n" +
-                            $"**Ban Length:** {p.Length.GetReadableLength()}\n" +
-                            $"**Expires in:** {p.RemainingTime.GetReadableLength()}\n" +
-                            $"**Banned by:** {MentionUtils.MentionUser(p.Moderator)}\n" +
-                            $"**Reason:** {p.Comment ?? "N/A"}"
-                        };
-
-                        return field;
-                    }).ToList();
-                    return page;
-                });
-                if (!pages2.Any())
+                if (bansS.Length == 0)
                 {
                     await SimpleEmbedAsync("There are no players currently banned. Use the `Allbans` command to lookup all player bans.");
                     return;
                 }
-                var pager2 = new ReactivePager(pages2);
+
+                var pages = new List<ReactivePage>();
+                foreach (var banGroup in bansS)
+                {
+                    var page = new ReactivePage();
+                    page.Fields = new List<EmbedFieldBuilder>();
+                    foreach (var ban in banGroup)
+                    {
+                        var user = db.Players.Find(Context.Guild.Id, ban.UserId);
+                        page.Fields.Add(new EmbedFieldBuilder
+                        {
+                            Name = user?.DisplayName ?? ban.UserId.ToString(),
+                            Value = $"**User:** {MentionUtils.MentionUser(ban.UserId)}\n" +
+                            $"**Banned at:**  {ban.ExpiryTime.ToString("dd MMM yyyy")}\n" +
+                            $"**Ban Length:** {ban.Length.GetReadableLength()}\n" +
+                            $"**Expires in:** {ban.RemainingTime.GetReadableLength()}\n" +
+                            $"**Banned By:** {MentionUtils.MentionUser(ban.Moderator)}\n" +
+                            $"**Reason:** {ban.Comment ?? "N/A"}\n".FixLength(512)
+                        });
+                    }
+                    pages.Add(page);
+                }
+
+                var pager2 = new ReactivePager(pages);
                 await PagedReplyAsync(pager2.ToCallBack().WithDefaultPagerCallbacks());
             }
         }
@@ -87,30 +90,32 @@ namespace ELO.Modules
                     return;
                 }
 
-                var pages2 = bans.OrderBy(x => x.RemainingTime).SplitList(5).Select(x =>
+                var bansS = bans.OrderBy(x => x.RemainingTime).SplitList(5).ToArray();
+
+                var pages = new List<ReactivePage>();
+                foreach (var banGroup in bansS)
                 {
                     var page = new ReactivePage();
-
-                    page.Fields = x.Select(p =>
+                    page.Fields = new List<EmbedFieldBuilder>();
+                    foreach (var ban in banGroup)
                     {
-                        var user = db.Players.Find(Context.Guild.Id, p.UserId);
-                        var field = new EmbedFieldBuilder
+                        var user = db.Players.Find(Context.Guild.Id, ban.UserId);
+                        page.Fields.Add(new EmbedFieldBuilder
                         {
-                            Name = user?.DisplayName ?? p.UserId.ToString(),
-                            Value = $"**User:** {MentionUtils.MentionUser(p.UserId)}\n" +
-                            $"**Banned at:**  {p.ExpiryTime.ToString("dd MMM yyyy")}\n" +
-                            $"**Ban Length:** {p.Length.GetReadableLength()}\n" +
-                            $"**Banned By:** {MentionUtils.MentionUser(p.Moderator)}\n" +
-                            $"**Manually Disabled:** {p.ManuallyDisabled}\n" +
-                            $"**Reason:** {p.Comment ?? "N/A"}\n" +
-                            $"**Expired:** {p.IsExpired}"
-                        };
+                            Name = user?.DisplayName ?? ban.UserId.ToString(),
+                            Value = $"**User:** {MentionUtils.MentionUser(ban.UserId)}\n" +
+                            $"**Banned at:**  {ban.ExpiryTime.ToString("dd MMM yyyy")}\n" +
+                            $"**Ban Length:** {ban.Length.GetReadableLength()}\n" +
+                            $"**Banned By:** {MentionUtils.MentionUser(ban.Moderator)}\n" +
+                            $"**Manually Disabled:** {ban.ManuallyDisabled}\n" +
+                            $"**Expired:** {ban.IsExpired}\n" +
+                            $"**Reason:** {ban.Comment ?? "N/A"}".FixLength(512)
+                        });
+                    }
+                    pages.Add(page);
+                }
 
-                        return field;
-                    }).ToList();
-                    return page;
-                });
-                var pager2 = new ReactivePager(pages2);
+                var pager2 = new ReactivePager(pages);
                 await PagedReplyAsync(pager2.ToCallBack().WithDefaultPagerCallbacks());
             }
         }
