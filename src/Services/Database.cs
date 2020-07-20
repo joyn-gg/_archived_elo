@@ -127,11 +127,15 @@ namespace ELO.Services
 
         public HashSet<ulong> GetTeamFull(GameResult game, int teamNumber)
         {
-            var cap = TeamCaptains.FirstOrDefault(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == teamNumber);
-            var players = TeamPlayers.Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == teamNumber).Select(x => x.UserId).ToHashSet();
-            if (cap != null)
+            ulong cap = default;
+            if (game.GamePickMode == PickMode.Captains_HighestRanked || game.GamePickMode == PickMode.Captains_Random || game.GamePickMode == PickMode.Captains_RandomHighestRanked)
             {
-                players.Add(cap.UserId);
+                cap = TeamCaptains.Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == teamNumber).Select(x => x.UserId).FirstOrDefault();
+            }
+            var players = TeamPlayers.Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == teamNumber).Select(x => x.UserId).ToHashSet();
+            if (cap != default)
+            {
+                players.Add(cap);
             }
             return players;
         }
