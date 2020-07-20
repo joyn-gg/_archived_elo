@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using RavenBOT.Common;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -189,6 +190,33 @@ namespace ELO.Services
                 if (patreonGuild == null) return;
                 await patreonGuild.DownloadUsersAsync();
             });
+        }
+
+        private object bpcLock = new object();
+
+        private Dictionary<ulong, (int, bool)> basicPremiumCache = new Dictionary<ulong, (int, bool)>();
+
+        public bool IsPremiumSimple(ulong guildId)
+        {
+            lock (bpcLock)
+            {
+                if (basicPremiumCache.TryGetValue(guildId, out var requestCount))
+                {
+                    // 0,10,20..
+                    if (requestCount.Item1 % 10 == 0)
+                    {
+                        requestCount.Item2 = IsPremium(guildId);
+                    }
+                    basicPremiumCache[guildId] = (requestCount.Item1 + 1, requestCount.Item2);
+                    return requestCount.Item2;
+                }
+                else
+                {
+                    var isPrem = IsPremium(guildId);
+                    basicPremiumCache.Add(guildId, (1, isPrem));
+                    return isPrem;
+                }
+            }
         }
 
         public bool IsPremium(ulong guildId)

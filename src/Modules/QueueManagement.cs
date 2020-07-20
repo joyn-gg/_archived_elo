@@ -112,20 +112,16 @@ namespace ELO.Modules
                     }
                 }
 
-                var currentGame = db.GetLatestGame(lobby);
-                if (currentGame != null)
+                if (db.IsCurrentlyPicking(lobby))
                 {
-                    if (currentGame.GameState == GameState.Picking)
+                    if (lobby.HideQueue)
                     {
-                        if (lobby.HideQueue)
-                        {
-                            await Context.Message.DeleteAsync();
-                            await SimpleEmbedAndDeleteAsync("Current game is picking teams, wait until this is completed.", Color.DarkBlue, TimeSpan.FromSeconds(5));
-                            return;
-                        }
-                        await SimpleEmbedAsync("Current game is picking teams, wait until this is completed.", Color.DarkBlue);
+                        await Context.Message.DeleteAsync();
+                        await SimpleEmbedAndDeleteAsync("Current game is picking teams, wait until this is completed.", Color.DarkBlue, TimeSpan.FromSeconds(5));
                         return;
                     }
+                    await SimpleEmbedAsync("Current game is picking teams, wait until this is completed.", Color.DarkBlue);
+                    return;
                 }
 
                 if (queue.Any(x => x.UserId == Context.User.Id))
@@ -200,7 +196,7 @@ namespace ELO.Modules
                     }
                     else
                     {
-                        if (Premium.IsPremium(Context.Guild.Id))
+                        if (Premium.IsPremiumSimple(Context.Guild.Id))
                         {
                             await SimpleEmbedAsync($"{player.GetDisplayNameSafe()} joined the queue. **[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]**", Color.Green);
                         }
