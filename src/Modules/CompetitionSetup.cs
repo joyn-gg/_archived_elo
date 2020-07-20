@@ -31,6 +31,7 @@ namespace ELO.Modules
                 comp.Prefix = prefix;
                 db.Update(comp);
                 db.SaveChanges();
+                ELO.Handlers.ELOEventHandler.PrefixCache[Context.Guild.Id] = prefix;
                 await SimpleEmbedAsync($"Prefix has been set to `{prefix ?? "Default"}`");
             }
         }
@@ -686,7 +687,7 @@ namespace ELO.Modules
                 var missing = players.Where(x => Context.Guild.GetUser(x.UserId) == null).ToArray();
                 db.Players.RemoveRange(missing);
                 db.SaveChanges();
-                Extensions.Extensions.RegistrationCache.Clear();
+                Extensions.Extensions.RegCache.Clear();
 
                 await SimpleEmbedAsync($"Removed {missing.Length} registrations.", Color.Green);
             }

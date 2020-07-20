@@ -2,15 +2,85 @@
 using ELO.Models;
 using ELO.Services;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ELO.Extensions
 {
     public static class Extensions
     {
-        public static Dictionary<ulong, Dictionary<ulong, bool>> RegistrationCache = new Dictionary<ulong, Dictionary<ulong, bool>>();
+        // public static Dictionary<ulong, Dictionary<ulong, bool>> RegistrationCache = new Dictionary<ulong, Dictionary<ulong, bool>>();
 
         private static object cacheLock = new object();
 
+        public static Dictionary<(ulong guildId, ulong userId), bool> RegCache = new Dictionary<(ulong guildId, ulong userId), bool>();
+
+        public static void SetRegistrationState(ulong guildId, ulong userId, bool state)
+        {
+            lock (cacheLock)
+            {
+                var key = (guildId, userId);
+                RegCache[key] = state;
+            }
+        }
+
+        public static bool IsRegistered(this SocketGuildUser user, out Player player, bool required = true)
+        {
+            var key = (user.Guild.Id, user.Id);
+            bool containsKey;
+            bool registered;
+            lock (cacheLock)
+            {
+                containsKey = RegCache.TryGetValue(key, out registered);
+            }
+
+            // User is not cached so query db and store result.
+            if (!containsKey)
+            {
+                using (var db = new Database())
+                {
+                    player = db.Players.FirstOrDefault(x => x.GuildId == user.Guild.Id && x.UserId == user.Id);
+                }
+
+                lock (cacheLock)
+                {
+                    var result = player != null;
+                    RegCache[key] = result;
+                    return result;
+                }
+            }
+
+            // Cached user is considered registered
+            if (registered)
+            {
+                bool result;
+                if (required)
+                {
+                    using (var db = new Database())
+                    {
+                        player = db.Players.FirstOrDefault(x => x.GuildId == user.Guild.Id && x.UserId == user.Id);
+                    }
+                    result = player != null;
+
+                    lock (cacheLock)
+                    {
+                        RegCache[key] = result;
+                    }
+                }
+                else
+                {
+                    player = null;
+                    result = registered;
+                }
+
+                return result;
+            }
+
+            // Cached user is not registered so do not populate.
+            player = null;
+            return false;
+        }
+
+        /*
         public static bool IsRegistered(this SocketGuildUser user, out Player player, bool required = true)
         {
             //Create a new db session.
@@ -66,6 +136,6 @@ namespace ELO.Extensions
                     }
                 }
             }
-        }
+        }*/
     }
 }
