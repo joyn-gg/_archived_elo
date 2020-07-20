@@ -77,8 +77,17 @@ namespace ELO.Services
                 await context.Channel.SendMessageAsync("", false, "Queue is full. Picking teams...".QuickEmbed(Color.Blue));
 
                 //Increment the game counter as there is now a new game.
-                var vals = ((IQueryable<GameResult>)db.GameResults).Where(x => x.LobbyId == lobby.ChannelId).ToArray();
-                lobby.CurrentGameCount = vals.Length == 0 ? 1 : vals.Max(x => x.GameId) + 1;
+                int maxId;
+                try
+                {
+                    maxId = db.GameResults.Where(x => x.LobbyId == lobby.ChannelId).Max(x => x.GameId);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    // Empty collection catch.
+                    maxId = 0;
+                }
+                lobby.CurrentGameCount = maxId + 1;
                 var game = new GameResult
                 {
                     LobbyId = lobby.ChannelId,
