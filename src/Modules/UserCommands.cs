@@ -208,9 +208,9 @@ namespace ELO.Modules
                     };
                     db.Players.Add(user);
                     db.SaveChanges();
+                    Extensions.Extensions.SetRegistrationState(Context.Guild.Id, user.GuildId, true);
                 }
 
-                Extensions.Extensions.SetRegistrationState(Context.Guild.Id, user.GuildId, true);
                 var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
                 var responses = await UserService.UpdateUserAsync(comp, user, ranks, regUser);
 
