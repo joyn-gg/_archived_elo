@@ -865,7 +865,7 @@ namespace ELO.Modules
         {
             if (timeout.HasValue && timeout < TimeSpan.FromMinutes(10))
             {
-                await SimpleEmbedAsync("Minimum timeout legth is 10 minutes.");
+                await SimpleEmbedAsync("Minimum timeout length is 10 minutes.");
                 return;
             }
 
