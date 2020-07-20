@@ -15,9 +15,9 @@ namespace ELO.Services
             Client = client;
             Checker = checker;
             Premium = premium;
-            UserService = userService; 
-            Client.ReactionAdded += Client_ReactionAdded;
+            UserService = userService;
 
+            // Client.ReactionAdded += Client_ReactionAdded;
         }
 
         private Task Checker_AllShardsReady()
@@ -25,6 +25,7 @@ namespace ELO.Services
             return Task.CompletedTask;
         }
 
+        /*
         private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> messageCache, ISocketMessageChannel channel, SocketReaction reaction)
         {
             if (reaction.Emote.Name != registrationConfirmEmoji.Name) return;
@@ -73,9 +74,14 @@ namespace ELO.Services
                 }
             });
         }
+        */
+
         public DiscordShardedClient Client { get; }
+
         public ShardChecker Checker { get; }
+
         public PremiumService Premium { get; }
+
         public UserService UserService { get; }
 
         public static readonly Emoji registrationConfirmEmoji = new Emoji("✅");

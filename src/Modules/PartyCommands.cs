@@ -23,17 +23,17 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                if (!(Context.User as SocketGuildUser).IsRegistered(out var player))
+                if (!(Context.User as SocketGuildUser).IsRegistered())
                 {
                     await SimpleEmbedAsync("You are not registered.");
                     return;
                 }
-                if (!user.IsRegistered(out var _))
+                if (!user.IsRegistered())
                 {
                     await SimpleEmbedAsync("User is not registered.");
                     return;
                 }
-                
+
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
@@ -111,17 +111,16 @@ namespace ELO.Modules
         [Command("ForceDuo", RunMode = RunMode.Sync)]
         [Summary("Join the queue with another user in the current lobby.")]
         [RequirePermission(PermissionLevel.ELOAdmin)]
-
         public virtual async Task JoinLobbyAsync(SocketGuildUser host, SocketGuildUser user)
         {
             using (var db = new Database())
             {
-                if (!host.IsRegistered(out var _))
+                if (!host.IsRegistered())
                 {
                     await SimpleEmbedAsync("Host is not registered.");
                     return;
                 }
-                if (!user.IsRegistered(out var _))
+                if (!user.IsRegistered())
                 {
                     await SimpleEmbedAsync("User is not registered.");
                     return;
@@ -176,7 +175,6 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
@@ -207,7 +205,6 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
@@ -235,7 +232,6 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {

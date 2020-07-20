@@ -13,6 +13,7 @@ namespace ELO.Preconditions
     public class RequirePermission : PreconditionBase
     {
         private readonly PermissionLevel Level;
+
         public RequirePermission(PermissionLevel level)
         {
             if (level == PermissionLevel.Default) throw new Exception("Cannot use default as the default value.");
@@ -67,7 +68,7 @@ namespace ELO.Preconditions
             {
                 if (Level == PermissionLevel.Registered)
                 {
-                    if (gUser.IsRegistered(out var _, false))
+                    if (gUser.IsRegistered())
                     {
                         return PreconditionResult.FromSuccess();
                     }

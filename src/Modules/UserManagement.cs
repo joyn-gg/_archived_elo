@@ -124,12 +124,6 @@ namespace ELO.Modules
         [Summary("Unbans the specified user.")]
         public virtual async Task Unban(SocketGuildUser user)
         {
-            if (!user.IsRegistered(out var player))
-            {
-                await SimpleEmbedAndDeleteAsync("Player is not registered.", Color.Red);
-                return;
-            }
-
             using (var db = new Database())
             {
                 var bans = db.Bans.Where(x => x.GuildId == Context.Guild.Id && x.UserId == user.Id).ToList();

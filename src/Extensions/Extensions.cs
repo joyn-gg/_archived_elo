@@ -23,7 +23,29 @@ namespace ELO.Extensions
             }
         }
 
-        public static bool IsRegistered(this SocketGuildUser user, out Player player, bool required = true)
+        public static bool IsRegistered(this SocketGuildUser user)
+        {
+            var key = (user.Guild.Id, user.Id);
+
+            lock (cacheLock)
+            {
+                if (RegCache.TryGetValue(key, out bool registered))
+                {
+                    return registered;
+                }
+                else
+                {
+                    using (var db = new Database())
+                    {
+                        var playerExists = db.Players.Any(x => x.GuildId == user.Guild.Id && x.UserId == user.Id);
+                        RegCache[key] = playerExists;
+                        return playerExists;
+                    }
+                }
+            }
+        }
+
+        public static bool IsRegistered(this SocketGuildUser user, out Player player)
         {
             var key = (user.Guild.Id, user.Id);
             bool containsKey;
@@ -43,36 +65,29 @@ namespace ELO.Extensions
 
                 lock (cacheLock)
                 {
-                    var result = player != null;
-                    RegCache[key] = result;
-                    return result;
+                    registered = player != null;
+                    RegCache[key] = registered;
+                    return registered;
                 }
             }
 
             // Cached user is considered registered
             if (registered)
             {
-                bool result;
-                if (required)
+                using (var db = new Database())
                 {
-                    using (var db = new Database())
-                    {
-                        player = db.Players.FirstOrDefault(x => x.GuildId == user.Guild.Id && x.UserId == user.Id);
-                    }
-                    result = player != null;
-
-                    lock (cacheLock)
-                    {
-                        RegCache[key] = result;
-                    }
-                }
-                else
-                {
-                    player = null;
-                    result = registered;
+                    player = db.Players.FirstOrDefault(x => x.GuildId == user.Guild.Id && x.UserId == user.Id);
                 }
 
-                return result;
+                // This will refresh the registration status of the user
+                registered = player != null;
+
+                lock (cacheLock)
+                {
+                    RegCache[key] = registered;
+                }
+
+                return registered;
             }
 
             // Cached user is not registered so do not populate.

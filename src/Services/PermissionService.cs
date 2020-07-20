@@ -14,13 +14,17 @@ namespace ELO.Services
         }
 
         public bool PermissionBypass = false;
+
         public ulong OwnerId = 0;
+
         public static Dictionary<ulong, CachedPermissions> PermissionCache = new Dictionary<ulong, CachedPermissions>();
 
         public class CachedPermissions
         {
             public ulong GuildId;
+
             public ulong? AdminId = null;
+
             public ulong? ModId = null;
 
             public Dictionary<string, CachedPermission> Cache = new Dictionary<string, CachedPermission>();
@@ -28,6 +32,7 @@ namespace ELO.Services
             public class CachedPermission
             {
                 public string CommandName;
+
                 public PermissionLevel Level;
             }
         }
@@ -126,7 +131,7 @@ namespace ELO.Services
                 if (permission.Level == PermissionLevel.Default) return (null, guildCache, null);
                 if (permission.Level == PermissionLevel.Registered)
                 {
-                    return (user.IsRegistered(out var _, false), guildCache, permission);
+                    return (user.IsRegistered(), guildCache, permission);
                 }
             }
             if (permission.Level == PermissionLevel.Moderator)

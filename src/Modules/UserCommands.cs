@@ -128,7 +128,26 @@ namespace ELO.Modules
             {
                 var comp = db.GetOrCreateCompetition(Context.Guild.Id);
 
-                if (!(regUser as SocketGuildUser).IsRegistered(out var user))
+                if ((regUser as SocketGuildUser).IsRegistered(out var user))
+                {
+                    if (!comp.AllowReRegister)
+                    {
+                        if (regUser.Id != Context.User.Id)
+                        {
+                            await SimpleEmbedAndDeleteAsync($"{regUser.Mention} is already registered.", Color.Red);
+                        }
+                        else
+                        {
+                            await SimpleEmbedAndDeleteAsync("You are not allowed to re-register.", Color.Red);
+                        }
+                        return true;
+                    }
+
+                    user.DisplayName = name;
+                    db.Players.Update(user);
+                    db.SaveChanges();
+                }
+                else
                 {
                     var registered = ((IQueryable<Player>)db.Players).Count(x => x.GuildId == Context.Guild.Id);
                     var limit = Premium.GetRegistrationLimit(Context.Guild.Id);
@@ -183,28 +202,11 @@ namespace ELO.Modules
                         }
                     }
 
-                    user = new Player(regUser.Id, Context.Guild.Id, name);
-                    user.Points = comp.DefaultRegisterScore;
-                    db.Players.Add(user);
-                    db.SaveChanges();
-                }
-                else
-                {
-                    if (!comp.AllowReRegister)
+                    user = new Player(regUser.Id, Context.Guild.Id, name)
                     {
-                        if (regUser.Id != Context.User.Id)
-                        {
-                            await SimpleEmbedAndDeleteAsync($"{regUser.Mention} is already registered.", Color.Red);
-                        }
-                        else
-                        {
-                            await SimpleEmbedAndDeleteAsync("You are not allowed to re-register.", Color.Red);
-                        }
-                        return true;
-                    }
-
-                    user.DisplayName = name;
-                    db.Players.Update(user);
+                        Points = comp.DefaultRegisterScore
+                    };
+                    db.Players.Add(user);
                     db.SaveChanges();
                 }
 
