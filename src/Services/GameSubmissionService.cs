@@ -24,6 +24,123 @@ namespace ELO.Services
             UserService = userService;
         }
 
+        public (List<(Player, int, Rank, RankChangeState, Rank)> winners, List<(Player, int, Rank, RankChangeState, Rank)> losers) UpdateTeamScoresAsync(Competition competition, Lobby lobby, GameResult game, Rank[] ranks, HashSet<ulong> winnerIds, HashSet<ulong> loserIds, Database db)
+        {
+            var winnerUpdates = new List<(Player, int, Rank, RankChangeState, Rank)>();
+            var loserUpdates = new List<(Player, int, Rank, RankChangeState, Rank)>();
+
+            var winners = db.Players.Where(x => x.GuildId == competition.GuildId && winnerIds.Contains(x.UserId)).ToArray();
+            var losers = db.Players.Where(x => x.GuildId == competition.GuildId && loserIds.Contains(x.UserId)).ToArray();
+            foreach (var player in winners)
+            {
+                var maxRank = ranks.Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+
+                RankChangeState state = RankChangeState.None;
+                Rank newRank = null;
+
+                int updateVal = (int)((maxRank?.WinModifier ?? competition.DefaultWinModifier) * lobby.LobbyMultiplier);
+                if (lobby.HighLimit != null)
+                {
+                    if (player.Points > lobby.HighLimit)
+                    {
+                        updateVal = (int)(updateVal * lobby.ReductionPercent);
+                    }
+                }
+                player.Points += updateVal;
+                player.Wins++;
+                newRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                if (newRank != null)
+                {
+                    if (maxRank == null)
+                    {
+                        state = RankChangeState.RankUp;
+                    }
+                    else if (newRank.RoleId != maxRank.RoleId)
+                    {
+                        state = RankChangeState.RankUp;
+                    }
+                }
+
+                winnerUpdates.Add((player, updateVal, maxRank, state, newRank));
+                var oldUpdate = db.ScoreUpdates.FirstOrDefault(x => x.ChannelId == lobby.ChannelId && x.GameNumber == game.GameId && x.UserId == player.UserId);
+                if (oldUpdate == null)
+                {
+                    var update = new ScoreUpdate
+                    {
+                        GuildId = competition.GuildId,
+                        ChannelId = game.LobbyId,
+                        UserId = player.UserId,
+                        GameNumber = game.GameId,
+                        ModifyAmount = updateVal
+                    };
+                    db.ScoreUpdates.Add(update);
+                }
+                else
+                {
+                    oldUpdate.ModifyAmount = updateVal;
+                    db.ScoreUpdates.Update(oldUpdate);
+                }
+
+                db.Update(player);
+            }
+
+            foreach (var player in losers)
+            {
+                var maxRank = ranks.Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+
+                RankChangeState state = RankChangeState.None;
+                Rank newRank = null;
+
+                //Loss modifiers are always positive values that are to be subtracted
+                int updateVal = maxRank?.LossModifier ?? competition.DefaultLossModifier;
+                if (lobby.MultiplyLossValue)
+                {
+                    updateVal = (int)(updateVal * lobby.LobbyMultiplier);
+                }
+
+                player.Points -= updateVal;
+                if (!competition.AllowNegativeScore && player.Points < 0) player.Points = 0;
+                player.Losses++;
+
+                //Set the update value to a negative value for returning purposes.
+                updateVal = -Math.Abs(updateVal);
+
+                if (maxRank != null)
+                {
+                    if (player.Points < maxRank.Points)
+                    {
+                        state = RankChangeState.DeRank;
+                        newRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                    }
+                }
+
+                loserUpdates.Add((player, updateVal, maxRank, state, newRank));
+                var oldUpdate = db.ScoreUpdates.FirstOrDefault(x => x.ChannelId == lobby.ChannelId && x.GameNumber == game.GameId && x.UserId == player.UserId);
+                if (oldUpdate == null)
+                {
+                    var update = new ScoreUpdate
+                    {
+                        GuildId = competition.GuildId,
+                        ChannelId = game.LobbyId,
+                        UserId = player.UserId,
+                        GameNumber = game.GameId,
+                        ModifyAmount = updateVal
+                    };
+                    db.ScoreUpdates.Add(update);
+                }
+                else
+                {
+                    oldUpdate.ModifyAmount = updateVal;
+                    db.ScoreUpdates.Update(oldUpdate);
+                }
+
+                db.Update(player);
+            }
+
+            db.SaveChanges();
+            return (winnerUpdates, loserUpdates);
+        }
+
         //returns a list of userIds and the amount of points they received/lost for the win/loss, and if the user lost/gained a rank
         //UserId, Points added/removed, rank before, rank modify state, rank after
         /// <summary>
@@ -37,6 +154,7 @@ namespace ELO.Services
         /// The player's rank change state (rank up, derank, none)
         /// The players new rank (if changed)
         /// </returns>
+        /*
         public List<(Player, int, Rank, RankChangeState, Rank)> UpdateTeamScoresAsync(Competition competition, Lobby lobby, GameResult game, Rank[] ranks, bool win, HashSet<ulong> userIds, Database db)
         {
             var updates = new List<(Player, int, Rank, RankChangeState, Rank)>();
@@ -127,7 +245,7 @@ namespace ELO.Services
             }
             db.SaveChanges();
             return updates;
-        }
+        }*/
 
         public string GetResponseContent(List<(Player, int, Rank, RankChangeState, Rank)> players)
         {
@@ -153,6 +271,12 @@ namespace ELO.Services
                 }
 
                 sb.AppendLine($"{player.Item1.GetDisplayNameSafe()} **Points:** {player.Item1.Points - player.Item2}{(player.Item2 >= 0 ? $" + {player.Item2}" : $" - {Math.Abs(player.Item2)}")} = {player.Item1.Points} **Rank:** {originalRole ?? "N.A"} => {newRole ?? "N/A"}");
+            }
+
+            var response = sb.ToString();
+            if (sb.Length == 0 || string.IsNullOrWhiteSpace(response))
+            {
+                return $"There were no affected users on this team.";
             }
 
             return sb.ToString();
@@ -199,13 +323,11 @@ namespace ELO.Services
                 var team2 = db.GetTeamFull(game, 2);
                 if (winning_team == TeamSelection.team1)
                 {
-                    winList = UpdateTeamScoresAsync(competition, lobby, game, ranks, true, team1, db);
-                    loseList = UpdateTeamScoresAsync(competition, lobby, game, ranks, false, team2, db);
+                    (winList, loseList) = UpdateTeamScoresAsync(competition, lobby, game, ranks, team1, team2, db);
                 }
                 else
                 {
-                    loseList = UpdateTeamScoresAsync(competition, lobby, game, ranks, false, team1, db);
-                    winList = UpdateTeamScoresAsync(competition, lobby, game, ranks, true, team2, db);
+                    (winList, loseList) = UpdateTeamScoresAsync(competition, lobby, game, ranks, team2, team1, db);
                 }
 
                 var allUsers = new List<(Player, int, Rank, RankChangeState, Rank)>();
@@ -358,13 +480,11 @@ namespace ELO.Services
             List<(Player, int, Rank, RankChangeState, Rank)> loseList;
             if (winning_team == TeamSelection.team1)
             {
-                winList = UpdateTeamScoresAsync(competition, lobby, game, ranks, true, team1, db);
-                loseList = UpdateTeamScoresAsync(competition, lobby, game, ranks, false, team2, db);
+                (winList, loseList) = UpdateTeamScoresAsync(competition, lobby, game, ranks, team1, team2, db);
             }
             else
             {
-                loseList = UpdateTeamScoresAsync(competition, lobby, game, ranks, false, team1, db);
-                winList = UpdateTeamScoresAsync(competition, lobby, game, ranks, true, team2, db);
+                (winList, loseList) = UpdateTeamScoresAsync(competition, lobby, game, ranks, team2, team1, db);
             }
 
             var allUsers = new List<(Player, int, Rank, RankChangeState, Rank)>();
