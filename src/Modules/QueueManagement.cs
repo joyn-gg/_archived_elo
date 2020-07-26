@@ -304,5 +304,57 @@ namespace ELO.Modules
                 }
             }
         }
+
+        [Command("Map", RunMode = RunMode.Async)]
+        [RequirePermission(PermissionLevel.Moderator)]
+        [Summary("Select a random map for the lobby map list")]
+        public virtual async Task Map2Async()
+        {
+            using (var db = new Database())
+            {
+                //var comp = db.Competitions.FirstOrDefault(x => x.GuildId == Context.Guild.Id);
+                var comp = db.GetOrCreateCompetition(Context.Guild.Id);
+
+                if (!(Context.User as SocketGuildUser).IsRegistered(out var player))
+                {
+                    await SimpleEmbedAsync("You must register in order to use this command.");
+                    return;
+                }
+
+                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                if (lobby == null)
+                {
+                    await SimpleEmbedAsync("This channel is not a lobby.");
+                    return;
+                }
+
+                // Maplist (Just to show which maps can be selected by the bot)
+                var mapsList = db.Maps.Where(x => x.ChannelId == Context.Channel.Id).AsNoTracking().ToArray();
+
+                // Select a random map from the db
+                var r = new Random();
+                var maps = db.Maps.Where(x => x.ChannelId == Context.Channel.Id).ToArray();
+
+                var getMap = maps.ToArray().OrderByDescending(m => r.Next()).FirstOrDefault();
+                //var mapImg = getMap?.MapImage ?? comp.IHLDefaultMap;
+
+                if (maps.Length != 0)
+                {
+                    var embed = new EmbedBuilder
+                    {
+                        Color = Color.Blue,
+                        //Title = $"Random Map"
+                    };
+
+                    //embed.ThumbnailUrl = mapImg;
+                    embed.AddField("**Selected Map**", $"**{getMap.MapName}**");
+                    await ReplyAsync(null, false, embed.Build());
+                }
+                else
+                {
+                    await SimpleEmbedAndDeleteAsync("There are no maps added in this lobby", Color.DarkOrange);
+                }
+            }
+        }        
     }
 }
