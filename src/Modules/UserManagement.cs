@@ -35,9 +35,7 @@ namespace ELO.Modules
             await using (var db = new Database())
             {
                 var bans = db.Bans.Where(x => x.GuildId == Context.Guild.Id).ToList();
-                var playerbans = bans.Where(x => x.UserId == player.Id)
-                    //.OrderBy(x => x.IsExpired).ThenBy(x => x.ExpiryTime).ThenBy(x => x.ManuallyDisabled /*== false*/)
-                    .ToList();
+                var playerbans = bans.Where(x => x.UserId == player.Id).ToList();
                 if (playerbans.Count == 0)
                 {
                     await SimpleEmbedAndDeleteAsync($"{player.Mention} has no bans on record.\n" +
@@ -52,13 +50,11 @@ namespace ELO.Modules
                     var page = new ReactivePage();
                     page.Color = Color.Blue;
                     page.Title = $"{player.GetDisplayName()} - Bans";
-                    //page.Description = $"{DateTime.Now:dd.MM.yyyy HH:mm:ss} CET";
                     page.Fields = group.Select(p =>
                     {
                         var user = db.Players.Find(Context.Guild.Id, p.UserId);
                         var field = new EmbedFieldBuilder
                         {
-                            //Name = user?.DisplayName ?? p.UserId.ToString(),
                             Value = $"**User:** {MentionUtils.MentionUser(p.UserId) ?? p.UserId.ToString()}\n" +
                                     $"**Banned at:**  {p.ExpiryTime:dd.MM.yyyy HH:mm:ss}\n" +
                                     $"**Ban Length:** {p.Length.GetReadableLength()}\n" +
