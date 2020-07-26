@@ -55,6 +55,9 @@ namespace ELO.Modules
                         var user = db.Players.Find(Context.Guild.Id, p.UserId);
                         var field = new EmbedFieldBuilder
                         {
+                            Name = p.IsExpired != true
+                                ? $"*{p.BanId}* **[Active]** {user?.GetDisplayNameSafe() ?? p.UserId.ToString()}"
+                                : $"*{p.BanId}* **[Expired]** {user?.GetDisplayNameSafe() ?? p.UserId.ToString()}",                                 
                             Value = $"**User:** {MentionUtils.MentionUser(p.UserId) ?? p.UserId.ToString()}\n" +
                                     $"**Banned at:**  {p.ExpiryTime:dd.MM.yyyy HH:mm:ss}\n" +
                                     $"**Ban Length:** {p.Length.GetReadableLength()}\n" +
@@ -62,8 +65,6 @@ namespace ELO.Modules
                                     $"**Banned by:** {MentionUtils.MentionUser(p.Moderator)}\n" +
                                     $"**Reason:** {p.Comment ?? "N/A"}".FixLength(512)
                         };
-                        field.Name = p.IsExpired != true ? $" - *{p.BanId}* **[Active]** {user?.GetDisplayNameSafe() ?? p.UserId.ToString()}" : $" - *{p.BanId}* **[Expired]** {user?.GetDisplayNameSafe() ?? p.UserId.ToString()}"; ;
-
                         return field;
                     }).ToList();
                     pages.Add(page);
@@ -126,45 +127,55 @@ namespace ELO.Modules
         }
 
         [Command("AllBans", RunMode = RunMode.Async)]
-        [Summary("Shows all bans for the current server.")]
+        [Alias("FullBanList", "FullCooldowns", "FullCooldownList", "AllCooldowns")]
+        [Summary("Shows all bans in history for the current server.")]
         public virtual async Task AllBans()
         {
             using (var db = new Database())
             {
                 var bans = db.Bans.Where(x => x.GuildId == Context.Guild.Id).ToList();
+
                 if (bans.Count == 0)
                 {
-                    await SimpleEmbedAsync("There aren't any banned players.", Color.Blue);
+                    await SimpleEmbedAndDeleteAsync("There aren't any banned players", Color.Blue);
                     return;
                 }
 
-                var bansS = bans.OrderBy(x => x.RemainingTime).SplitList(5).ToArray();
-
+                var groups = bans.OrderBy(x => x.IsExpired).SplitList(5).ToArray();
                 var pages = new List<ReactivePage>();
-                foreach (var banGroup in bansS)
+                foreach (var ban in groups)
                 {
                     var page = new ReactivePage();
-                    page.Fields = new List<EmbedFieldBuilder>();
-                    foreach (var ban in banGroup)
+                    page.Color = Color.Blue;
+                    page.Title = $"{Context.Guild.Name} All Queue Cooldowns";
+                    page.Fields = group.Select(p =>
                     {
-                        var user = db.Players.Find(Context.Guild.Id, ban.UserId);
-                        page.Fields.Add(new EmbedFieldBuilder
+                        var user = db.Players.Find(Context.Guild.Id, p.UserId);
+                        var field = new EmbedFieldBuilder
                         {
-                            Name = user?.DisplayName ?? ban.UserId.ToString(),
-                            Value = $"**User:** {MentionUtils.MentionUser(ban.UserId)}\n" +
-                            $"**Banned at:**  {ban.ExpiryTime.ToString("dd MMM yyyy")}\n" +
-                            $"**Ban Length:** {ban.Length.GetReadableLength()}\n" +
-                            $"**Banned By:** {MentionUtils.MentionUser(ban.Moderator)}\n" +
-                            $"**Manually Disabled:** {ban.ManuallyDisabled}\n" +
-                            $"**Expired:** {ban.IsExpired}\n" +
-                            $"**Reason:** {ban.Comment ?? "N/A"}".FixLength(512)
-                        });
-                    }
+                            Name = p.IsExpired != true
+                                ? $"*{p.BanId}* **[Active]** {user?.GetDisplayNameSafe() ?? p.UserId.ToString()}"
+                                : $"*{p.BanId}* **[Expired]** {user?.GetDisplayNameSafe() ?? p.UserId.ToString()}",                            
+                            Value = $"**User:** {MentionUtils.MentionUser(p.UserId) ?? p.UserId.ToString()}\n" +
+                                    $"**Banned at:**  {p.ExpiryTime.ToString("dd MMM yyyy")}\n" +
+                                    $"**Ban Length:** {p.Length.GetReadableLength()}\n" +
+                                    $"{(p.IsExpired != true ? $"**Expires in:** {p.RemainingTime.GetReadableLength()}\n" : "")}" +
+                                    $"**Banned by:** {MentionUtils.MentionUser(p.Moderator)}\n" +
+                                    $"**Reason:** {p.Comment ?? "N/A"}".FixLength(512)
+                        };
+                        return field;
+                    }).ToList();
                     pages.Add(page);
                 }
-
-                var pager2 = new ReactivePager(pages);
-                await PagedReplyAsync(pager2.ToCallBack().WithDefaultPagerCallbacks());
+                if (!pages.Any())
+                {
+                    await SimpleEmbedAndDeleteAsync($"{Context.Guild.Name} has no bans yet.");
+                    return;
+                }
+                await PagedReplyAsync(new ReactivePager
+                {
+                    Pages = pages
+                }.ToCallBack().WithDefaultPagerCallbacks().WithJump());
             }
         }
 
