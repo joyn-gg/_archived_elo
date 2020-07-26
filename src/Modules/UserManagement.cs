@@ -27,6 +27,57 @@ namespace ELO.Modules
         public UserService UserService { get; }
 
         //TODO: Player specific ban lookup
+        [Command("Bans", RunMode = RunMode.Async)]
+        [Alias("UserBans")]
+        [Summary("Shows all bans for the specified user on the current server.")]
+        public virtual async Task UsersBans(SocketGuildUser player)
+        {
+            await using (var db = new Database())
+            {
+                var bans = db.Bans.Where(x => x.GuildId == Context.Guild.Id).ToList();
+                var playerbans = bans.Where(x => x.UserId == player.Id)
+                    //.OrderBy(x => x.IsExpired).ThenBy(x => x.ExpiryTime).ThenBy(x => x.ManuallyDisabled /*== false*/)
+                    .ToList();
+                if (playerbans.Count == 0)
+                {
+                    await SimpleEmbedAndDeleteAsync($"{player.Mention} has no bans on record.\n" +
+                                                    $"Use the `Bans` command to see all **Active** bans or the `AllBans` command to lookup all player bans in history.", Color.DarkRed);
+                    return;
+                }
+
+                var groups = playerbans.OrderBy(x => x.IsExpired).SplitList(5).ToArray();
+                var pages = new List<ReactivePage>();
+                foreach (var ban in groups)
+                {
+                    var page = new ReactivePage();
+                    page.Color = Color.Blue;
+                    page.Title = $"{player.GetDisplayName()} - Bans";
+                    //page.Description = $"{DateTime.Now:dd.MM.yyyy HH:mm:ss} CET";
+                    page.Fields = group.Select(p =>
+                    {
+                        var user = db.Players.Find(Context.Guild.Id, p.UserId);
+                        var field = new EmbedFieldBuilder
+                        {
+                            //Name = user?.DisplayName ?? p.UserId.ToString(),
+                            Value = $"**User:** {MentionUtils.MentionUser(p.UserId) ?? p.UserId.ToString()}\n" +
+                                    $"**Banned at:**  {p.ExpiryTime:dd.MM.yyyy HH:mm:ss}\n" +
+                                    $"**Ban Length:** {p.Length.GetReadableLength()}\n" +
+                                    $"{(p.IsExpired != true ? $"**Expires in:** {p.RemainingTime.GetReadableLength()}\n" : "")}" +
+                                    $"**Banned by:** {MentionUtils.MentionUser(p.Moderator)}\n" +
+                                    $"**Reason:** {p.Comment ?? "N/A"}".FixLength(512)
+                        };
+                        field.Name = p.IsExpired != true ? $" - *{p.BanId}* **[Active]** {user?.GetDisplayNameSafe() ?? p.UserId.ToString()}" : $" - *{p.BanId}* **[Expired]** {user?.GetDisplayNameSafe() ?? p.UserId.ToString()}"; ;
+
+                        return field;
+                    }).ToList();
+                    pages.Add(page);
+                }
+                await PagedReplyAsync(new ReactivePager
+                {
+                    Pages = pages
+                }.ToCallBack().WithDefaultPagerCallbacks().WithJump());
+            }
+        }
 
         [Command("Bans", RunMode = RunMode.Async)]
         [Alias("Banlist")]
@@ -54,6 +105,7 @@ namespace ELO.Modules
                 foreach (var banGroup in bansS)
                 {
                     var page = new ReactivePage();
+                    page.Title = $"{Context.Guild.Name} Queue Cooldowns";
                     page.Fields = new List<EmbedFieldBuilder>();
                     foreach (var ban in banGroup)
                     {
