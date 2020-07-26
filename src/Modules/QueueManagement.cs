@@ -196,19 +196,26 @@ namespace ELO.Modules
                     if (lobby.HideQueue)
                     {
                         await Context.Message.DeleteAsync();
-                        await SimpleEmbedAsync($"A player has joined the queue. **[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]**");
+                        await SimpleEmbedAsync($"**[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]** A player joined the queue.", Color.Green);
+
                     }
                     else
                     {
                         if (Premium.IsPremiumSimple(Context.Guild.Id))
                         {
-                            await SimpleEmbedAsync($"{player.GetDisplayNameSafe()} joined the queue. **[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]**", Color.Green);
-                        }
+                        if (Context.User.Id == Context.Guild.OwnerId)
+                            {
+                                await SimpleEmbedAsync($"**[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]** {Context.User.Mention} [{player.Points}] joined the queue.", Color.Green);
+                                db.SaveChanges();
+                                return;
+                            }
+                            await SimpleEmbedAsync($"**[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]** {(comp.NameFormat.Contains("score") ? $"{Context.User.Mention}" : $"{Context.User.Mention} [{player.Points}]")} joined the queue.",Color.Green);
+                        }             
                         else
                         {
                             await ReplyAsync("", false, new EmbedBuilder
                             {
-                                Description = $"{player.GetDisplayNameSafe()} joined the queue. **[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]**\n" +
+                                Description = $"**[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]** {(comp.NameFormat.Contains("score") ? $"{Context.User.Mention}" : $"{Context.User.Mention} [{player.Points}]")} joined the queue.\n" +
                                 $"[Get Premium to remove ELO bot branding]({Premium.PremiumConfig.ServerInvite})",
                                 Color = Color.Green
                             }.Build());
@@ -272,7 +279,28 @@ namespace ELO.Modules
                         await SimpleEmbedAsync($"Removed a player. **[{queue.Count - 1}/{lobby.PlayersPerTeam * 2}]**");
                         return;
                     }
-                    await SimpleEmbedAsync($"Removed {player.GetDisplayNameSafe()} from queue. **[{queue.Count - 1}/{lobby.PlayersPerTeam * 2}]**", Color.DarkBlue);
+                    else
+                    {
+                        if (Premium.IsPremiumSimple(Context.Guild.Id))
+                        {
+                            if (Context.User.Id == Context.Guild.OwnerId)
+                            {
+                                await SimpleEmbedAsync($"**[{queue.Count - 1}/{lobby.PlayersPerTeam * 2}]** {Context.User.Mention} [{player.Points}] left the queue.", Color.DarkBlue);
+                                db.SaveChanges();
+                                return;
+                            }
+                            await SimpleEmbedAsync($"**[{queue.Count - 1}/{lobby.PlayersPerTeam * 2}]** {(comp.NameFormat.Contains("score") ? $"{Context.User.Mention}" : $"{Context.User.Mention} [{player.Points}]")} left the queue.",Color.DarkBlue);
+                        }             
+                        else
+                        {
+                            await ReplyAsync("", false, new EmbedBuilder
+                            {
+                                Description = $"**[{queue.Count - 1}/{lobby.PlayersPerTeam * 2}]** {(comp.NameFormat.Contains("score") ? $"{Context.User.Mention}" : $"{Context.User.Mention} [{player.Points}]")} left the queue.\n" +
+                                $"[Get Premium to remove ELO bot branding]({Premium.PremiumConfig.ServerInvite})",
+                                Color = Color.DarkBlue
+                            }.Build());
+                        }
+                    }                    
                 }
             }
         }
