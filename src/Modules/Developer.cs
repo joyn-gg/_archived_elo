@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using ELO.Preconditions;
 using ELO.Services;
 using Microsoft.EntityFrameworkCore;
+using MoreLinq;
 using RavenBOT.Common;
 using System;
 using System.Collections.Generic;
@@ -43,11 +44,11 @@ namespace ELO.Modules
             var client = new Patreon.NET.PatreonClient(apiKey);
             var pledges = await client.GetCampaignPledges(campaignId);
 
-            var rewardMissing = pledges.Users.Count(x => x.Reward == null);
+            var rewardMissing = pledges.Users.Count(x => x.Rewards == null);
             var userMissing = pledges.Users.Count(x => x.UserIncluded == null);
 
             int uidMissing = 0;
-            var premiumUsers = new List<(ulong, List<ulong>)>();
+            var premiumUsers = new Dictionary<ulong, HashSet<ulong>>();
 
             PremiumService.PremiumRole[] roles;
             using (var db = new Database())
@@ -64,15 +65,29 @@ namespace ELO.Modules
                 }
                 else
                 {
-                    var roleIds = pledge.Reward.Attributes.DiscordRoleIds;
-                    var entitledRoles = new List<ulong>();
+                    var roleIds = pledge.Rewards.SelectMany(x => x.Attributes.DiscordRoleIds);
+                    var entitledRoles = new HashSet<ulong>();
                     foreach (var role in roleIds)
                     {
                         entitledRoles.Add(ulong.Parse(role));
                     }
 
                     var uid = ulong.Parse(userId);
-                    premiumUsers.Add((uid, entitledRoles));
+
+                    if (premiumUsers.TryGetValue(uid, out var uCol))
+                    {
+                        foreach (var entitledRoleId in entitledRoles)
+                        {
+                            uCol.Add(entitledRoleId);
+                        }
+
+                        entitledRoles = uCol;
+                    }
+                    else
+                    {
+                        premiumUsers.Add(uid, entitledRoles);
+                    }
+
                     var gUser = guild.GetUser(uid);
                     if (gUser != null)
                     {
@@ -82,7 +97,7 @@ namespace ELO.Modules
                             // User has premium but wrong roles.
                             if (userPremiumRoles.Any(r => !entitledRoles.Contains(r.Id)))
                             {
-                                Console.WriteLine($"{gUser.GetDisplayName()} has role when only entitled to {string.Join(" ", entitledRoles)}");
+                                Console.WriteLine($"{gUser.GetDisplayName()} has role when only entitled to {string.Join(" ", entitledRoles.Select(x => "<@&" + x + ">"))}");
                             }
                         }
                     }
@@ -91,10 +106,15 @@ namespace ELO.Modules
 
             var gUsersWithPremiumRoles = guild.Users.Where(u => u.Roles.Any(r => roles.Any(y => y.RoleId == r.Id))).ToArray();
             var builder = new StringBuilder();
+
+            // Iterate through all users in the server which have a premium role
             foreach (var user in gUsersWithPremiumRoles)
             {
+                // Get roles from the user which are in the bot's premium role list
                 var uPremiumRoles = user.Roles.Where(x => roles.Any(r => r.RoleId == x.Id)).ToArray();
-                var uEntitledRoles = premiumUsers.FirstOrDefault(x => x.Item1 == user.Id).Item2;
+
+                // Find the list of roles which the user is entitled to.
+                var uEntitledRoles = premiumUsers.FirstOrDefault(x => x.Key == user.Id).Value;
                 if (uPremiumRoles.Length > 0)
                 {
                     if (uEntitledRoles == null)
@@ -104,6 +124,7 @@ namespace ELO.Modules
                     }
                     else
                     {
+                        // Find users discord roles which are not contained in the entitled roles list.
                         var notEntitled = uPremiumRoles.Where(r => !uEntitledRoles.Contains(r.Id)).ToArray();
                         if (notEntitled.Length > 0)
                         {
@@ -166,40 +187,40 @@ namespace ELO.Modules
                     }).Distinct().ToArray());
 
                     builder.AppendLine($"|{command.Name}|{command.Summary}|" + string.Join(" ", command.Parameters.Select(parameter =>
-                     {
-                         var initial = parameter.Name + (parameter.Summary == null ? "" : $"({parameter.Summary})");
+                    {
+                        var initial = parameter.Name + (parameter.Summary == null ? "" : $"({parameter.Summary})");
 
-                         if (parameter.IsOptional)
-                         {
-                             if (parameter.DefaultValue == null)
-                             {
-                                 initial += $":optional";
-                             }
-                             else
-                             {
-                                 initial += $":optional({parameter.DefaultValue})";
-                             }
-                         }
+                        if (parameter.IsOptional)
+                        {
+                            if (parameter.DefaultValue == null)
+                            {
+                                initial += $":optional";
+                            }
+                            else
+                            {
+                                initial += $":optional({parameter.DefaultValue})";
+                            }
+                        }
 
-                         if (parameter.IsMultiple)
-                         {
-                             initial += ":multiple";
-                         }
+                        if (parameter.IsMultiple)
+                        {
+                            initial += ":multiple";
+                        }
 
-                         if (parameter.Type.IsEnum)
-                         {
-                             if (seenEnums.All(x => !x.Equals(parameter.Type)))
-                             {
-                                 seenEnums.Add(parameter.Type);
-                                 enumBuilder.AppendLine($"## {parameter.Type.Name}");
-                                 enumBuilder.AppendLine(string.Join("\n\n", parameter.Type.GetEnumNames().Select(x => $"`{x}`")));
-                             }
+                        if (parameter.Type.IsEnum)
+                        {
+                            if (seenEnums.All(x => !x.Equals(parameter.Type)))
+                            {
+                                seenEnums.Add(parameter.Type);
+                                enumBuilder.AppendLine($"## {parameter.Type.Name}");
+                                enumBuilder.AppendLine(string.Join("\n\n", parameter.Type.GetEnumNames().Select(x => $"`{x}`")));
+                            }
 
-                             initial = $"[{initial}](#{parameter.Type.Name})";
-                         }
+                            initial = $"[{initial}](#{parameter.Type.Name})";
+                        }
 
-                         return "{" + initial + "}";
-                     }))
+                        return "{" + initial + "}";
+                    }))
                     +
                     $"|{string.Join(", ", command.Aliases)}|{preconditionString}|{command.Remarks}|");
                 }

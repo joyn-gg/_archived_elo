@@ -43,7 +43,7 @@ namespace Patreon.NET
         {
             public Datum UserData;
 
-            public Included Reward;
+            public List<Included> Rewards;
 
             public Included UserIncluded;
         }
@@ -79,7 +79,7 @@ namespace Patreon.NET
                         var linkedPatron = new LinkedPatron
                         {
                             UserData = dataPacket,
-                            Reward = content.Included.FirstOrDefault(x => x.Type.Equals("reward") && x.Id.Equals(dataPacket.Relationships.Reward.Data.Id)),
+                            Rewards = content.Included.Where(x => x.Type.Equals("reward") && x.Id.Equals(dataPacket.Relationships.Reward.Data.Id)).ToList(),
                             UserIncluded = content.Included.FirstOrDefault(x => x.Type.Equals("user") && x.Id.Equals(dataPacket.Relationships.Patron.Data.Id))
                         };
 
