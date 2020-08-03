@@ -276,7 +276,7 @@ namespace ELO.Modules
                     if (lobby.HideQueue)
                     {
                         await Context.Message.DeleteAsync();
-                        await SimpleEmbedAsync($"Removed a player. **[{queue.Count - 1}/{lobby.PlayersPerTeam * 2}]**");
+                        await SimpleEmbedAsync($"**[{queue.Count - 1}/{lobby.PlayersPerTeam * 2}]** A player left the queue.", Color.DarkBlue);
                         return;
                     }
                     else
