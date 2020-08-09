@@ -389,7 +389,7 @@ namespace ELO.Modules
                 }
 
                 //Ensure the player is eligible to join a team
-                if (users.Any(user => !queue.Any(x => x.UserId == user.Id)))
+                if (users.Any(user => queue.All(x => x.UserId != user.Id)))
                 {
                     if (users.Length == 2)
                         await SimpleEmbedAndDeleteAsync("A selected player is not queued for this game.", Color.Red);

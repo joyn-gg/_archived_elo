@@ -51,9 +51,8 @@ namespace ELO.Services
         public (CachedPermissions, CachedPermissions.CachedPermission) GetCached(Database db, ulong guildId, string commandName)
         {
             commandName = commandName.ToLower();
-            CachedPermissions guildCache;
             CachedPermissions.CachedPermission permission;
-            if (PermissionCache.TryGetValue(guildId, out guildCache))
+            if (PermissionCache.TryGetValue(guildId, out var guildCache))
             {
                 if (guildCache.Cache.TryGetValue(commandName.ToLower(), out permission))
                 {

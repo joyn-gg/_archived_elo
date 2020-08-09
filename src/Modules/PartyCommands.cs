@@ -239,7 +239,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var parties = db.PartyMembers.Where(x => x.ChannelId == Context.Channel.Id).ToArray().GroupBy(x => x.PartyHost);
+                var parties = db.PartyMembers.Where(x => x.ChannelId == Context.Channel.Id).ToArray().GroupBy(x => x.PartyHost).ToArray();
                 if (parties.Any())
                 {
                     //await SimpleEmbedAsync(string.Join("\n", parties.Select(x => $"Host: {MentionUtils.MentionUser(x.Key)} Members: {string.Join(" ", x.Select(m => MentionUtils.MentionUser(m.UserId)))}")));

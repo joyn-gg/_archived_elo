@@ -135,7 +135,7 @@ namespace ELO.Modules
                 }
             }
 
-            await ReplyAsync(builder.ToString());
+            await ReplyAsync(builder.ToString().FixLength(2047));
         }
 
         [Command("ConsoleDoc", RunMode = RunMode.Async)]
@@ -209,7 +209,7 @@ namespace ELO.Modules
 
                         if (parameter.Type.IsEnum)
                         {
-                            if (seenEnums.All(x => !x.Equals(parameter.Type)))
+                            if (seenEnums.All(x => x != parameter.Type))
                             {
                                 seenEnums.Add(parameter.Type);
                                 enumBuilder.AppendLine($"## {parameter.Type.Name}");

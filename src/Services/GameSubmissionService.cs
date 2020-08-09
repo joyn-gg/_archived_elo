@@ -301,7 +301,7 @@ namespace ELO.Services
                     return;
                 }
 
-                var game = db.GameResults.Where(x => x.GuildId == context.Guild.Id && x.LobbyId == lobbyChannel.Id && x.GameId == gameNumber).FirstOrDefault();
+                var game = db.GameResults.FirstOrDefault(x => x.GuildId == context.Guild.Id && x.LobbyId == lobbyChannel.Id && x.GameId == gameNumber);
                 if (game == null)
                 {
                     //Reply not valid game number.
@@ -424,7 +424,7 @@ namespace ELO.Services
                     return;
                 }
 
-                var game = db.GameResults.Where(x => x.GuildId == context.Guild.Id && x.LobbyId == lobbyChannel.Id && x.GameId == gameNumber).FirstOrDefault();
+                var game = db.GameResults.FirstOrDefault(x => x.GuildId == context.Guild.Id && x.LobbyId == lobbyChannel.Id && x.GameId == gameNumber);
                 if (game == null)
                 {
                     //Reply not valid game number.
@@ -552,7 +552,7 @@ namespace ELO.Services
                     return;
                 }
 
-                var game = db.GameResults.Where(x => x.GuildId == context.Guild.Id && x.LobbyId == lobbyChannel.Id && x.GameId == gameNumber).FirstOrDefault();
+                var game = db.GameResults.FirstOrDefault(x => x.GuildId == context.Guild.Id && x.LobbyId == lobbyChannel.Id && x.GameId == gameNumber);
                 if (game == null)
                 {
                     //Reply not valid game number.

@@ -52,7 +52,6 @@ namespace ELO.Modules
 
                 await DisplayGameAsync(game);
             }
-
         }
 
         public virtual async Task DisplayGameAsync(ManualGameResult game)
@@ -87,7 +86,6 @@ namespace ELO.Modules
 
             using (var db = new Database())
             {
-
                 var lobby = db.Lobbies.Find(lobbyChannel.Id);
                 if (lobby == null)
                 {
@@ -95,7 +93,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var game = db.GameResults.Where(x => x.LobbyId == lobby.ChannelId && x.GameId == gameNumber).FirstOrDefault();
+                var game = db.GameResults.FirstOrDefault(x => x.LobbyId == lobby.ChannelId && x.GameId == gameNumber);
                 if (game == null)
                 {
                     await SimpleEmbedAsync("Invalid Game Id.", Color.Red);
@@ -113,7 +111,7 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                var game = db.ManualGameResults.Where(x => x.GuildId == Context.Guild.Id && x.GameId == gameNumber).FirstOrDefault();
+                var game = db.ManualGameResults.FirstOrDefault(x => x.GuildId == Context.Guild.Id && x.GameId == gameNumber);
                 if (game == null)
                 {
                     await SimpleEmbedAsync("Specified game number is invalid.", Color.Red);
@@ -188,13 +186,13 @@ namespace ELO.Modules
                 }
 
                 var games = db.GameResults.AsNoTracking().Where(x => x.GuildId == Context.Guild.Id && x.LobbyId == lobbyChannel.Id).OrderByDescending(x => x.GameId).Take(100);
-                if (games.Count() == 0)
+                if (!games.Any())
                 {
                     await SimpleEmbedAsync("There aren't any games in history for the specified lobby.", Color.Blue);
                     return;
                 }
 
-                var gamePages = games.SplitList(20);
+                var gamePages = games.AsEnumerable().SplitList(20);
                 var pages = new List<ReactivePage>();
                 foreach (var page in gamePages)
                 {

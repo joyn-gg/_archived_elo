@@ -174,7 +174,7 @@ namespace ELO.Modules
                 {
                     if (guild.LegacyPremiumExpiry.Value > DateTime.UtcNow)
                     {
-                        await SimpleEmbedAsync($"Expires on: {guild.LegacyPremiumExpiry.Value.ToString("dd MMM yyyy")} {guild.LegacyPremiumExpiry.Value.ToShortTimeString()}\nRemaining: {RavenBOT.Common.Extensions.GetReadableLength(guild.LegacyPremiumExpiry.Value - DateTime.UtcNow)}", Color.Blue);
+                        await SimpleEmbedAsync($"Expires on: {guild.LegacyPremiumExpiry.Value.ToString("dd MMM yyyy")} {guild.LegacyPremiumExpiry.Value.ToShortTimeString()}\nRemaining: {(guild.LegacyPremiumExpiry.Value - DateTime.UtcNow).GetReadableLength()}", Color.Blue);
                     }
                     else
                     {

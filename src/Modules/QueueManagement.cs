@@ -160,10 +160,10 @@ namespace ELO.Modules
                                 var remaining = currentUserLastJoin + comp.RequeueDelay.Value - DateTime.UtcNow;
                                 if (lobby.HideQueue)
                                 {
-                                    await SimpleEmbedAndDeleteAsync($"You cannot requeue for another {RavenBOT.Common.Extensions.GetReadableLength(remaining)}", Color.Red);
+                                    await SimpleEmbedAndDeleteAsync($"You cannot requeue for another {remaining.GetReadableLength()}", Color.Red);
                                     return;
                                 }
-                                await SimpleEmbedAsync($"{Context.User.Mention} - You cannot requeue for another {RavenBOT.Common.Extensions.GetReadableLength(remaining)}", Color.Red);
+                                await SimpleEmbedAsync($"{Context.User.Mention} - You cannot requeue for another {remaining.GetReadableLength()}", Color.Red);
                                 return;
                             }
                             else

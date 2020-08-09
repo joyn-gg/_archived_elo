@@ -44,7 +44,7 @@ namespace ELO.Modules
                     {
                         await SimpleEmbedAsync($"This server already has {Premium.PremiumConfig.LobbyLimit} lobbies created. " +
                             $"In order to create more you must become an ELO premium subscriber at {Premium.PremiumConfig.AltLink} join the server " +
-                            $"{Premium.PremiumConfig.ServerInvite} to recieve your role and then run the `claimpremium` command in your server.");
+                            $"{Premium.PremiumConfig.ServerInvite} to receive your role and then run the `claimpremium` command in your server.");
                         return;
                     }
                 }
