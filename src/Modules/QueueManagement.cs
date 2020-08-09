@@ -9,6 +9,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ELO.Preconditions;
+using Microsoft.EntityFrameworkCore;
 
 namespace ELO.Modules
 {
@@ -16,11 +18,14 @@ namespace ELO.Modules
     {
         public static Dictionary<ulong, Dictionary<ulong, DateTime>> QueueDelays = new Dictionary<ulong, Dictionary<ulong, DateTime>>();
 
-        public QueueManagement(LobbyService lobbyService, PremiumService premium)
+        public QueueManagement(Random random, LobbyService lobbyService, PremiumService premium)
         {
+            Random = random;
             LobbyService = lobbyService;
             Premium = premium;
         }
+
+        public Random Random { get; }
 
         public LobbyService LobbyService { get; }
 
@@ -49,8 +54,8 @@ namespace ELO.Modules
 
                 var now = DateTime.UtcNow;
 
-                var lastBan = db.Bans.Where(x => x.UserId == Context.User.Id && x.GuildId == Context.Guild.Id).ToArray()
-                    .Where(x => x.ManuallyDisabled == false && x.TimeOfBan + x.Length > now)
+                var lastBan = db.Bans.Where(x => x.UserId == Context.User.Id && x.GuildId == Context.Guild.Id && x.ManuallyDisabled == false).ToArray()
+                    .Where(x => x.TimeOfBan + x.Length > now)
                     .OrderByDescending(x => x.ExpiryTime)
                     .FirstOrDefault();
                 if (lastBan != null)
@@ -173,8 +178,7 @@ namespace ELO.Modules
                     }
                     else
                     {
-                        var newDict = new Dictionary<ulong, DateTime>();
-                        newDict.Add(Context.User.Id, DateTime.UtcNow);
+                        var newDict = new Dictionary<ulong, DateTime> { { Context.User.Id, DateTime.UtcNow } };
                         QueueDelays.Add(Context.Guild.Id, newDict);
                     }
                 }
@@ -191,35 +195,33 @@ namespace ELO.Modules
                     await LobbyService.LobbyFullAsync(Context, lobby);
                     return;
                 }
+
+                if (lobby.HideQueue)
+                {
+                    await Context.Message.DeleteAsync();
+                    await SimpleEmbedAsync($"**[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]** A player joined the queue.", Color.Green);
+                }
                 else
                 {
-                    if (lobby.HideQueue)
+                    if (Premium.IsPremiumSimple(Context.Guild.Id))
                     {
-                        await Context.Message.DeleteAsync();
-                        await SimpleEmbedAsync($"**[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]** A player joined the queue.", Color.Green);
-
+                        if (Context.User.Id == Context.Guild.OwnerId)
+                        {
+                            await SimpleEmbedAsync($"**[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]** {Context.User.Mention} [{player.Points}] joined the queue.", Color.Green);
+                        }
+                        else
+                        {
+                            await SimpleEmbedAsync($"**[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]** {(comp.NameFormat.Contains("score") ? $"{Context.User.Mention}" : $"{Context.User.Mention} [{player.Points}]")} joined the queue.", Color.Green);
+                        }
                     }
                     else
                     {
-                        if (Premium.IsPremiumSimple(Context.Guild.Id))
+                        await ReplyAsync("", false, new EmbedBuilder
                         {
-                        if (Context.User.Id == Context.Guild.OwnerId)
-                            {
-                                await SimpleEmbedAsync($"**[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]** {Context.User.Mention} [{player.Points}] joined the queue.", Color.Green);
-                                db.SaveChanges();
-                                return;
-                            }
-                            await SimpleEmbedAsync($"**[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]** {(comp.NameFormat.Contains("score") ? $"{Context.User.Mention}" : $"{Context.User.Mention} [{player.Points}]")} joined the queue.",Color.Green);
-                        }             
-                        else
-                        {
-                            await ReplyAsync("", false, new EmbedBuilder
-                            {
-                                Description = $"**[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]** {(comp.NameFormat.Contains("score") ? $"{Context.User.Mention}" : $"{Context.User.Mention} [{player.Points}]")} joined the queue.\n" +
-                                $"[Get Premium to remove ELO bot branding]({Premium.PremiumConfig.ServerInvite})",
-                                Color = Color.Green
-                            }.Build());
-                        }
+                            Description = $"**[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]** {(comp.NameFormat.Contains("score") ? $"{Context.User.Mention}" : $"{Context.User.Mention} [{player.Points}]")} joined the queue.\n" +
+                                          $"[Get Premium to remove ELO bot branding]({Premium.PremiumConfig.ServerInvite})",
+                            Color = Color.Green
+                        }.Build());
                     }
                 }
 
@@ -249,7 +251,10 @@ namespace ELO.Modules
                 }
 
                 var queue = db.GetQueuedPlayers(Context.Guild.Id, Context.Channel.Id).ToList();
-                if (!queue.Any(x => x.UserId == Context.User.Id))
+                var queueMember = queue.FirstOrDefault(x => x.UserId == Context.User.Id);
+
+                // User is not found in queue
+                if (queueMember == null)
                 {
                     if (lobby.HideQueue)
                     {
@@ -270,37 +275,31 @@ namespace ELO.Modules
                         }
                     }
 
-                    db.QueuedPlayers.Remove(queue.FirstOrDefault(x => x.UserId == Context.User.Id));
+                    db.QueuedPlayers.Remove(queueMember);
                     db.SaveChanges();
 
                     if (lobby.HideQueue)
                     {
                         await Context.Message.DeleteAsync();
-                        await SimpleEmbedAsync($"Removed a player. **[{queue.Count - 1}/{lobby.PlayersPerTeam * 2}]**");
+                        await SimpleEmbedAsync($"A player left the queue. **[{queue.Count - 1}/{lobby.PlayersPerTeam * 2}]**");
                         return;
                     }
                     else
                     {
                         if (Premium.IsPremiumSimple(Context.Guild.Id))
                         {
-                            if (Context.User.Id == Context.Guild.OwnerId)
-                            {
-                                await SimpleEmbedAsync($"**[{queue.Count - 1}/{lobby.PlayersPerTeam * 2}]** {Context.User.Mention} [{player.Points}] left the queue.", Color.DarkBlue);
-                                db.SaveChanges();
-                                return;
-                            }
-                            await SimpleEmbedAsync($"**[{queue.Count - 1}/{lobby.PlayersPerTeam * 2}]** {(comp.NameFormat.Contains("score") ? $"{Context.User.Mention}" : $"{Context.User.Mention} [{player.Points}]")} left the queue.",Color.DarkBlue);
-                        }             
+                            await SimpleEmbedAsync($"**[{queue.Count - 1}/{lobby.PlayersPerTeam * 2}]** {Context.User.Mention} [{player.Points}] left the queue.", Color.DarkBlue);
+                        }
                         else
                         {
                             await ReplyAsync("", false, new EmbedBuilder
                             {
-                                Description = $"**[{queue.Count - 1}/{lobby.PlayersPerTeam * 2}]** {(comp.NameFormat.Contains("score") ? $"{Context.User.Mention}" : $"{Context.User.Mention} [{player.Points}]")} left the queue.\n" +
+                                Description = $"**[{queue.Count - 1}/{lobby.PlayersPerTeam * 2}]** {Context.User.Mention} [{player.Points}] left the queue.\n" +
                                 $"[Get Premium to remove ELO bot branding]({Premium.PremiumConfig.ServerInvite})",
                                 Color = Color.DarkBlue
                             }.Build());
                         }
-                    }                    
+                    }
                 }
             }
         }
@@ -312,49 +311,34 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                //var comp = db.Competitions.FirstOrDefault(x => x.GuildId == Context.Guild.Id);
                 var comp = db.GetOrCreateCompetition(Context.Guild.Id);
 
-                if (!(Context.User as SocketGuildUser).IsRegistered(out var player))
-                {
-                    await SimpleEmbedAsync("You must register in order to use this command.");
-                    return;
-                }
-
-                var lobby = db.Lobbies.Find(Context.Channel.Id);
+                var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
                     await SimpleEmbedAsync("This channel is not a lobby.");
                     return;
                 }
 
-                // Maplist (Just to show which maps can be selected by the bot)
-                var mapsList = db.Maps.Where(x => x.ChannelId == Context.Channel.Id).AsNoTracking().ToArray();
-
                 // Select a random map from the db
-                var r = new Random();
                 var maps = db.Maps.Where(x => x.ChannelId == Context.Channel.Id).ToArray();
 
-                var getMap = maps.ToArray().OrderByDescending(m => r.Next()).FirstOrDefault();
-                //var mapImg = getMap?.MapImage ?? comp.IHLDefaultMap;
-
-                if (maps.Length != 0)
+                var map = maps.OrderByDescending(m => Random.Next()).FirstOrDefault();
+                if (map != null)
                 {
                     var embed = new EmbedBuilder
                     {
-                        Color = Color.Blue,
-                        //Title = $"Random Map"
+                        Color = Color.Blue
                     };
 
-                    //embed.ThumbnailUrl = mapImg;
-                    embed.AddField("**Selected Map**", $"**{getMap.MapName}**");
-                    await ReplyAsync(null, false, embed.Build());
+                    embed.AddField("**Selected Map**", $"**{map.MapName}**");
+                    await ReplyAsync("", false, embed.Build());
                 }
                 else
                 {
                     await SimpleEmbedAndDeleteAsync("There are no maps added in this lobby", Color.DarkOrange);
                 }
             }
-        }        
+        }
     }
 }
