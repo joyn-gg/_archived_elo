@@ -14,12 +14,15 @@ namespace ELO.Extensions
 
         public static Dictionary<(ulong guildId, ulong userId), bool> RegCache = new Dictionary<(ulong guildId, ulong userId), bool>();
 
-        public static void SetRegistrationState(ulong guildId, ulong userId, bool state)
+        public static void ClearUserCache(ulong guildId, ulong userId)
         {
             lock (cacheLock)
             {
                 var key = (guildId, userId);
-                RegCache[key] = state;
+                if (RegCache.ContainsKey(key))
+                {
+                    RegCache.Remove(key);
+                }
             }
         }
 
@@ -87,63 +90,5 @@ namespace ELO.Extensions
                 return false;
             }
         }
-
-        /*
-        public static bool IsRegistered(this SocketGuildUser user, out Player player, bool required = true)
-        {
-            //Create a new db session.
-            using (var db = new Database())
-            {
-                //Ensure there is a cached value for the user in question
-                if (!RegistrationCache.ContainsKey(user.Guild.Id))
-                {
-                    RegistrationCache.Add(user.Guild.Id, new Dictionary<ulong, bool>());
-                }
-
-                //Find the cache for the specified guild
-                var guildCache = RegistrationCache[user.Guild.Id];
-                if (guildCache.TryGetValue(user.Id, out var registered))
-                {
-                    //Check cache to avoid initial db query
-                    if (registered)
-                    {
-                        //Query db here
-                        if (required)
-                        {
-                            player = db.Players.Find(user.Guild.Id, user.Id);
-                        }
-                        else
-                        {
-                            player = null;
-                        }
-
-                        return true;
-                    }
-                    else
-                    {
-                        player = null;
-                        return false;
-                    }
-                }
-                else
-                {
-                    //The user is not cached so populate the cache with if they are registered or not
-                    lock (cacheLock)
-                    {
-                        player = db.Players.Find(user.Guild.Id, user.Id);
-                        if (player == null)
-                        {
-                            guildCache.Add(user.Id, false);
-                            return false;
-                        }
-                        else
-                        {
-                            guildCache.Add(user.Id, true);
-                            return true;
-                        }
-                    }
-                }
-            }
-        }*/
     }
 }

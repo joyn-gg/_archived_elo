@@ -46,74 +46,15 @@ namespace ELO.Modules
             }
         }
 
-        /*
-        [Command("ForceRegister", RunMode = RunMode.Sync)]
-        [RequirePermission(PermissionLevel.ELOAdmin)]
-        public virtual async Task ForceRegisterAsync(SocketGuildUser regUser, [Remainder]string name = null)
-        {
-            await RegisterAsync(regUser, name);
-        }*/
-
         [Command("Register", RunMode = RunMode.Sync)]
         [Alias("reg")]
         [Summary("Register for the ELO competition.")]
-        [RateLimit(1, 20, Measure.Seconds)]
+
+        // [RateLimit(1, 20, Measure.Seconds)]
         public virtual async Task RegisterAsync([Remainder]string name = null)
         {
             await RegisterAsync(Context.User as SocketGuildUser, name);
         }
-
-        /*[Command("TestReg", RunMode = RunMode.Sync)]
-        [Summary("Register for the ELO competition.")]
-        public virtual async Task TestRegAsync(TopggVoteService.ResultType voteState)
-        {
-            var registrationLimitEmbed = new EmbedBuilder
-            {
-                Title = "Registration Limit Exceeded",
-                Url = Premium.PremiumConfig.AltLink,
-                ThumbnailUrl = Context.Client.CurrentUser.GetAvatarUrl(),
-                Color = Color.DarkBlue
-            }
-            .AddField("Subscribe", $"You can upgrade your registration limit by subscribing at [Patreon]({Premium.PremiumConfig.AltLink})\n" +
-            $"For Support, visit the ELO [Support Server]({Premium.PremiumConfig.ServerInvite})", true);
-
-            bool displayVoteInfo = false;
-
-            if (voteState == TopggVoteService.ResultType.NotVoted)
-            {
-                displayVoteInfo = true;
-            }
-            else if (voteState == TopggVoteService.ResultType.Voted)
-            {
-                // Check registration count against new vote limit
-                if (true)
-                {
-                    displayVoteInfo = true;
-                }
-                else
-                {
-                    // Allow registration
-                }
-            }
-
-            if (displayVoteInfo)
-            {
-                registrationLimitEmbed.AddField("Voting", $"For up to {VoteService.MaxRegLimit} registrations, " +
-                    $"individuals may register by voting at [ELO](https://top.gg/bot/{Context.Client.CurrentUser.Id}) and then running the `register` command", true);
-            }
-
-            using (var db = new Database())
-            {
-                var registered = ((IQueryable<Player>)db.Players).Count(x => x.GuildId == Context.Guild.Id);
-                var limit = Premium.GetRegistrationLimit(Context.Guild.Id);
-
-                registrationLimitEmbed.AddField("Limits",
-                    $"**Currently Registered:** {registered}/{limit} users" +
-                    (displayVoteInfo ? $"\n**Voted Registration Limit:** {VoteService.MaxRegLimit} users" : ""));
-
-                await ReplyAsync("", false, registrationLimitEmbed.Build());
-            }
-        }*/
 
         public virtual async Task<bool> RegisterAsync(SocketGuildUser regUser, [Remainder]string name = null)
         {
@@ -128,7 +69,7 @@ namespace ELO.Modules
             {
                 var comp = db.GetOrCreateCompetition(Context.Guild.Id);
 
-                if ((regUser as SocketGuildUser).IsRegistered(out var user))
+                if (regUser.IsRegistered(out var user))
                 {
                     if (!comp.AllowReRegister)
                     {
@@ -208,7 +149,7 @@ namespace ELO.Modules
                     };
                     db.Players.Add(user);
                     db.SaveChanges();
-                    Extensions.Extensions.SetRegistrationState(Context.Guild.Id, user.GuildId, true);
+                    Extensions.Extensions.ClearUserCache(Context.Guild.Id, user.UserId);
                 }
 
                 var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
