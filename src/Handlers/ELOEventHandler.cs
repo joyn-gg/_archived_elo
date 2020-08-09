@@ -182,6 +182,7 @@ namespace ELO.Handlers
                         hasPrefixCached = PrefixCache.TryGetValue(guildId, out prefix);
                     }
 
+                    // prefix not found in cache so pull from db
                     if (!hasPrefixCached)
                     {
                         //Check that the message was from a server and try to use a custom set prefix if available.
@@ -191,7 +192,7 @@ namespace ELO.Handlers
                             prefix = comp?.Prefix ?? Program.Prefix;
                             lock (PrefixCache)
                             {
-                                PrefixCache.Add(guildId, prefix);
+                                PrefixCache[guildId] = prefix;
                             }
                         }
                     }

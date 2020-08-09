@@ -31,7 +31,7 @@ namespace ELO.Modules
                 comp.Prefix = prefix;
                 db.Update(comp);
                 db.SaveChanges();
-                ELO.Handlers.ELOEventHandler.PrefixCache[Context.Guild.Id] = prefix;
+                Handlers.ELOEventHandler.UpdatePrefix(Context.Guild.Id, prefix);
                 await SimpleEmbedAsync($"Prefix has been set to `{prefix ?? "Default"}`");
             }
         }
