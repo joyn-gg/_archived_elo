@@ -26,8 +26,8 @@ namespace ELO.Handlers
                 var commandMatch = Service.Search(message, argPos);
                 if (commandMatch.IsSuccess)
                 {
-                    //Ensure none of the possible commands are syncrhronous
-                    if (!commandMatch.Commands.Any(x => x.Command.RunMode == RunMode.Sync))
+                    //Ensure none of the possible commands are synchronous
+                    if (commandMatch.Commands.All(x => x.Command.RunMode != RunMode.Sync))
                     {
                         //If command is async then swap in a task and return
                         var _ = Task.Run(() => Service.ExecuteAsync(message, argPos, Provider));
@@ -41,7 +41,7 @@ namespace ELO.Handlers
                 //Check and attempt to run the command processor
                 if (!Running)
                 {
-                    Task.Run(() => RunProcessor());
+                    Task.Run(RunProcessor);
                 }
             }
 
@@ -65,11 +65,9 @@ namespace ELO.Handlers
                             Console.WriteLine($"Exception thrown in command processor loop for guild: {GuildId}");
                         }
 
-                        if (Queue.Count > 100)
-                        {
-                            Queue.Clear();
-                            Console.WriteLine($"Execution delay for guild {GuildId} too long, cleared queue");
-                        }
+                        if (Queue.Count <= 100) continue;
+                        Queue.Clear();
+                        Console.WriteLine($"Execution delay for guild {GuildId} too long, cleared queue");
                     }
                 }
                 catch
