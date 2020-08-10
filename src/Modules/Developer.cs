@@ -51,7 +51,7 @@ namespace ELO.Modules
             var premiumUsers = new Dictionary<ulong, HashSet<ulong>>();
 
             PremiumService.PremiumRole[] roles;
-            using (var db = new Database())
+            await using (var db = new Database())
             {
                 roles = db.PremiumRoles.ToArray();
             }
@@ -281,7 +281,7 @@ namespace ELO.Modules
         [Command("AddPremiumRole", RunMode = RunMode.Sync)]
         public async Task AddRoleAsync(SocketRole role, int maxCount)
         {
-            using (var db = new Database())
+            await using (var db = new Database())
             {
                 var match = db.PremiumRoles.Find(role.Id);
                 if (match != null)
@@ -306,7 +306,7 @@ namespace ELO.Modules
         [Command("PremiumRoles")]
         public async Task ShowRolesAsync()
         {
-            using (var db = new Database())
+            await using (var db = new Database())
             {
                 var roles = db.PremiumRoles.ToArray();
                 await SimpleEmbedAsync("Roles:\n" + string.Join("\n", roles.Select(x => MentionUtils.MentionRole(x.RoleId) + " - " + x.Limit)));
@@ -316,7 +316,7 @@ namespace ELO.Modules
         [Command("LastLegacyPremium", RunMode = RunMode.Async)]
         public async Task LastLegacyPremium()
         {
-            using (var db = new Database())
+            await using (var db = new Database())
             {
                 var configs = db.Competitions.AsNoTracking().Where(x => x.LegacyPremiumExpiry != null).ToArray().OrderByDescending(x => x.LegacyPremiumExpiry).Take(20).ToArray();
 

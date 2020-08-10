@@ -18,7 +18,9 @@ namespace ELO.Modules
     public class GameManagement : ReactiveBase
     {
         public GameService GameService { get; }
+
         public UserService UserService { get; }
+
         public GameSubmissionService GSS { get; }
 
         public GameManagement(GameService gameService, UserService userService, GameSubmissionService gSS)
@@ -27,6 +29,7 @@ namespace ELO.Modules
             UserService = userService;
             GSS = gSS;
         }
+
         [Command("VoteStates", RunMode = RunMode.Async)]
         [Alias("Results", "VoteTypes")]
         [Summary("Shows possible vote options for the Result command")]
@@ -35,7 +38,6 @@ namespace ELO.Modules
         {
             await SimpleEmbedAsync(string.Join("\n", RavenBOT.Common.Extensions.EnumNames<VoteState>()), Color.Blue);
         }
-
 
         [Command("Vote", RunMode = RunMode.Sync)]
         [Alias("GameResult", "Result")]
@@ -85,7 +87,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var game = db.GameResults.Where(x => x.GuildId == Context.Guild.Id && x.LobbyId == lobbyChannel.Id && x.GameId == gameNumber).FirstOrDefault();
+                var game = db.GameResults.FirstOrDefault(x => x.GuildId == Context.Guild.Id && x.LobbyId == lobbyChannel.Id && x.GameId == gameNumber);
                 if (game == null)
                 {
                     await SimpleEmbedAsync($"Game not found. Most recent game is {db.GetLatestGame(lobby)?.GameId}", Color.DarkBlue);
@@ -108,7 +110,6 @@ namespace ELO.Modules
                 await SimpleEmbedAsync($"Game #{gameNumber} in {MentionUtils.MentionChannel(lobbyChannel.Id)} Undone.");
             }
         }
-
 
         public virtual async Task UndoScoreUpdatesAsync(GameResult game, Competition competition, Database db)
         {
@@ -157,15 +158,14 @@ namespace ELO.Modules
             db.SaveChanges();
         }
 
-
         /*
+
         // If these commands are added back explain that this does not affect the users who were in the game if it had a result. this is only for removing the game log from the database
-        
+
         [Command("DeleteGame", RunMode = RunMode.Sync)]
         [Alias("Delete Game", "DelGame")]
         [Summary("Deletes the specified game from history")]
         [RequirePermission(PermissionLevel.ELOAdmin)]
-        
         public virtual async Task DelGame(SocketTextChannel lobbyChannel, int gameNumber)
         {
             await DelGame(gameNumber, lobbyChannel);
@@ -222,7 +222,6 @@ namespace ELO.Modules
         {
             await GSS.CancelAsync(Context, gameNumber, lobbyChannel, comment);
         }
-
 
         [Command("Draw", RunMode = RunMode.Sync)]
         [Summary("Calls a draw for the specified game in the specified lobby with an optional comment.")]
