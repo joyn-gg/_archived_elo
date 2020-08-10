@@ -67,11 +67,12 @@ namespace ELO.Modules
                         page.Fields.Add(new EmbedFieldBuilder
                         {
                             Name = ban.IsExpired != true
-                                ? $"*{ban.BanId}* **[Active]** {user?.GetDisplayNameSafe() ?? ban.UserId.ToString()}"
-                                : $"*{ban.BanId}* **[Expired]** {user?.GetDisplayNameSafe() ?? ban.UserId.ToString()}",
-                            Value = $"**User:** {MentionUtils.MentionUser(ban.UserId) ?? ban.UserId.ToString()}\n" +
-                                    $"**Banned at:**  {ban.ExpiryTime.ToString("dd MMM yyyy")}\n" +
-                                    $"**Ban Length:** {ban.Length.GetReadableLength()}\n" +
+                                ? $"**[Active]** {user?.GetDisplayNameSafe() ?? ban.UserId.ToString()}"
+                                : $"**[Expired]** {user?.GetDisplayNameSafe() ?? ban.UserId.ToString()}",
+                            Value = $"**User:** {MentionUtils.MentionUser(ban.UserId)}\n" +
+                                    $"**Banned at:**  {ban.TimeOfBan.ToString("dd MMM yyyy HH:mm:ss")}\n" +
+                                    $"**Banned until:**  {ban.ExpiryTime.ToString("dd MMM yyyy HH:mm:ss")}\n" +
+                                    $"**Ban length:** {ban.Length.GetReadableLength()}\n" +
                                     $"{(ban.IsExpired != true ? $"**Expires in:** {ban.RemainingTime.GetReadableLength()}\n" : "")}" +
                                     $"**Banned by:** {MentionUtils.MentionUser(ban.Moderator)}\n" +
                                     $"**Reason:** {ban.Comment ?? "N/A"}".FixLength(512)
@@ -81,7 +82,8 @@ namespace ELO.Modules
                 }
                 await PagedReplyAsync(new ReactivePager
                 {
-                    Pages = pages
+                    Pages = pages,
+                    FooterOverride = new EmbedFooterBuilder().WithText($"{bans.Count} ban(s) | {bans.Count(x => !x.IsExpired)} current ban(s) | All times are displayed in UTC")
                 }.ToCallBack().WithDefaultPagerCallbacks().WithJump());
             }
         }
@@ -131,8 +133,9 @@ namespace ELO.Modules
                         {
                             Name = user?.DisplayName ?? ban.UserId.ToString(),
                             Value = $"**User:** {MentionUtils.MentionUser(ban.UserId)}\n" +
-                            $"**Banned at:**  {ban.ExpiryTime.ToString("dd MMM yyyy")}\n" +
-                            $"**Ban Length:** {ban.Length.GetReadableLength()}\n" +
+                            $"**Banned at:**  {ban.TimeOfBan.ToString("dd MMM yyyy HH:mm:ss")}\n" +
+                            $"**Banned until:**  {ban.ExpiryTime.ToString("dd MMM yyyy HH:mm:ss")}\n" +
+                            $"**Ban length:** {ban.Length.GetReadableLength()}\n" +
                             $"**Expires in:** {ban.RemainingTime.GetReadableLength()}\n" +
                             $"**Banned By:** {MentionUtils.MentionUser(ban.Moderator)}\n" +
                             $"**Reason:** {ban.Comment ?? "N/A"}\n".FixLength(512)
@@ -141,7 +144,10 @@ namespace ELO.Modules
                     pages.Add(page);
                 }
 
-                var pager2 = new ReactivePager(pages);
+                var pager2 = new ReactivePager(pages)
+                {
+                    FooterOverride = new EmbedFooterBuilder().WithText($"{bans.Count(x => !x.IsExpired)} current ban(s) | All times are displayed in UTC")
+                };
                 await PagedReplyAsync(pager2.ToCallBack().WithDefaultPagerCallbacks());
             }
         }
@@ -186,11 +192,12 @@ namespace ELO.Modules
                         page.Fields.Add(new EmbedFieldBuilder
                         {
                             Name = ban.IsExpired != true
-                                ? $"*{ban.BanId}* **[Active]** {user?.GetDisplayNameSafe() ?? ban.UserId.ToString()}"
-                                : $"*{ban.BanId}* **[Expired]** {user?.GetDisplayNameSafe() ?? ban.UserId.ToString()}",
-                            Value = $"**User:** {MentionUtils.MentionUser(ban.UserId) ?? ban.UserId.ToString()}\n" +
-                                    $"**Banned at:**  {ban.ExpiryTime.ToString("dd MMM yyyy")}\n" +
-                                    $"**Ban Length:** {ban.Length.GetReadableLength()}\n" +
+                                ? $"**[Active]** {user?.GetDisplayNameSafe() ?? ban.UserId.ToString()}"
+                                : $"**[Expired]** {user?.GetDisplayNameSafe() ?? ban.UserId.ToString()}",
+                            Value = $"**User:** {MentionUtils.MentionUser(ban.UserId)}\n" +
+                                    $"**Banned at:**  {ban.TimeOfBan.ToString("dd MMM yyyy HH:mm:ss")}\n" +
+                                    $"**Banned until:**  {ban.ExpiryTime.ToString("dd MMM yyyy HH:mm:ss")}\n" +
+                                    $"**Ban length:** {ban.Length.GetReadableLength()}\n" +
                                     $"{(ban.IsExpired != true ? $"**Expires in:** {ban.RemainingTime.GetReadableLength()}\n" : "")}" +
                                     $"**Banned by:** {MentionUtils.MentionUser(ban.Moderator)}\n" +
                                     $"**Reason:** {ban.Comment ?? "N/A"}".FixLength(512)
@@ -205,7 +212,8 @@ namespace ELO.Modules
                 }
                 await PagedReplyAsync(new ReactivePager
                 {
-                    Pages = pages
+                    Pages = pages,
+                    FooterOverride = new EmbedFooterBuilder().WithText($"{bans.Count} ban(s) | {bans.Count(x => !x.IsExpired)} current ban(s) | All times are displayed in UTC")
                 }.ToCallBack().WithDefaultPagerCallbacks().WithJump());
             }
         }
