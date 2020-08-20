@@ -30,7 +30,7 @@ namespace ELO.Preconditions
 
             if (!(context.User is SocketGuildUser gUser))
             {
-                return PreconditionResult.FromError("You are not recognised as a guild user.");
+                return PreconditionResult.FromError("You are not recognized as a guild user.");
             }
 
             /*
