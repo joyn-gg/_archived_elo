@@ -48,12 +48,15 @@ namespace ELO.Services
             }
         }
 
-        public (CachedPermissions, CachedPermissions.CachedPermission) GetCached(Database db, ulong guildId, string commandName)
+        public (CachedPermissions, CachedPermissions.CachedPermission) GetCached(ulong guildId, string commandName)
         {
             commandName = commandName.ToLower();
             CachedPermissions.CachedPermission permission;
+
+            // Check if guild cache contains current server already
             if (PermissionCache.TryGetValue(guildId, out var guildCache))
             {
+                // Check guild's cache for server
                 if (guildCache.Cache.TryGetValue(commandName.ToLower(), out permission))
                 {
                     if (permission == null)
@@ -64,6 +67,37 @@ namespace ELO.Services
                 }
                 else
                 {
+                    using (var db = new Database())
+                    {
+                        var dbPermission = db.Permissions.FirstOrDefault(x => x.GuildId == guildId && x.CommandName == commandName);
+                        if (dbPermission == null)
+                        {
+                            guildCache.Cache.Add(commandName.ToLower(), null);
+                        }
+                        else
+                        {
+                            permission = new CachedPermissions.CachedPermission
+                            {
+                                CommandName = commandName.ToLower(),
+                                Level = dbPermission.Level
+                            };
+                            guildCache.Cache.Add(permission.CommandName, permission);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                using (var db = new Database())
+                {
+                    var comp = db.GetOrCreateCompetition(guildId);
+                    guildCache = new CachedPermissions
+                    {
+                        GuildId = guildId,
+                        ModId = comp.ModeratorRole,
+                        AdminId = comp.AdminRole
+                    };
+
                     var dbPermission = db.Permissions.FirstOrDefault(x => x.GuildId == guildId && x.CommandName == commandName);
                     if (dbPermission == null)
                     {
@@ -79,34 +113,9 @@ namespace ELO.Services
                         };
                         guildCache.Cache.Add(permission.CommandName, permission);
                     }
-                }
-            }
-            else
-            {
-                var comp = db.GetOrCreateCompetition(guildId);
-                guildCache = new CachedPermissions
-                {
-                    GuildId = guildId,
-                    ModId = comp.ModeratorRole,
-                    AdminId = comp.AdminRole
-                };
 
-                var dbPermission = db.Permissions.FirstOrDefault(x => x.GuildId == guildId && x.CommandName == commandName);
-                if (dbPermission == null)
-                {
-                    permission = null;
-                    guildCache.Cache.Add(commandName.ToLower(), null);
+                    PermissionCache.Add(guildId, guildCache);
                 }
-                else
-                {
-                    permission = new CachedPermissions.CachedPermission
-                    {
-                        CommandName = commandName.ToLower(),
-                        Level = dbPermission.Level
-                    };
-                    guildCache.Cache.Add(permission.CommandName, permission);
-                }
-                PermissionCache.Add(guildId, guildCache);
             }
 
             return (guildCache, permission);
@@ -115,24 +124,18 @@ namespace ELO.Services
         public (bool?, CachedPermissions, CachedPermissions.CachedPermission) EvaluateCustomPermission(string commandName, SocketGuildUser user, out PermissionLevel? permissionLevel)
         {
             permissionLevel = null;
+            var perms = GetCached(user.Guild.Id, commandName);
+            var guildCache = perms.Item1;
+            if (perms.Item2 == null) return (null, guildCache, null);
+            var permission = perms.Item2;
 
-            CachedPermissions guildCache;
-            CachedPermissions.CachedPermission permission;
-
-            using (var db = new Database())
+            permissionLevel = permission.Level;
+            if (permission.Level == PermissionLevel.Default) return (null, guildCache, null);
+            if (permission.Level == PermissionLevel.Registered)
             {
-                var perms = GetCached(db, user.Guild.Id, commandName);
-                guildCache = perms.Item1;
-                if (perms.Item2 == null) return (null, guildCache, null);
-                permission = perms.Item2;
-
-                permissionLevel = permission.Level;
-                if (permission.Level == PermissionLevel.Default) return (null, guildCache, null);
-                if (permission.Level == PermissionLevel.Registered)
-                {
-                    return (user.IsRegistered(), guildCache, permission);
-                }
+                return (user.IsRegistered(), guildCache, permission);
             }
+
             if (permission.Level == PermissionLevel.Moderator)
             {
                 return (user.GuildPermissions.Administrator || user.Roles.Any(x => x.Id == guildCache.ModId || x.Id == guildCache.AdminId || x.Permissions.Administrator), guildCache, permission);
