@@ -183,6 +183,8 @@ namespace ELO.Modules
                 var team2 = db.GetTeam2(game).ToArray();
                 var t1c = db.GetTeamCaptain(game, 1);
                 var t2c = db.GetTeamCaptain(game, 2);
+
+                // Check if the user being added is already in the game
                 if (team1.Any(x => x.UserId == replacedWith.Id) || team2.Any(x => x.UserId == replacedWith.Id) || t1c?.UserId == replacedWith.Id || t2c?.UserId == replacedWith.Id)
                 {
                     await SimpleEmbedAsync($"{replacedWith.Mention} is already in this game.");
@@ -192,7 +194,8 @@ namespace ELO.Modules
                 var captainReplaced = false;
                 var queueUserReplaced = false;
 
-                if (team1.All(x => x.UserId != user.Id) && team2.All(x => x.UserId != user.Id))
+                // Check if user is in either team (and fallback to checking queue)
+                if (team1.All(x => x.UserId != user.Id) && team2.All(x => x.UserId != user.Id) && t1c?.UserId != user.Id && t2c?.UserId != user.Id)
                 {
                     // User is not present in either team and is not a team captain, check if the game is currently picking and replace the member in the queue.
                     if (game.GameState != GameState.Picking)
@@ -261,6 +264,40 @@ namespace ELO.Modules
                     {
                         t1c.UserId = replacedWith.Id;
                         db.TeamCaptains.Update(t1c);
+
+                        // Game is picking to try to also replace captain in queue if they remain.
+                        if (game.GameState == GameState.Picking)
+                        {
+                            var queuedUsers = db.QueuedPlayers.Where(x => x.ChannelId == Context.Channel.Id);
+                            var current = queuedUsers.SingleOrDefault(x => x.UserId == user.Id);
+                            if (current == null && t1c?.UserId != user.Id && t2c?.UserId != user.Id)
+                            {
+                                // Player is not present in queue team1 or team2 or captain
+                                await SimpleEmbedAsync($"{user.Mention} is not present in the game.");
+                                return;
+                            }
+
+                            // Ensure the user replacing the player is not queued.
+                            var replacer = queuedUsers.SingleOrDefault(x => x.UserId == replacedWith.Id);
+                            if (replacer != null)
+                            {
+                                await SimpleEmbedAsync($"{replacedWith.Mention} is in the remaining player pool already.");
+                                return;
+                            }
+
+                            if (current != null)
+                            {
+                                db.QueuedPlayers.Remove(current);
+                                db.QueuedPlayers.Add(new QueuedPlayer
+                                {
+                                    GuildId = Context.Guild.Id,
+                                    ChannelId = lobby.ChannelId,
+                                    UserId = replacedWith.Id
+                                });
+                                queueUserReplaced = true;
+                            }
+                        }
+
                         db.SaveChanges();
                         await SimpleEmbedAsync($"{user.Mention} as a team captain was replaced with {replacedWith.Mention}");
                         captainReplaced = true;
@@ -269,6 +306,40 @@ namespace ELO.Modules
                     {
                         t2c.UserId = replacedWith.Id;
                         db.TeamCaptains.Update(t2c);
+
+                        // Game is picking to try to also replace captain in queue if they remain.
+                        if (game.GameState == GameState.Picking)
+                        {
+                            var queuedUsers = db.QueuedPlayers.Where(x => x.ChannelId == Context.Channel.Id);
+                            var current = queuedUsers.SingleOrDefault(x => x.UserId == user.Id);
+                            if (current == null && t1c?.UserId != user.Id && t2c?.UserId != user.Id)
+                            {
+                                // Player is not present in queue team1 or team2 or captain
+                                await SimpleEmbedAsync($"{user.Mention} is not present in the game.");
+                                return;
+                            }
+
+                            // Ensure the user replacing the player is not queued.
+                            var replacer = queuedUsers.SingleOrDefault(x => x.UserId == replacedWith.Id);
+                            if (replacer != null)
+                            {
+                                await SimpleEmbedAsync($"{replacedWith.Mention} is in the remaining player pool already.");
+                                return;
+                            }
+
+                            if (current != null)
+                            {
+                                db.QueuedPlayers.Remove(current);
+                                db.QueuedPlayers.Add(new QueuedPlayer
+                                {
+                                    GuildId = Context.Guild.Id,
+                                    ChannelId = lobby.ChannelId,
+                                    UserId = replacedWith.Id
+                                });
+                                queueUserReplaced = true;
+                            }
+                        }
+
                         db.SaveChanges();
                         await SimpleEmbedAsync($"{user.Mention} as a team captain was replaced with {replacedWith.Mention}");
                         captainReplaced = true;
