@@ -11,6 +11,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ELO.Models;
+using Patreon.NET;
 
 namespace ELO.Modules
 {
@@ -31,6 +33,303 @@ namespace ELO.Modules
 
         public CommandService Cmd { get; }
 
+        [Command("LeaveGuild")]
+        public async Task LeaveGuildAsync(ulong guildId)
+        {
+            var match = Context.Client.GetGuild(guildId);
+            if (match == null)
+            {
+                await ReplyAsync("Guild not found");
+                return;
+            }
+
+            await match.LeaveAsync();
+            await ReplyAsync($"Guild {match.Name} has been left [{match.Id}]");
+        }
+
+        [Command("GuildInfo")]
+        public async Task GuildInfoAsync(ulong guildId)
+        {
+            var match = Context.Client.GetGuild(guildId);
+            if (match == null)
+            {
+                await ReplyAsync("Guild not found");
+                return;
+            }
+
+            using (var db = new Database())
+            {
+                var comp = db.Competitions.FirstOrDefault(x => x.GuildId == match.Id);
+                var memberCount = match.MemberCount;
+                var owner = match.OwnerId;
+
+                var inv = await GetInviteAsync(match.Id);
+
+                var embed = new EmbedBuilder();
+
+                embed.AddField("Info",
+                    $"Member Count: {memberCount}\n" +
+                    $"Owner: {Discord.MentionUtils.MentionUser(owner)} {match.Owner?.Username}#{match.Owner?.Discriminator} {match.OwnerId}\n" +
+                    $"Invite: {inv?.Url ?? "N/A"}");
+
+                if (comp != null)
+                {
+                    var registered = db.Players.Count(x => x.GuildId == Context.Guild.Id);
+                    var gameCount = db.GameResults.Count(x => x.GuildId == Context.Guild.Id);
+                    var decGameCount = db.GameResults.Count(x => x.GuildId == Context.Guild.Id && (x.GameState == GameState.Decided || x.GameState == GameState.Draw));
+                    var manualGameCount = db.ManualGameResults.Count(x => x.GuildId == Context.Guild.Id);
+
+                    embed.AddField("Roles",
+                                $"**Register Role:** {(comp.RegisteredRankId == null ? "N/A" : MentionUtils.MentionRole(comp.RegisteredRankId.Value))}\n" +
+                                $"**Admin Role:** {(comp.AdminRole == null ? "N/A" : MentionUtils.MentionRole(comp.AdminRole.Value))}\n" +
+                                $"**Moderator Role:** {(comp.ModeratorRole == null ? "N/A" : MentionUtils.MentionRole(comp.ModeratorRole.Value))}");
+                    embed.AddField("Options",
+                                $"**Allow Multi-Queuing:** {comp.AllowMultiQueueing}\n" +
+                                $"**Allow Negative Score:** {comp.AllowNegativeScore}\n" +
+                                $"**Update Nicknames:** {comp.UpdateNames}\n" +
+                                $"**Display Error Messages:** {comp.DisplayErrors}\n" +
+                                $"**Allow Self Rename:** {comp.AllowSelfRename}\n" +
+                                $"**Allow Re-registering:** {comp.AllowReRegister}\n" +
+                                $"**Requeue Delay:** {(comp.RequeueDelay.HasValue ? comp.RequeueDelay.Value.GetReadableLength() : "None")}\n" +
+                                $"**Voting Enabled:** {comp.AllowVoting}\n" +
+                                $"**Custom Prefix:** {comp.Prefix ?? "N/A"}\n" +
+                                $"**Auto Queue Timeout:** {(comp.QueueTimeout.HasValue ? comp.QueueTimeout.Value.GetReadableLength() : "None")}");
+
+                    embed.AddField("Premium",
+                                $"**Premium Buffer Until:** " +
+                                $"{(comp.PremiumBuffer.HasValue ? comp.PremiumBuffer.Value.ToShortDateString() + " " + comp.PremiumBuffer.Value.ToShortTimeString() : "N/A")}\n" +
+                                $"**Premium Buffer Count:** {(comp.BufferedPremiumCount.HasValue ? comp.BufferedPremiumCount.Value.ToString() : "N/A")}\n" +
+                                $"**Premium Redeemer:** {(comp.PremiumRedeemer.HasValue ? MentionUtils.MentionUser(comp.PremiumRedeemer.Value) : "N/A")}\n" +
+                                $"**Registration Limit:** {Prem.GetRegistrationLimit(Context.Guild.Id)}");
+
+                    embed.AddField("Stats",
+                        $"**Registrations:** {registered}\n" +
+                        $"**Games Created:** {gameCount}\n" +
+                        $"**Games Submitted:** {decGameCount}\n" +
+                        $"**Manual Games:** {manualGameCount}");
+
+                    embed.AddField("Formatting", $"**Nickname Format:** {comp.NameFormat}\n" +
+                                $"**Registration Message:** {comp.RegisterMessageTemplate.FixLength(128)}");
+
+                    embed.AddField("Rank Info",
+                    $"**Default Win Amount:** +{comp.DefaultWinModifier}\n" +
+                    $"**Default Loss Amount:** -{comp.DefaultLossModifier}\n" +
+                    $"**Default Points On Register:** {comp.DefaultRegisterScore}");
+                }
+
+                await ReplyAsync("", false, embed.Build());
+            }
+        }
+
+        private async Task<IInvite> GetInviteAsync(ulong guildId)
+        {
+            var guild = Context.Client.GetGuild(guildId);
+            if (guild == null)
+            {
+                return null;
+            }
+
+            foreach (var invite in await guild.GetInvitesAsync())
+            {
+                if (invite.IsRevoked) continue;
+                return invite;
+            }
+
+            try
+            {
+                var vanity = await guild.GetVanityInviteAsync();
+                return vanity;
+            }
+            catch (Exception e)
+            {
+                //
+            }
+
+            foreach (var channel in guild.TextChannels)
+            {
+                try
+                {
+                    var tmp = await channel.CreateInviteAsync();
+                    return tmp;
+                }
+                catch (Exception e)
+                {
+                    //
+                }
+            }
+
+            foreach (var channel in guild.VoiceChannels)
+            {
+                try
+                {
+                    var tmp = await channel.CreateInviteAsync();
+                    return tmp;
+                }
+                catch (Exception e)
+                {
+                    //
+                }
+            }
+
+            return null;
+        }
+
+        private PatreonClient.PledgesInfo cacheInfo = null;
+
+        [Command("AnalyzePatronsCache")]
+        public async Task PatreonTestCachedAsync(string apiKey = null, string campaignId = null)
+        {
+            if (apiKey == null || campaignId == null)
+            {
+                await ReplyAsync("Must supply api key and campaign ID when running this command.");
+                return;
+            }
+
+            await ReplyAsync("Pulling patreon info.");
+            var guild = Context.Client.GetGuild(Prem.PremiumConfig.GuildId);
+            if (cacheInfo == null)
+            {
+                var client = new Patreon.NET.PatreonClient(apiKey);
+                var pledges = await client.GetCampaignPledges(campaignId);
+                cacheInfo = pledges;
+            }
+
+            var rewardMissing = cacheInfo.Users.Count(x => x.Rewards == null);
+            var userMissing = cacheInfo.Users.Count(x => x.UserIncluded == null);
+
+            int uidMissing = 0;
+            var premiumUsers = new Dictionary<ulong, HashSet<ulong>>();
+
+            PremiumService.PremiumRole[] roles;
+            await using (var db = new Database())
+            {
+                roles = db.PremiumRoles.ToArray();
+            }
+
+            foreach (var pledge in cacheInfo.Users)
+            {
+                var userId = pledge.UserIncluded.Attributes.SocialConnections.Discord?.UserId;
+                if (userId == null)
+                {
+                    uidMissing++;
+                }
+                else
+                {
+                    var roleIds = pledge.Rewards.SelectMany(x => x.Attributes.DiscordRoleIds);
+                    var entitledRoles = new HashSet<ulong>();
+                    foreach (var role in roleIds)
+                    {
+                        entitledRoles.Add(ulong.Parse(role));
+                    }
+
+                    var uid = ulong.Parse(userId);
+
+                    if (premiumUsers.TryGetValue(uid, out var uCol))
+                    {
+                        foreach (var entitledRoleId in entitledRoles)
+                        {
+                            uCol.Add(entitledRoleId);
+                        }
+
+                        entitledRoles = uCol;
+                    }
+                    else
+                    {
+                        premiumUsers.Add(uid, entitledRoles);
+                    }
+                }
+            }
+
+            var contentStrings = new List<string>();
+            int maxLength = 2000;
+            var builder = new StringBuilder();
+            foreach (var premiumUser in premiumUsers)
+            {
+                var gUser = guild.GetUser(premiumUser.Key);
+                if (gUser != null)
+                {
+                    var userPremiumRoles = gUser.Roles.Where(x => roles.Any(y => y.RoleId == x.Id)).ToArray();
+                    /*if (userPremiumRoles.Length > 0)
+                    {
+                        // User has premium but wrong roles.
+                        if (userPremiumRoles.Any(r => !premiumUser.Value.Contains(r.Id)))
+                        {
+                            builder.AppendLine($"{gUser.Mention} `{gUser.Username}#{gUser.Discriminator}` has role when only entitled to {string.Join(" ", premiumUser.Value.Select(x => "<@&" + x + ">"))}");
+                        }
+                    }*/
+
+                    if (premiumUser.Value.Count > 0 && userPremiumRoles.Length == 0)
+                    {
+                        var content =
+                            $"{gUser.Mention} `{gUser.Username}#{gUser.Discriminator}` has no roles but is entitled to {string.Join(" ", premiumUser.Value.Select(x => "<@&" + x + ">"))}";
+                        if (builder.Length + content.Length > maxLength)
+                        {
+                            contentStrings.Add(builder.ToString());
+                            builder.Clear();
+                        }
+
+                        builder.AppendLine(content);
+                    }
+                }
+            }
+
+            var gUsersWithPremiumRoles = guild.Users.Where(u => u.Roles.Any(r => roles.Any(y => y.RoleId == r.Id))).ToArray();
+
+            // Iterate through all users in the server which have a premium role
+            foreach (var user in gUsersWithPremiumRoles)
+            {
+                // Get roles from the user which are in the bot's premium role list
+                var uPremiumRoles = user.Roles.Where(x => roles.Any(r => r.RoleId == x.Id)).ToArray();
+
+                // Find the list of roles which the user is entitled to.
+                var uEntitledRoles = premiumUsers.FirstOrDefault(x => x.Key == user.Id).Value;
+                if (uPremiumRoles.Length > 0)
+                {
+                    if (uEntitledRoles == null)
+                    {
+                        // User has prem roles but no prem
+                        var content =
+                            $"{user.GetDisplayName()} {user.Mention} has premium roles but no premium";
+                        if (builder.Length + content.Length > maxLength)
+                        {
+                            contentStrings.Add(builder.ToString());
+                            builder.Clear();
+                        }
+
+                        builder.AppendLine(content);
+                    }
+                    else
+                    {
+                        // Find users discord roles which are not contained in the entitled roles list.
+                        var notEntitled = uPremiumRoles.Where(r => !uEntitledRoles.Contains(r.Id)).ToArray();
+                        if (notEntitled.Length > 0)
+                        {
+                            // User has prem roles but not entitled to them.
+                            var content =
+                                $"{user.GetDisplayName()} {user.Mention} has premium roles that they are not entitled to {string.Join(" ", notEntitled.Select(x => x.Mention))}";
+                            if (builder.Length + content.Length > maxLength)
+                            {
+                                contentStrings.Add(builder.ToString());
+                                builder.Clear();
+                            }
+
+                            builder.AppendLine(content);
+                        }
+                    }
+                }
+            }
+
+            contentStrings.Add(builder.ToString());
+
+            foreach (var contentString in contentStrings)
+            {
+                if (contentString.Length > 0)
+                {
+                    await ReplyAsync(contentString.FixLength(2000));
+                }
+            }
+        }
+
         [Command("AnalyzePatrons")]
         public async Task PatreonTestAsync(string apiKey = null, string campaignId = null)
         {
@@ -40,6 +339,7 @@ namespace ELO.Modules
                 return;
             }
 
+            await ReplyAsync("Pulling patreon info.");
             var guild = Context.Client.GetGuild(Prem.PremiumConfig.GuildId);
             var client = new Patreon.NET.PatreonClient(apiKey);
             var pledges = await client.GetCampaignPledges(campaignId);
@@ -87,19 +387,27 @@ namespace ELO.Modules
                     {
                         premiumUsers.Add(uid, entitledRoles);
                     }
+                }
+            }
 
-                    var gUser = guild.GetUser(uid);
-                    if (gUser != null)
+            foreach (var premiumUser in premiumUsers)
+            {
+                var gUser = guild.GetUser(premiumUser.Key);
+                if (gUser != null)
+                {
+                    var userPremiumRoles = gUser.Roles.Where(x => roles.Any(y => y.RoleId == x.Id)).ToArray();
+                    if (userPremiumRoles.Length > 0)
                     {
-                        var userPremiumRoles = gUser.Roles.Where(x => roles.Any(y => y.RoleId == x.Id)).ToArray();
-                        if (userPremiumRoles.Length > 0)
+                        // User has premium but wrong roles.
+                        if (userPremiumRoles.Any(r => !premiumUser.Value.Contains(r.Id)))
                         {
-                            // User has premium but wrong roles.
-                            if (userPremiumRoles.Any(r => !entitledRoles.Contains(r.Id)))
-                            {
-                                Console.WriteLine($"{gUser.GetDisplayName()} has role when only entitled to {string.Join(" ", entitledRoles.Select(x => "<@&" + x + ">"))}");
-                            }
+                            Console.WriteLine($"{gUser.GetDisplayName()} has role when only entitled to {string.Join(" ", premiumUser.Value.Select(x => "<@&" + x + ">"))}");
                         }
+                    }
+
+                    if (premiumUser.Value.Count > 0 && userPremiumRoles.Length == 0)
+                    {
+                        Console.WriteLine($"{gUser.GetDisplayName()} has no roles but is entitled to {string.Join(" ", premiumUser.Value.Select(x => "<@&" + x + ">"))}");
                     }
                 }
             }
