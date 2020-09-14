@@ -22,7 +22,7 @@ namespace ELO.Modules
         }
 
         [Command("SetPrefix", RunMode = RunMode.Sync)]
-        [Summary("Set the server's prefix")]
+        [Summary("Set the server's command prefix")]
         public virtual async Task SetPrefixAsync([Remainder]string prefix = null)
         {
             using (var db = new Database())
@@ -32,7 +32,10 @@ namespace ELO.Modules
                 db.Update(comp);
                 db.SaveChanges();
                 Handlers.ELOEventHandler.UpdatePrefix(Context.Guild.Id, prefix);
-                await SimpleEmbedAsync($"Prefix has been set to `{prefix ?? "Default"}`");
+                //await SimpleEmbedAsync($"Prefix has been set to `{prefix ?? "Default"}`");
+                await SimpleEmbedAsync($"Prefix has been {(prefix != null ? "set" : "reset")} to `{prefix ?? Program.Prefix}` {(prefix == null ? "(default)" : "")}\n" +
+                                 $"All commands now use this prefix.\n" +
+                                 $"Example: `{prefix ?? Program.Prefix}Help`", Color.Green);
             }
         }
 
@@ -227,7 +230,8 @@ namespace ELO.Modules
                             $"**Allow Re-registering:** {comp.AllowReRegister}\n" +
                             $"**Requeue Delay:** {(comp.RequeueDelay.HasValue ? comp.RequeueDelay.Value.GetReadableLength() : "None")}\n" +
                             $"**Voting Enabled:** {comp.AllowVoting}\n" +
-                            $"**Custom Prefix:** {comp.Prefix ?? "N/A"}\n" +
+                            //$"**Custom Prefix:** {comp.Prefix ?? "N/A"}\n" +
+                            $"**Command Prefix:** {comp.Prefix ?? Program.Prefix + "(default)"}\n" +
                             $"**Auto Queue Timeout:** {(comp.QueueTimeout.HasValue ? comp.QueueTimeout.Value.GetReadableLength() : "None")}");
 
                 embed.AddField("Premium",
@@ -243,7 +247,8 @@ namespace ELO.Modules
                     $"**Games Submitted:** {decGameCount}\n" +
                     $"**Manual Games:** {manualGameCount}");
 
-                embed.AddField("Formatting", $"**Nickname Format:** {comp.NameFormat}\n" +
+                embed.AddField("Formatting", 
+                            $"**Nickname Format:** {comp.NameFormat}\n" +
                             $"**Registration Message:** {comp.RegisterMessageTemplate.FixLength(128)}");
 
                 embed.AddField("Rank Info",
@@ -383,7 +388,7 @@ namespace ELO.Modules
                 "{losses} - Total losses\n" +
                 "{games} - Games played\n\n" +
                 "Example:\n" +
-                "`RegisterMessageFormats Thank you for registering {name}` `Thank you for registering Player`\n" +
+                "`SetRegisterMessage Thank you for registering {name}` => `Thank you for registering Player`\n" +
                 "NOTE: Format is limited to 1024 characters long";
 
             await SimpleEmbedAsync(response, Color.Blue);
@@ -460,6 +465,7 @@ namespace ELO.Modules
             }
         }
 
+        [Priority(1)]
         [Command("AddRank", RunMode = RunMode.Sync)]
         [Alias("Add Rank", "UpdateRank")]
         [Summary("Adds a new rank with the specified amount of points and win/loss modifiers")]
@@ -650,34 +656,15 @@ namespace ELO.Modules
             }
         }
 
-        [Command("DefaultWinModifier", RunMode = RunMode.Sync)]
-        [Summary("Sets the default amount of points users can earn when winning.")]
-        public virtual async Task CompWinModifier(int? amountToAdd = null)
-        {
-            using (var db = new Database())
-            {
-                var competition = db.GetOrCreateCompetition(Context.Guild.Id);
-
-                if (!amountToAdd.HasValue)
-                {
-                    await SimpleEmbedAsync($"Current DefaultWinModifier Setting: {competition.DefaultWinModifier}", Color.Blue);
-                    return;
-                }
-                competition.DefaultWinModifier = amountToAdd.Value;
-                db.Update(competition);
-                db.SaveChanges();
-                await SimpleEmbedAsync($"Default Win Modifier set to {competition.DefaultWinModifier}", Color.Green);
-            }
-        }
-
         [Command("PurgeRegistrations", RunMode = RunMode.Sync)]
-        [Summary("Purges registrations.")]
+        [Summary("Removes registrations from users who are no longer in the server.")]
         public virtual async Task PurgeRegistrationsAsync(string confirm = null)
         {
             string confirmKey = "erkjbg4rt";
             if (confirm == null || !confirm.Equals(confirmKey, StringComparison.OrdinalIgnoreCase))
             {
-                await SimpleEmbedAsync($"Confirm key is: `{confirmKey}`\nThis command will remove registrations from users who are no longer in the server.");
+                await SimpleEmbedAsync($"Please __re-run this command__ with confirmation code `{confirmKey}`\n" +
+                                       $"`PurgeUsers {confirmKey}`\n\nThis command will only remove registrations from users who are no longer in the server.", Color.Blue);
                 return;
             }
 
@@ -693,8 +680,30 @@ namespace ELO.Modules
             }
         }
 
+        [Command("DefaultWinModifier", RunMode = RunMode.Sync)]
+        [Alias("SetDefaultWinModifier")]
+        [Summary("Sets the default amount of points users gain when winning a game.")]
+        public virtual async Task CompWinModifier(int? amountToAdd = null)
+        {
+            using (var db = new Database())
+            {
+                var competition = db.GetOrCreateCompetition(Context.Guild.Id);
+
+                if (!amountToAdd.HasValue)
+                {
+                    await SimpleEmbedAsync($"Current DefaultWinModifier Setting: {competition.DefaultWinModifier}", Color.Blue);
+                    return;
+                }
+                competition.DefaultWinModifier = amountToAdd.Value;
+                db.Update(competition);
+                db.SaveChanges();
+                await SimpleEmbedAsync($"DefaultWinModifier set to {competition.DefaultWinModifier}", Color.Green);
+            }
+        }
+
         [Command("DefaultLossModifier", RunMode = RunMode.Sync)]
-        [Summary("Sets the default amount of points users lose when the lose a game.")]
+        [Alias("SetDefaultLossModifier")]
+        [Summary("Sets the default amount of points users lose when losing a game.")]
         public virtual async Task CompLossModifier(int? amountToSubtract = null)
         {
             using (var db = new Database())
@@ -709,11 +718,12 @@ namespace ELO.Modules
                 competition.DefaultLossModifier = amountToSubtract.Value;
                 db.Update(competition);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Default Loss Modifier set to {competition.DefaultLossModifier}", Color.Green);
+                await SimpleEmbedAsync($"DefaultLossModifier set to {competition.DefaultLossModifier}", Color.Green);
             }
         }
 
         [Command("RankLossModifier", RunMode = RunMode.Sync)]
+        [Alias("SetRankLossModifier")]
         [Summary("Sets the amount of points lost for a user with the specified rank.")]
         public virtual async Task RankLossModifier(IRole role, int? amountToSubtract = null)
         {
@@ -742,6 +752,7 @@ namespace ELO.Modules
         }
 
         [Command("RankWinModifier", RunMode = RunMode.Sync)]
+        [Alias("SetRankWinModifier")]
         [Summary("Sets the amount of points lost for a user with the specified rank.")]
         public virtual async Task RankWinModifier(IRole role, int? amountToAdd = null)
         {
