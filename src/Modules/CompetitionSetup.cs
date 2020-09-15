@@ -664,7 +664,7 @@ namespace ELO.Modules
             if (confirm == null || !confirm.Equals(confirmKey, StringComparison.OrdinalIgnoreCase))
             {
                 await SimpleEmbedAsync($"Please __re-run this command__ with confirmation code `{confirmKey}`\n" +
-                                       $"`PurgeUsers {confirmKey}`\n\nThis command will only remove registrations from users who are no longer in the server.", Color.Blue);
+                                       $"`PurgeRegistrations {confirmKey}`\n\nThis command will only remove registrations from users who are no longer in the server.", Color.Blue);
                 return;
             }
 
