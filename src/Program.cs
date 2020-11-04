@@ -151,7 +151,7 @@ namespace ELO
                 ShardId = shardIdValue,
                 LogLevel = logLevel,
                 ExclusiveBulkDelete = true,
-                AlwaysDownloadUsers = false,
+                AlwaysDownloadUsers = true,
                 MessageCacheSize = 10
             };
 
