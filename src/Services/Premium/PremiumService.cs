@@ -182,7 +182,7 @@ namespace ELO.Services
             }
         }
 
-        private async Task DownloadMembers()
+        private void DownloadMembers()
         {
             var _ = Task.Run(async () =>
             {
@@ -219,6 +219,10 @@ namespace ELO.Services
             }
         }
 
+        private int cacheRefreshCheck = 0;
+        private object cacheLock = new object();
+
+
         public bool IsPremium(ulong guildId)
         {
             if (!PremiumConfig.Enabled) return true;
@@ -236,7 +240,20 @@ namespace ELO.Services
                     return false;
                 }
 
+
                 var patreonGuild = Client.GetGuild(PremiumConfig.GuildId);
+
+
+                lock (cacheLock)
+                {
+                    cacheRefreshCheck++;
+                    if (cacheRefreshCheck > 1000)
+                    {
+                        DownloadMembers();
+                        cacheRefreshCheck = 0;
+                    }
+                }
+
                 var patreonUser = patreonGuild?.GetUser(match.PremiumRedeemer.Value);
 
                 // If user not found, fall back to check for deleted premium sub.
