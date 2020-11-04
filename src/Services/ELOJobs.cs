@@ -30,15 +30,15 @@ namespace ELO.Services
                 {
                     var now = DateTime.UtcNow;
 
-                    var competitions = db.Competitions.Where(x => x.QueueTimeout != null).ToArray();
+                    var competitions = db.Competitions.AsQueryable().Where(x => x.QueueTimeout != null).ToArray();
                     var compIds = competitions.Select(x => x.GuildId).ToArray();
-                    var affectedPlayers = db.QueuedPlayers.Where(x => compIds.Contains(x.GuildId)).ToArray();
+                    var affectedPlayers = db.QueuedPlayers.AsQueryable().Where(x => compIds.Contains(x.GuildId)).ToArray();
                     foreach (var competition in competitions)
                     {
-                        var lobbyMembers = affectedPlayers.Where(x => x.GuildId == competition.GuildId).GroupBy(x => x.ChannelId).ToArray();
+                        var lobbyMembers = affectedPlayers.AsQueryable().Where(x => x.GuildId == competition.GuildId).GroupBy(x => x.ChannelId).ToArray();
                         foreach (var lobby in lobbyMembers)
                         {
-                            var lastGame = db.GameResults.Where(x => x.GuildId == competition.GuildId && x.LobbyId == lobby.Key).OrderByDescending(x => x.GameId).FirstOrDefault();
+                            var lastGame = db.GameResults.AsQueryable().Where(x => x.GuildId == competition.GuildId && x.LobbyId == lobby.Key).OrderByDescending(x => x.GameId).FirstOrDefault();
 
                             // Do not remove players if the game is currently picking (since players remain in queue while picking is taking place)
                             if (lastGame != null && lastGame.GameState == GameState.Picking)

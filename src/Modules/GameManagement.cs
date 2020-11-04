@@ -114,7 +114,7 @@ namespace ELO.Modules
         public virtual async Task UndoScoreUpdatesAsync(GameResult game, Competition competition, Database db)
         {
             var scoreUpdates = db.GetScoreUpdates(game.GuildId, game.LobbyId, game.GameId).ToArray();
-            var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+            var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
             foreach (var score in scoreUpdates)
             {
                 var player = db.Players.Find(game.GuildId, score.UserId);
@@ -124,7 +124,7 @@ namespace ELO.Modules
                     continue;
                 }
 
-                var currentRank = ranks.Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                var currentRank = ranks.AsQueryable().Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
 
                 if (score.ModifyAmount < 0)
                 {

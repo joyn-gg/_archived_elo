@@ -189,7 +189,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var hostMatches = db.PartyMembers.Where(x => x.ChannelId == Context.Channel.Id && x.PartyHost == member.PartyHost);
+                var hostMatches = db.PartyMembers.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id && x.PartyHost == member.PartyHost);
                 db.PartyMembers.Remove(member);
                 db.PartyMembers.RemoveRange(hostMatches);
 
@@ -219,7 +219,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var hostMatches = db.PartyMembers.Where(x => x.ChannelId == Context.Channel.Id && x.PartyHost == member.PartyHost);
+                var hostMatches = db.PartyMembers.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id && x.PartyHost == member.PartyHost);
 
                 await SimpleEmbedAsync($"Party Members: {string.Join(" ", hostMatches.Select(x => MentionUtils.MentionUser(x.UserId)))}");
             }
@@ -239,7 +239,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var parties = db.PartyMembers.Where(x => x.ChannelId == Context.Channel.Id).ToArray().GroupBy(x => x.PartyHost).ToArray();
+                var parties = db.PartyMembers.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id).ToArray().GroupBy(x => x.PartyHost).ToArray();
                 if (parties.Any())
                 {
                     //await SimpleEmbedAsync(string.Join("\n", parties.Select(x => $"Host: {MentionUtils.MentionUser(x.Key)} Members: {string.Join(" ", x.Select(m => MentionUtils.MentionUser(m.UserId)))}")));
@@ -273,7 +273,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var partyMembers = db.PartyMembers.Where(x => x.ChannelId == Context.Channel.Id).ToArray();
+                var partyMembers = db.PartyMembers.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id).ToArray();
                 db.PartyMembers.RemoveRange(partyMembers);
                 await SimpleEmbedAsync("All duos have been disbanded.");
                 db.SaveChanges();

@@ -37,7 +37,7 @@ namespace ELO.Modules
                     await SimpleEmbedAndDeleteAsync("This channel is already a lobby. Remove the lobby before trying top create a new one here.", Color.Red);
                     return;
                 }
-                var allLobbies = db.Lobbies.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                var allLobbies = db.Lobbies.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
                 if (allLobbies.Length >= Premium.PremiumConfig.LobbyLimit)
                 {
                     if (!Premium.IsPremium(Context.Guild.Id))
@@ -345,7 +345,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var maps = db.Maps.Where(x => x.ChannelId == Context.Channel.Id);
+                var maps = db.Maps.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id);
                 db.RemoveRange(maps);
                 db.SaveChanges();
                 await SimpleEmbedAsync("Maps cleared.", Color.Green);
@@ -370,7 +370,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var currentMaps = db.Maps.Where(x => x.ChannelId == Context.Channel.Id).ToArray();
+                var currentMaps = db.Maps.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id).ToArray();
                 var mapViolations = new HashSet<string>(mapNames.Length);
                 var addedMaps = new HashSet<string>(mapNames.Length);
 
@@ -420,7 +420,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var maps = db.Maps.Where(x => x.ChannelId == Context.Channel.Id).ToArray();
+                var maps = db.Maps.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id).ToArray();
                 if (maps.Length == 0)
                 {
                     await SimpleEmbedAsync("There are no maps to remove.", Color.DarkBlue);
@@ -520,7 +520,7 @@ namespace ELO.Modules
             using (var db = new Database())
             {
                 //Find lobbies for the server where there is NO matching channel found
-                var lobbies = db.Lobbies.Where(x => x.GuildId == Context.Guild.Id).ToArray().Where(x => !Context.Guild.Channels.Any(c => c.Id == x.ChannelId)).ToArray();
+                var lobbies = db.Lobbies.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray().AsQueryable().Where(x => !Context.Guild.Channels.Any(c => c.Id == x.ChannelId)).ToArray();
                 if (lobbies.Length == 0)
                 {
                     await SimpleEmbedAsync("There are no lobbies to remove.", Color.Red);

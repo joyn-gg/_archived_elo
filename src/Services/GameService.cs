@@ -15,7 +15,7 @@ namespace ELO.Services
             if (captain != null)
             {
                 resStr += $"Captain: {MentionUtils.MentionUser(captain.UserId)}\n";
-                players = players.Where(x => x != captain.UserId).ToArray();
+                players = players.AsQueryable().Where(x => x != captain.UserId).ToArray();
                 if (players.Any())
                 {
                     resStr += $"Players: {string.Join("\n", RavenBOT.Common.Extensions.GetUserMentionList(players))}";
@@ -145,7 +145,7 @@ namespace ELO.Services
 
                 if (remainingPlayers)
                 {
-                    var remaining = queue.Where(x => team1p.All(y => y == x) && team2p.All(y => y == x));
+                    var remaining = queue.AsQueryable().Where(x => team1p.All(y => y == x) && team2p.All(y => y == x));
                     if (remaining.Any())
                     {
                         embed.AddField("Remaining Players", string.Join(" ", remaining.Select(x => MentionUtils.MentionUser(x))));
@@ -260,7 +260,7 @@ namespace ELO.Services
 
             if (remainingPlayers)
             {
-                var remaining = queue.Where(x => team1p.All(y => y == x) && team2p.All(y => y == x));
+                var remaining = queue.AsQueryable().Where(x => team1p.All(y => y == x) && team2p.All(y => y == x));
                 if (remaining.Any())
                 {
                     embed.AddField("Remaining Players", string.Join(" ", remaining.Select(x => MentionUtils.MentionUser(x))));
@@ -299,7 +299,7 @@ namespace ELO.Services
 
             using (var db = new Database())
             {
-                var scoreUpdates = db.ManualGameScoreUpdates.Where(x => x.GuildId == game.GuildId && x.ManualGameId == game.GameId);
+                var scoreUpdates = db.ManualGameScoreUpdates.AsQueryable().Where(x => x.GuildId == game.GuildId && x.ManualGameId == game.GameId);
                 embed.Description = $"**GameId:** {game.GameId}\n" +
                                     $"**Creation Time:** {game.CreationTime.ToString("dd MMM yyyy")} {game.CreationTime.ToShortTimeString()}\n" +
                                     $"**Comment:** {game.Comment ?? "N/A"}\n" +
@@ -328,7 +328,7 @@ namespace ELO.Services
                 var team2p = db.GetTeamFull(game, 2);
                 var cap1 = db.GetTeamCaptain(game.GuildId, game.LobbyId, game.GameId, 1);
                 var cap2 = db.GetTeamCaptain(game.GuildId, game.LobbyId, game.GameId, 2);
-                var queueRemaining = queue.Where(x => team1p.All(y => y != x.UserId) && team2p.All(y => y != x.UserId));
+                var queueRemaining = queue.AsQueryable().Where(x => team1p.All(y => y != x.UserId) && team2p.All(y => y != x.UserId));
 
                 var winningCap = game.WinningTeam == 1 ? cap1 : cap2;
                 var winningPlayers = game.WinningTeam == 1 ? team1p : team2p;

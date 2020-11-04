@@ -11,6 +11,7 @@ using RavenBOT.Common;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Discord;
 
 namespace ELO
 {
@@ -152,8 +153,16 @@ namespace ELO
                 LogLevel = logLevel,
                 ExclusiveBulkDelete = true,
                 AlwaysDownloadUsers = true,
-                MessageCacheSize = 10
+                MessageCacheSize = 10,
+                GatewayIntents = GatewayIntents.DirectMessages | 
+                                 GatewayIntents.GuildBans | 
+                                 GatewayIntents.GuildMembers | 
+                                 GatewayIntents.Guilds | 
+                                 GatewayIntents.GuildMessages |
+                                 GatewayIntents.DirectMessages
             };
+
+            
 
             var token = config.GetOrAddEntry("Token", () =>
             {

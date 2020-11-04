@@ -41,9 +41,9 @@ namespace ELO.Modules
             using (var db = new Database())
             {
                 var userIds = users.Select(x => x.Id).ToArray();
-                var players = db.Players.Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId));
+                var players = db.Players.AsQueryable().Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId));
                 var comp = db.GetOrCreateCompetition(Context.Guild.Id);
-                var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
                 var responseString = "";
                 foreach (var player in players)
                 {
@@ -85,7 +85,7 @@ namespace ELO.Modules
             using (var db = new Database())
             {
                 var userIds = users.Select(x => x.Id).ToArray();
-                var players = db.Players.Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId));
+                var players = db.Players.AsQueryable().Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId));
                 var responseString = "";
                 foreach (var player in players)
                 {
@@ -125,7 +125,7 @@ namespace ELO.Modules
             using (var db = new Database())
             {
                 var userIds = users.Select(x => x.Id).ToArray();
-                var players = db.Players.Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId));
+                var players = db.Players.AsQueryable().Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId));
                 var responseString = "";
                 foreach (var player in players)
                 {
@@ -165,7 +165,7 @@ namespace ELO.Modules
             using (var db = new Database())
             {
                 var userIds = users.Select(x => x.Id).ToArray();
-                var players = db.Players.Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId));
+                var players = db.Players.AsQueryable().Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId));
                 var responseString = "";
                 foreach (var player in players)
                 {
@@ -205,7 +205,7 @@ namespace ELO.Modules
             using (var db = new Database())
             {
                 var userIds = users.Select(x => x.Id).ToArray();
-                var players = db.Players.Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId));
+                var players = db.Players.AsQueryable().Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId));
                 var responseString = "";
                 foreach (var player in players)
                 {
@@ -245,7 +245,7 @@ namespace ELO.Modules
             using (var db = new Database())
             {
                 var userIds = users.Select(x => x.Id).ToArray();
-                var players = db.Players.Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId));
+                var players = db.Players.AsQueryable().Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId));
                 var responseString = "";
                 foreach (var player in players)
                 {
@@ -284,7 +284,7 @@ namespace ELO.Modules
             {
                 await SimpleEmbedAsync($"Resetting leaderboard...", Color.Green);
                 var comp = db.GetOrCreateCompetition(Context.Guild.Id);
-                var players = db.Players.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                var players = db.Players.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
                 foreach (var player in players)
                 {
                     player.Points = comp.DefaultRegisterScore;
@@ -322,8 +322,8 @@ namespace ELO.Modules
 
                     await SimpleEmbedAsync($"Running refresh task... Estimated time: {TimeSpan.FromSeconds(Context.Guild.MemberCount * 10).GetReadableLength()}", Color.Green);
                     var comp = db.GetOrCreateCompetition(Context.Guild.Id);
-                    var players = db.Players.Where(x => x.GuildId == Context.Guild.Id).ToArray();
-                    var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                    var players = db.Players.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                    var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
 
                     foreach (var player in players)
                     {
@@ -368,7 +368,7 @@ namespace ELO.Modules
                     return;
                 }
                 var comp = db.GetOrCreateCompetition(Context.Guild.Id);
-                var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
 
                 await UserService.UpdateUserAsync(comp, player, ranks, user);
                 await ReplyAsync("User update complete.");

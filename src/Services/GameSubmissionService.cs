@@ -29,12 +29,12 @@ namespace ELO.Services
             var winnerUpdates = new List<(Player, int, Rank, RankChangeState, Rank)>();
             var loserUpdates = new List<(Player, int, Rank, RankChangeState, Rank)>();
 
-            var winners = db.Players.Where(x => x.GuildId == competition.GuildId && winnerIds.Contains(x.UserId)).ToArray();
-            var losers = db.Players.Where(x => x.GuildId == competition.GuildId && loserIds.Contains(x.UserId)).ToArray();
-            var scoreUpdates = db.ScoreUpdates.Where(x => x.ChannelId == lobby.ChannelId && x.GameNumber == game.GameId).ToArray();
+            var winners = db.Players.AsQueryable().Where(x => x.GuildId == competition.GuildId && winnerIds.Contains(x.UserId)).ToArray();
+            var losers = db.Players.AsQueryable().Where(x => x.GuildId == competition.GuildId && loserIds.Contains(x.UserId)).ToArray();
+            var scoreUpdates = db.ScoreUpdates.AsQueryable().Where(x => x.ChannelId == lobby.ChannelId && x.GameNumber == game.GameId).ToArray();
             foreach (var player in winners)
             {
-                var maxRank = ranks.Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                var maxRank = ranks.AsQueryable().Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
 
                 RankChangeState state = RankChangeState.None;
                 Rank newRank = null;
@@ -49,7 +49,7 @@ namespace ELO.Services
                 }
                 player.Points += updateVal;
                 player.Wins++;
-                newRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                newRank = ranks.AsQueryable().Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
                 if (newRank != null)
                 {
                     if (maxRank == null)
@@ -87,7 +87,7 @@ namespace ELO.Services
 
             foreach (var player in losers)
             {
-                var maxRank = ranks.Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                var maxRank = ranks.AsQueryable().Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
 
                 RankChangeState state = RankChangeState.None;
                 Rank newRank = null;
@@ -111,7 +111,7 @@ namespace ELO.Services
                     if (player.Points < maxRank.Points)
                     {
                         state = RankChangeState.DeRank;
-                        newRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                        newRank = ranks.AsQueryable().Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
                     }
                 }
 
@@ -165,7 +165,7 @@ namespace ELO.Services
                 if (player == null) continue;
 
                 //This represents the current user's rank
-                var maxRank = ranks.Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                var maxRank = ranks.AsQueryable().Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
 
                 int updateVal;
                 RankChangeState state = RankChangeState.None;
@@ -183,7 +183,7 @@ namespace ELO.Services
                     }
                     player.Points += updateVal;
                     player.Wins++;
-                    newRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                    newRank = ranks.AsQueryable().Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
                     if (newRank != null)
                     {
                         if (maxRank == null)
@@ -217,7 +217,7 @@ namespace ELO.Services
                         if (player.Points < maxRank.Points)
                         {
                             state = RankChangeState.DeRank;
-                            newRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                            newRank = ranks.AsQueryable().Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
                         }
                     }
                 }
@@ -316,7 +316,7 @@ namespace ELO.Services
                 }
 
                 var competition = db.GetOrCreateCompetition(context.Guild.Id);
-                var ranks = db.Ranks.Where(x => x.GuildId == context.Guild.Id).ToArray();
+                var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == context.Guild.Id).ToArray();
 
                 List<(Player, int, Rank, RankChangeState, Rank)> winList;
                 List<(Player, int, Rank, RankChangeState, Rank)> loseList;
@@ -475,7 +475,7 @@ namespace ELO.Services
             }
 
             var competition = db.GetOrCreateCompetition(context.Guild.Id);
-            var ranks = db.Ranks.Where(x => x.GuildId == context.Guild.Id).ToArray();
+            var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == context.Guild.Id).ToArray();
 
             List<(Player, int, Rank, RankChangeState, Rank)> winList;
             List<(Player, int, Rank, RankChangeState, Rank)> loseList;
@@ -645,7 +645,7 @@ namespace ELO.Services
                     return;
                 }
 
-                var votes = db.Votes.Where(x => x.ChannelId == lobby.ChannelId && x.GameId == gameNumber).ToList();
+                var votes = db.Votes.AsQueryable().Where(x => x.ChannelId == lobby.ChannelId && x.GameId == gameNumber).ToList();
                 if (votes.Any(x => x.UserId == context.User.Id))
                 {
                     await context.Channel.SendMessageAsync("", false, "You already submitted your vote for this game.".QuickEmbed(Color.DarkBlue));
@@ -674,25 +674,25 @@ namespace ELO.Services
                     var team1WinCount = votes
 
                                             //Get players in team 1 and count wins
-                                            .Where(x => team1.Contains(x.UserId))
+                                            .AsQueryable().Where(x => team1.Contains(x.UserId))
                                             .Count(x => x.UserVote == VoteState.Win)
                                         +
                                         votes
 
                                             //Get players in team 2 and count losses
-                                            .Where(x => team2.Contains(x.UserId))
+                                            .AsQueryable().Where(x => team2.Contains(x.UserId))
                                             .Count(x => x.UserVote == VoteState.Lose);
 
                     var team2WinCount = votes
 
                                             //Get players in team 2 and count wins
-                                            .Where(x => team2.Contains(x.UserId))
+                                            .AsQueryable().Where(x => team2.Contains(x.UserId))
                                             .Count(x => x.UserVote == VoteState.Win)
                                         +
                                         votes
 
                                             //Get players in team 1 and count losses
-                                            .Where(x => team1.Contains(x.UserId))
+                                            .AsQueryable().Where(x => team1.Contains(x.UserId))
                                             .Count(x => x.UserVote == VoteState.Lose);
 
                     if (team1WinCount == votes.Count)

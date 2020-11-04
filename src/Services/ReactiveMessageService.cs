@@ -63,7 +63,7 @@ namespace ELO.Services
                     db.Add(player);
                     db.SaveChanges();
 
-                    var responses = await UserService.UpdateUserAsync(config, player, db.Ranks.Where(x => x.GuildId == guildChannel.Guild.Id).ToArray(), user as SocketGuildUser).ConfigureAwait(false);
+                    var responses = await UserService.UpdateUserAsync(config, player, db.Ranks.AsQueryable().Where(x => x.GuildId == guildChannel.Guild.Id).ToArray(), user as SocketGuildUser).ConfigureAwait(false);
 
                     var responseMsg = await guildChannel.SendMessageAsync($"{user.Mention} - " + config.FormatRegisterMessage(player) + $"\n{string.Join("\n", responses)}");
                     var resTask = Task.Run(async () =>

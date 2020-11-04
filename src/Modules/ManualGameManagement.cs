@@ -58,8 +58,8 @@ namespace ELO.Modules
                                                     $"Submitted at: {game.CreationTime}");
                 var updateChanges = new StringBuilder();
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);
-                var scoreUpdates = db.ManualGameScoreUpdates.Where(x => x.GuildId == Context.Guild.Id && x.ManualGameId == gameId).ToArray();
-                var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                var scoreUpdates = db.ManualGameScoreUpdates.AsQueryable().Where(x => x.GuildId == Context.Guild.Id && x.ManualGameId == gameId).ToArray();
+                var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
                 foreach (var scoreUpdate in scoreUpdates)
                 {
                     var player = db.Players.Find(Context.Guild.Id, scoreUpdate.UserId);
@@ -103,19 +103,19 @@ namespace ELO.Modules
                     {
                         var competition = db.GetOrCreateCompetition(Context.Guild.Id);
                         var updates = new List<(Player, int, Rank, RankChangeState, Rank)>();
-                        var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                        var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
                         var embed = new EmbedBuilder
                         {
                             Title = (win ? "Win" : "Lose") + $" Manual Game: #{competition.ManualGameCounter + 1}",
                             Color = win ? Color.Green : Color.Red,
                         };
-                        var players = db.Players.Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId)).ToArray();
+                        var players = db.Players.AsQueryable().Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId)).ToArray();
 
                         var sb = new StringBuilder();
                         foreach (var player in players)
                         {
                             //This represents the current user's rank
-                            var maxRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                            var maxRank = ranks.AsQueryable().Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
 
                             int updateVal;
                             RankChangeState state = RankChangeState.None;
@@ -126,7 +126,7 @@ namespace ELO.Modules
                                 updateVal = maxRank?.WinModifier ?? competition.DefaultWinModifier;
                                 player.Points += updateVal;
                                 player.Wins++;
-                                newRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                                newRank = ranks.AsQueryable().Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
                                 if (newRank != null)
                                 {
                                     if (maxRank == null)
@@ -156,7 +156,7 @@ namespace ELO.Modules
                                     if (player.Points < maxRank.Points)
                                     {
                                         state = RankChangeState.DeRank;
-                                        newRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                                        newRank = ranks.AsQueryable().Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
                                     }
                                 }
                             }
@@ -184,7 +184,7 @@ namespace ELO.Modules
                         //Update counter and save new competition config
 
                         //Create new game info
-                        var vals = ((IQueryable<ManualGameResult>)db.ManualGameResults).Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                        var vals = ((IQueryable<ManualGameResult>)db.ManualGameResults).AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
                         var count = vals.Length == 0 ? 0 : vals.Max(x => x.GameId);
                         var game = new ManualGameResult
                         {
@@ -198,7 +198,7 @@ namespace ELO.Modules
                         game.GameState = win ? ManualGameState.Win : ManualGameState.Lose;
                         db.ManualGameResults.Add(game);
                         db.SaveChanges();
-                        var maxId = db.ManualGameResults.Where(x => x.GuildId == Context.Guild.Id).Max(x => x.GameId);
+                        var maxId = db.ManualGameResults.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).Max(x => x.GameId);
                         foreach (var upd in updates)
                         {
                             db.ManualGameScoreUpdates.Add(new ManualGameScoreUpdate

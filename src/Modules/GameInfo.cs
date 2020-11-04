@@ -129,7 +129,7 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                var games = db.ManualGameResults.AsNoTracking().Where(x => x.GuildId == Context.Guild.Id).OrderByDescending(x => x.GuildId).Take(100).ToList();
+                var games = db.ManualGameResults.AsNoTracking().AsQueryable().Where(x => x.GuildId == Context.Guild.Id).OrderByDescending(x => x.GuildId).Take(100).ToList();
 
                 if (games.Count == 0)
                 {
@@ -143,13 +143,13 @@ namespace ELO.Modules
                 {
                     var content = page.Select(x =>
                     {
-                        var scoreUpdates = db.ManualGameScoreUpdates.AsNoTracking().Where(y => y.GuildId == Context.Guild.Id && y.ManualGameId == x.GameId).ToArray();
+                        var scoreUpdates = db.ManualGameScoreUpdates.AsNoTracking().AsQueryable().Where(y => y.GuildId == Context.Guild.Id && y.ManualGameId == x.GameId).ToArray();
                         if (scoreUpdates.Length == 0) return null;
 
                         return new EmbedFieldBuilder()
                             .WithName($"#{x.GameId}: {x.GameState}")
                             .WithValue(string.Join("\n", scoreUpdates.Select(s => $"{MentionUtils.MentionUser(s.UserId)} - `{s.ModifyAmount}`") + $"\n **Submitted by: {MentionUtils.MentionUser(x.Submitter)}**"));
-                    }).Where(x => x != null).ToList();
+                    }).AsQueryable().Where(x => x != null).ToList();
 
                     if (content.Count == 0) continue;
 
@@ -185,7 +185,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var games = db.GameResults.AsNoTracking().Where(x => x.GuildId == Context.Guild.Id && x.LobbyId == lobbyChannel.Id).OrderByDescending(x => x.GameId).Take(100);
+                var games = db.GameResults.AsNoTracking().AsQueryable().Where(x => x.GuildId == Context.Guild.Id && x.LobbyId == lobbyChannel.Id).OrderByDescending(x => x.GameId).Take(100);
                 if (!games.Any())
                 {
                     await SimpleEmbedAsync("There aren't any games in history for the specified lobby.", Color.Blue);

@@ -34,7 +34,7 @@ namespace ELO.Modules
         {
             await using (var db = new Database())
             {
-                var bans = db.Bans.Where(x => x.GuildId == Context.Guild.Id && x.UserId == player.Id).ToList();
+                var bans = db.Bans.AsQueryable().Where(x => x.GuildId == Context.Guild.Id && x.UserId == player.Id).ToList();
                 if (bans.Count == 0)
                 {
                     await SimpleEmbedAndDeleteAsync($"{player.Mention} has no bans on record.\n" +
@@ -95,14 +95,14 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                var bans = db.Bans.Where(x => x.GuildId == Context.Guild.Id).ToList();
+                var bans = db.Bans.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToList();
                 if (bans.Count == 0)
                 {
                     await SimpleEmbedAsync("There aren't any banned players.", Color.Blue);
                     return;
                 }
 
-                var banPages = bans.Where(x => x.IsExpired == false).OrderBy(x => x.RemainingTime).SplitList(5).ToArray();
+                var banPages = bans.AsQueryable().Where(x => x.IsExpired == false).OrderBy(x => x.RemainingTime).SplitList(5).ToArray();
 
                 if (banPages.Length == 0)
                 {
@@ -159,7 +159,7 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                var bans = db.Bans.Where(x => x.GuildId == Context.Guild.Id).ToList();
+                var bans = db.Bans.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToList();
 
                 if (bans.Count == 0)
                 {
@@ -224,7 +224,7 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                var bans = db.Bans.Where(x => x.GuildId == Context.Guild.Id && x.UserId == user.Id).ToList();
+                var bans = db.Bans.AsQueryable().Where(x => x.GuildId == Context.Guild.Id && x.UserId == user.Id).ToList();
                 if (bans.Count == 0)
                 {
                     await SimpleEmbedAsync("Player has never been banned.", Color.DarkBlue);

@@ -54,8 +54,8 @@ namespace ELO.Modules
 
                 var now = DateTime.UtcNow;
 
-                var lastBan = db.Bans.Where(x => x.UserId == Context.User.Id && x.GuildId == Context.Guild.Id && x.ManuallyDisabled == false).ToArray()
-                    .Where(x => x.TimeOfBan + x.Length > now)
+                var lastBan = db.Bans.AsQueryable().Where(x => x.UserId == Context.User.Id && x.GuildId == Context.Guild.Id && x.ManuallyDisabled == false).ToArray()
+                    .AsQueryable().Where(x => x.TimeOfBan + x.Length > now)
                     .OrderByDescending(x => x.ExpiryTime)
                     .FirstOrDefault();
                 if (lastBan != null)
@@ -90,7 +90,7 @@ namespace ELO.Modules
                 var comp = db.GetOrCreateCompetition(Context.Guild.Id);
                 if (!comp.AllowMultiQueueing)
                 {
-                    var queued = db.QueuedPlayers.Where(x => x.GuildId == Context.Guild.Id && x.UserId == Context.User.Id && x.ChannelId != Context.Channel.Id).ToArray();
+                    var queued = db.QueuedPlayers.AsQueryable().Where(x => x.GuildId == Context.Guild.Id && x.UserId == Context.User.Id && x.ChannelId != Context.Channel.Id).ToArray();
                     if (queued.Length > 0)
                     {
                         var guildChannels = queued.Select(x => MentionUtils.MentionChannel(x.ChannelId));
@@ -321,7 +321,7 @@ namespace ELO.Modules
                 }
 
                 // Select a random map from the db
-                var maps = db.Maps.Where(x => x.ChannelId == Context.Channel.Id).ToArray();
+                var maps = db.Maps.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id).ToArray();
 
                 var map = maps.OrderByDescending(m => Random.Next()).FirstOrDefault();
                 if (map != null)

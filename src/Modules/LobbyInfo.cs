@@ -26,7 +26,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var maps = db.Maps.Where(x => x.ChannelId == Context.Channel.Id).AsNoTracking().ToArray();
+                var maps = db.Maps.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id).AsNoTracking().ToArray();
                 if (maps.Length != 0)
                 {
                     await SimpleEmbedAsync($"**Maps:** {string.Join(", ", maps.Select(x => x.MapName))}");
@@ -78,7 +78,7 @@ namespace ELO.Modules
                     $"**Result announcement channel:** " +
                     $"{(lobby.GameResultAnnouncementChannel.HasValue ? MentionUtils.MentionChannel(lobby.GameResultAnnouncementChannel.Value) : "N/A")}\n");
 
-                var maps = db.Maps.Where(x => x.ChannelId == Context.Channel.Id).AsNoTracking().ToArray();
+                var maps = db.Maps.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id).AsNoTracking().ToArray();
                 if (maps.Length != 0)
                 {
                     embed.AddField("Maps", string.Join(", ", maps.Select(x => x.MapName)));
@@ -123,7 +123,7 @@ namespace ELO.Modules
                         var t1c = db.GetTeamCaptain(Context.Guild.Id, Context.Channel.Id, game.GameId, 1);
                         var t2c = db.GetTeamCaptain(Context.Guild.Id, Context.Channel.Id, game.GameId, 2);
                         var queue = db.GetQueue(game);
-                        var remainingIds = queue.Where(x =>
+                        var remainingIds = queue.AsQueryable().Where(x =>
                             team1.All(y => y.UserId != x.UserId) &&
                             team2.All(y => y.UserId != x.UserId) &&
                             t1c.UserId != x.UserId &&
@@ -211,7 +211,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var updates = db.ScoreUpdates.AsNoTracking().Where(x => x.ChannelId == channel.Id).ToArray().GroupBy(x => x.UserId);
+                var updates = db.ScoreUpdates.AsNoTracking().AsQueryable().Where(x => x.ChannelId == channel.Id).ToArray().GroupBy(x => x.UserId);
                 var infos = new Dictionary<ulong, int>();
                 foreach (var group in updates)
                 {

@@ -151,7 +151,7 @@ namespace ELO.Modules
                     Extensions.Extensions.ClearUserCache(Context.Guild.Id, user.UserId);
                 }
 
-                var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
                 var responses = await UserService.UpdateUserAsync(comp, user, ranks, regUser);
 
                 if (regUser.Id == Context.User.Id)
@@ -260,7 +260,7 @@ namespace ELO.Modules
                 db.SaveChanges();
 
                 var competition = db.Competitions.Find(Context.Guild.Id);
-                var responses = await UserService.UpdateUserAsync(competition, player, db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray(), user);
+                var responses = await UserService.UpdateUserAsync(competition, player, db.Ranks.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray(), user);
                 if (responses.Any())
                 {
                     await SimpleEmbedAsync("User's profile has been renamed\n" + string.Join("\n", responses), Color.Red);

@@ -66,7 +66,7 @@ namespace ELO.Modules
                         ModId = comp.ModeratorRole
                     };
 
-                    var permissions = db.Permissions.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                    var permissions = db.Permissions.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
                     foreach (var commandGroup in CommandService.Commands.GroupBy(x => x.Name.ToLower()))
                     {
                         var match = permissions.FirstOrDefault(x => x.CommandName.Equals(commandGroup.Key, StringComparison.OrdinalIgnoreCase));
@@ -175,7 +175,7 @@ namespace ELO.Modules
             using (var db = new Database())
             {
                 var comp = db.GetOrCreateCompetition(Context.Guild.Id);
-                var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToList();
+                var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToList();
                 if (ranks.Count == 0)
                 {
                     await SimpleEmbedAsync("There are currently no ranks set up.", Color.Blue);
@@ -214,8 +214,8 @@ namespace ELO.Modules
                     return;
                 }
 
-                var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToList();
-                var maxRank = ranks.Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToList();
+                var maxRank = ranks.AsQueryable().Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
                 string rankStr = null;
                 if (maxRank != null)
                 {
@@ -285,7 +285,7 @@ namespace ELO.Modules
             using (var db = new Database())
             {
                 //Retrieve players in the current guild from database
-                var users = db.Players.AsNoTracking().Where(x => x.GuildId == Context.Guild.Id);
+                var users = db.Players.AsNoTracking().AsQueryable().Where(x => x.GuildId == Context.Guild.Id);
                 int count = users.Count();
                 int pageSize = 20;
                 int skipCount = (page - 1) * pageSize;

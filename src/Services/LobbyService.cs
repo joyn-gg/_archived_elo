@@ -33,7 +33,7 @@ namespace ELO.Services
                     //Select randomly from the top 4 ranked players in the queue
                     if (queue.Count >= 4)
                     {
-                        var players = queue.Select(x => db.Players.Find(context.Guild.Id, x.UserId)).Where(x => x != null).OrderByDescending(x => x.Points).Take(4).OrderBy(x => rnd.Next()).ToList();
+                        var players = queue.Select(x => db.Players.Find(context.Guild.Id, x.UserId)).AsQueryable().Where(x => x != null).OrderByDescending(x => x.Points).Take(4).OrderBy(x => rnd.Next()).ToList();
                         cap1 = players[0].UserId;
                         cap2 = players[1].UserId;
                     }
@@ -56,7 +56,7 @@ namespace ELO.Services
                 else if (lobby.TeamPickMode == PickMode.Captains_HighestRanked)
                 {
                     //Select top two players
-                    var players = queue.Select(x => db.Players.Find(context.Guild.Id, x.UserId)).Where(x => x != null).OrderByDescending(x => x.Points).Take(2).ToList();
+                    var players = queue.Select(x => db.Players.Find(context.Guild.Id, x.UserId)).AsQueryable().Where(x => x != null).OrderByDescending(x => x.Points).Take(2).ToList();
                     cap1 = players[0].UserId;
                     cap2 = players[1].UserId;
                 }
@@ -80,7 +80,7 @@ namespace ELO.Services
                 int maxId;
                 try
                 {
-                    maxId = db.GameResults.Where(x => x.LobbyId == lobby.ChannelId).Max(x => x.GameId);
+                    maxId = db.GameResults.AsQueryable().Where(x => x.LobbyId == lobby.ChannelId).Max(x => x.GameId);
                 }
                 catch (InvalidOperationException ex)
                 {
@@ -97,7 +97,7 @@ namespace ELO.Services
                     GameId = lobby.CurrentGameCount
                 };
 
-                var maps = db.Maps.Where(x => x.ChannelId == lobby.ChannelId).ToArray();
+                var maps = db.Maps.AsQueryable().Where(x => x.ChannelId == lobby.ChannelId).ToArray();
                 if (maps.Length != 0)
                 {
                     var map = maps.OrderByDescending(x => Random.Next()).First();
@@ -156,11 +156,11 @@ namespace ELO.Services
                             Title = $"Game #{game.GameId} - Current Teams."
                         };
 
-                        var remainingPlayers = queue.Where(x => x.UserId != captains.Item1 && x.UserId != captains.Item2).Select(x => MentionUtils.MentionUser(x.UserId));
+                        var remainingPlayers = queue.AsQueryable().Where(x => x.UserId != captains.Item1 && x.UserId != captains.Item2).Select(x => MentionUtils.MentionUser(x.UserId));
                         if (lobby.HostSelectionMode != HostSelection.None)
                         {
                             var qIds = queue.Select(x => x.UserId).ToList();
-                            var players = db.Players.Where(p => qIds.Contains(p.UserId)).ToArray();
+                            var players = db.Players.AsQueryable().Where(p => qIds.Contains(p.UserId)).ToArray();
                             if (lobby.HostSelectionMode == HostSelection.HighestRanked)
                             {
                                 var selected = players.OrderByDescending(x => x.Points).First();
@@ -182,7 +182,7 @@ namespace ELO.Services
                     case PickMode.Random:
                         game.GameState = GameState.Undecided;
                         var shuffled = queue.OrderBy(x => Random.Next()).ToList();
-                        var partyPlayers = db.PartyMembers.Where(x => x.ChannelId == context.Channel.Id).ToArray();
+                        var partyPlayers = db.PartyMembers.AsQueryable().Where(x => x.ChannelId == context.Channel.Id).ToArray();
                         var partyPlayerIds = partyPlayers.Select(x => x.UserId);
                         var parties = partyPlayers.GroupBy(x => x.PartyHost).ToArray();
 
@@ -238,7 +238,7 @@ namespace ELO.Services
                         }
 
                         //Add remaining players to teams.
-                        foreach (var player in shuffled.Where(x => !partySelected.Contains(x.UserId)))
+                        foreach (var player in shuffled.AsQueryable().Where(x => !partySelected.Contains(x.UserId)))
                         {
                             if (t1Added.Count > t2Added.Count)
                             {
@@ -275,7 +275,7 @@ namespace ELO.Services
                     case PickMode.TryBalance:
                         game.GameState = GameState.Undecided;
 
-                        var balPlayers = queue.Select(x => db.Players.Find(context.Guild.Id, x.UserId)).Where(x => x != null).ToList();
+                        var balPlayers = queue.Select(x => db.Players.Find(context.Guild.Id, x.UserId)).AsQueryable().Where(x => x != null).ToList();
                         int difference = int.MaxValue;
                         int t1Count = balPlayers.Count / 2;
                         List<Player> balancedT1 = balPlayers.Take(t1Count).ToList();
@@ -377,7 +377,7 @@ namespace ELO.Services
                     if (lobby.HostSelectionMode != HostSelection.None)
                     {
                         var qIds = queue.Select(x => x.UserId).ToList();
-                        var players = db.Players.Where(p => qIds.Contains(p.UserId)).ToArray();
+                        var players = db.Players.AsQueryable().Where(p => qIds.Contains(p.UserId)).ToArray();
                         if (lobby.HostSelectionMode == HostSelection.HighestRanked)
                         {
                             var selected = players.OrderByDescending(x => x.Points).First();
@@ -613,7 +613,7 @@ namespace ELO.Services
 
         public static string[] GetMentionList(IEnumerable<SocketGuildUser> users)
         {
-            return users.Where(x => x != null).Select(x => x.Mention).ToArray();
+            return users.AsQueryable().Where(x => x != null).Select(x => x.Mention).ToArray();
         }
     }
 }

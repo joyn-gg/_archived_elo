@@ -47,10 +47,10 @@ namespace ELO.Modules
                     return;
                 }
 
-                var queuedPlayers = db.QueuedPlayers.Where(x => x.ChannelId == Context.Channel.Id);
+                var queuedPlayers = db.QueuedPlayers.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id);
                 db.QueuedPlayers.RemoveRange(queuedPlayers);
 
-                var latestGame = db.GameResults.Where(x => x.LobbyId == Context.Channel.Id).OrderByDescending(x => x.GameId).FirstOrDefault();
+                var latestGame = db.GameResults.AsQueryable().Where(x => x.LobbyId == Context.Channel.Id).OrderByDescending(x => x.GameId).FirstOrDefault();
                 if (latestGame != null && latestGame.GameState == GameState.Picking)
                 {
                     latestGame.GameState = GameState.Canceled;
@@ -82,10 +82,10 @@ namespace ELO.Modules
                     return;
                 }
                 var userIds = users.Select(x => x.Id).ToList();
-                var userPlayers = db.Players.Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId));
-                var queue = db.QueuedPlayers.Where(x => x.GuildId == Context.Guild.Id && x.ChannelId == Context.Channel.Id).ToList();
+                var userPlayers = db.Players.AsQueryable().Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId));
+                var queue = db.QueuedPlayers.AsQueryable().Where(x => x.GuildId == Context.Guild.Id && x.ChannelId == Context.Channel.Id).ToList();
                 int queueCount = queue.Count;
-                var latestGame = db.GameResults.Where(x => x.LobbyId == Context.Channel.Id).OrderByDescending(x => x.GameId).FirstOrDefault();
+                var latestGame = db.GameResults.AsQueryable().Where(x => x.LobbyId == Context.Channel.Id).OrderByDescending(x => x.GameId).FirstOrDefault();
                 if (latestGame != null && latestGame.GameState == GameState.Picking)
                 {
                     await SimpleEmbedAndDeleteAsync("Current game is picking teams, wait until this is completed.", Color.Red);
@@ -137,7 +137,7 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                var game = db.GameResults.Where(x => x.LobbyId == Context.Channel.Id).OrderByDescending(x => x.GameId).FirstOrDefault();
+                var game = db.GameResults.AsQueryable().Where(x => x.LobbyId == Context.Channel.Id).OrderByDescending(x => x.GameId).FirstOrDefault();
                 if (game != null)
                 {
                     await SubUserAsync(game.GameId, user, replacedWith);
@@ -204,7 +204,7 @@ namespace ELO.Modules
                         return;
                     }
 
-                    var queuedUsers = db.QueuedPlayers.Where(x => x.ChannelId == Context.Channel.Id);
+                    var queuedUsers = db.QueuedPlayers.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id);
                     var current = queuedUsers.SingleOrDefault(x => x.UserId == user.Id);
                     if (current == null && t1c?.UserId != user.Id && t2c?.UserId != user.Id)
                     {
@@ -268,7 +268,7 @@ namespace ELO.Modules
                         // Game is picking to try to also replace captain in queue if they remain.
                         if (game.GameState == GameState.Picking)
                         {
-                            var queuedUsers = db.QueuedPlayers.Where(x => x.ChannelId == Context.Channel.Id);
+                            var queuedUsers = db.QueuedPlayers.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id);
                             var current = queuedUsers.SingleOrDefault(x => x.UserId == user.Id);
                             if (current == null && t1c?.UserId != user.Id && t2c?.UserId != user.Id)
                             {
@@ -310,7 +310,7 @@ namespace ELO.Modules
                         // Game is picking to try to also replace captain in queue if they remain.
                         if (game.GameState == GameState.Picking)
                         {
-                            var queuedUsers = db.QueuedPlayers.Where(x => x.ChannelId == Context.Channel.Id);
+                            var queuedUsers = db.QueuedPlayers.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id);
                             var current = queuedUsers.SingleOrDefault(x => x.UserId == user.Id);
                             if (current == null && t1c?.UserId != user.Id && t2c?.UserId != user.Id)
                             {
@@ -378,7 +378,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var latestGame = db.GameResults.Where(x => x.LobbyId == Context.Channel.Id).OrderByDescending(x => x.GameId).FirstOrDefault();
+                var latestGame = db.GameResults.AsQueryable().Where(x => x.LobbyId == Context.Channel.Id).OrderByDescending(x => x.GameId).FirstOrDefault();
                 if (latestGame != null && latestGame.GameState == GameState.Picking)
                 {
                     await SimpleEmbedAsync("You cannot remove a player from a game that is still being picked, try cancelling the game instead.", Color.DarkBlue);
@@ -421,7 +421,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var latestGame = db.GameResults.Where(x => x.LobbyId == Context.Channel.Id).OrderByDescending(x => x.GameId).FirstOrDefault();
+                var latestGame = db.GameResults.AsQueryable().Where(x => x.LobbyId == Context.Channel.Id).OrderByDescending(x => x.GameId).FirstOrDefault();
                 if (latestGame == null)
                 {
                     await SimpleEmbedAsync("There is no game to pick for.", Color.DarkBlue);
@@ -507,11 +507,11 @@ namespace ELO.Modules
                 var allQueued = db.GetTeamFull(latestGame, 1).Union(db.GetTeamFull(latestGame, 2)).ToHashSet();
                 latestGame.Picks++;
                 db.Update(latestGame);
-                var remaining = queue.Where(x => !allQueued.Contains(x.UserId)).ToArray();
+                var remaining = queue.AsQueryable().Where(x => !allQueued.Contains(x.UserId)).ToArray();
                 if (remaining.Length == 1)
                 {
                     var lastUser = remaining.First();
-                    var allMembers = db.TeamPlayers.Where(x => x.GuildId == Context.Guild.Id && x.ChannelId == Context.Channel.Id && x.GameNumber == latestGame.GameId);
+                    var allMembers = db.TeamPlayers.AsQueryable().Where(x => x.GuildId == Context.Guild.Id && x.ChannelId == Context.Channel.Id && x.GameNumber == latestGame.GameId);
 
                     //More players in team 1 so add user to team 2
                     if (allMembers.Count(x => x.TeamNumber == 1) > allMembers.Count(x => x.TeamNumber == 2))

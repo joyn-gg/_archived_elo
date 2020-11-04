@@ -38,7 +38,7 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                var permissions = db.Permissions.Where(x => x.GuildId == Context.Guild.Id);
+                var permissions = db.Permissions.AsQueryable().Where(x => x.GuildId == Context.Guild.Id);
                 await SimpleEmbedAsync($"Custom Permissions:\n{string.Join("\n", permissions.Select(x => $"{x.CommandName} - {x.Level}"))}", Color.Blue);
             }
         }
