@@ -237,7 +237,6 @@ namespace ELO.Services
                 }
 
                 var patreonGuild = Client.GetGuild(PremiumConfig.GuildId);
-                patreonGuild.DownloadUsersAsync();
                 var patreonUser = patreonGuild?.GetUser(match.PremiumRedeemer.Value);
 
                 // If user not found, fall back to check for deleted premium sub.
