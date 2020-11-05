@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using ELO.Extensions;
 
@@ -33,6 +34,60 @@ namespace ELO.Handlers
             CommandSchedule.Service = provider.GetRequiredService<CommandService>();
             Client.Log += async x => BaseLogger.Log(x.Message, x.Severity);
             BaseLogger.Message += async (x, y) => Logger.Log(x, y);
+        }
+
+        private SemaphoreSlim userdownloadSem = new SemaphoreSlim(1);
+        private Task Client_GuildAvailable(SocketGuild arg)
+        {
+            _ = Task.Run(async () =>
+            {
+                Console.WriteLine($"Guild: {arg.Name} [{arg.Id}] Became Available");
+                await userdownloadSem.WaitAsync();
+
+                try
+                {
+                    if (ShardChecker.AllShardsReadyFired == false)
+                    {
+                        // Wait until all shards ready
+                        while (true)
+                        {
+                            await Task.Delay(100);
+                            if (ShardChecker.AllShardsReadyFired)
+                            {
+                                break;
+                            }
+                        }
+                    }
+
+                    var delay = Task.Delay(5000);
+                    var completeTask = await Task.WhenAny(delay, arg.DownloadUsersAsync());
+
+                    if (completeTask == delay)
+                    {
+                        Console.WriteLine(
+                            $"Guild: {arg.Name} [{arg.Id} Failed to return user list in time, releasing semaphore...");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Guild: {arg.Name} [{arg.Id}] Downloaded Users");
+                        if (!arg.HasAllMembers)
+                        {
+                            Console.WriteLine(
+                                $"Guild: {arg.Name} [{arg.Id}] Does not have all members, {arg.Users.Count}/{arg.MemberCount}");
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+                finally
+                {
+                    userdownloadSem.Release();
+                }
+            });
+
+            return Task.CompletedTask;
         }
 
         private LogHandler BaseLogger { get; }
@@ -100,6 +155,10 @@ namespace ELO.Handlers
         public Task ShardConnectedAsync(DiscordSocketClient shard)
         {
             Logger.Log($"Shard {shard.ShardId} connected! Guilds:{shard.Guilds.Count} Users:{shard.Guilds.Sum(x => x.MemberCount)}");
+            foreach (var guild in shard.Guilds)
+            {
+                Client_GuildAvailable(guild).GetAwaiter().GetResult();
+            }
             return Task.CompletedTask;
         }
 
@@ -111,6 +170,7 @@ namespace ELO.Handlers
 
         public async Task JoinedGuildAsync(SocketGuild guild)
         {
+            await Client_GuildAvailable(guild);
             //Try to find a channel the bot can send messages to with it's current permissions
             var firstChannel = guild.TextChannels.Where(x =>
             {
