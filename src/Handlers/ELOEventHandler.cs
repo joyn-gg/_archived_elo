@@ -37,10 +37,22 @@ namespace ELO.Handlers
         }
 
         private SemaphoreSlim userdownloadSem = new SemaphoreSlim(1);
+        private HashSet<ulong> guildAvailableQueue = new HashSet<ulong>();
         private Task Client_GuildAvailable(SocketGuild arg)
         {
             _ = Task.Run(async () =>
             {
+                if (guildAvailableQueue.Contains(arg.Id))
+                {
+                    return;
+                }
+
+                guildAvailableQueue.Add(arg.Id);
+                if (arg.HasAllMembers)
+                {
+                    return;
+                }
+
                 Console.WriteLine($"Guild: {arg.Name} [{arg.Id}] Became Available");
                 await userdownloadSem.WaitAsync();
 
@@ -84,6 +96,7 @@ namespace ELO.Handlers
                 finally
                 {
                     userdownloadSem.Release();
+                    guildAvailableQueue.Remove(arg.Id);
                 }
             });
 
