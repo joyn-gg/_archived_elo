@@ -2,17 +2,18 @@
 using Discord.Commands;
 using ELO.Models;
 using ELO.Services;
-using RavenBOT.Common;
 using System;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ELO.Extensions;
+using ELO.Preconditions;
 
 namespace ELO.Modules
 {
-    [RavenRequireContext(ContextType.Guild)]
+    [RequireContext(ContextType.Guild)]
     [Preconditions.RequirePermission(PermissionLevel.ELOAdmin)]
-    public class CompetitionSetup : ReactiveBase
+    public class CompetitionSetup : ModuleBase<ShardedCommandContext>
     {
         public PremiumService Premium { get; }
 
@@ -32,7 +33,7 @@ namespace ELO.Modules
                 db.Update(comp);
                 db.SaveChanges();
                 Handlers.ELOEventHandler.UpdatePrefix(Context.Guild.Id, prefix);
-                await SimpleEmbedAsync($"Prefix has been set to `{prefix ?? "Default"}`");
+                await Context.SimpleEmbedAsync($"Prefix has been set to `{prefix ?? "Default"}`");
             }
         }
 
@@ -54,7 +55,7 @@ namespace ELO.Modules
                 compMatch.BufferedPremiumCount = null;
                 db.Competitions.Update(compMatch);
                 db.SaveChanges();
-                await SimpleEmbedAsync("Premium subscription has been removed.");
+                await Context.SimpleEmbedAsync("Premium subscription has been removed.");
             }
         }
 
@@ -67,7 +68,7 @@ namespace ELO.Modules
                 var comps = db.Competitions.AsQueryable().Where(x => x.PremiumRedeemer == Context.User.Id).ToArray();
                 if (comps.Length == 0)
                 {
-                    await SimpleEmbedAsync("You do not have any premium redeemed servers.");
+                    await Context.SimpleEmbedAsync("You do not have any premium redeemed servers.");
                     return;
                 }
 
@@ -76,11 +77,11 @@ namespace ELO.Modules
                     var server = Context.Client.Guilds.FirstOrDefault(x => x.Id == comps[0].GuildId);
                     if (server == null)
                     {
-                        await SimpleEmbedAsync($"Server Not Found: {comps[0].GuildId}");
+                        await Context.SimpleEmbedAsync($"Server Not Found: {comps[0].GuildId}");
                     }
                     else
                     {
-                        await SimpleEmbedAsync($"Premium Server: {server.Name} [{comps[0].GuildId}]");
+                        await Context.SimpleEmbedAsync($"Premium Server: {server.Name} [{comps[0].GuildId}]");
                     }
                     return;
                 }
@@ -109,7 +110,7 @@ namespace ELO.Modules
                 var premiumLimit = Premium.GetRegistrationLimit(comps[0].GuildId);
                 builder.AppendLine($"Premium limit for each server is `{premiumLimit}`");
 
-                await SimpleEmbedAsync(builder.ToString());
+                await Context.SimpleEmbedAsync(builder.ToString());
             }
         }
 
@@ -126,7 +127,7 @@ namespace ELO.Modules
         {
             if (token == null)
             {
-                await SimpleEmbedAsync("This is used to redeem tokens that were created using the old ELO version.", Color.Blue);
+                await Context.SimpleEmbedAsync("This is used to redeem tokens that were created using the old ELO version.", Color.Blue);
                 return;
             }
 
@@ -135,7 +136,7 @@ namespace ELO.Modules
                 var legacy = db.LegacyTokens.Find(token);
                 if (legacy == null)
                 {
-                    await SimpleEmbedAsync($"Invalid token provided, if you believe this is a mistake please contact support at: {Premium.PremiumConfig.ServerInvite}", Color.Red);
+                    await Context.SimpleEmbedAsync($"Invalid token provided, if you believe this is a mistake please contact support at: {Premium.PremiumConfig.ServerInvite}", Color.Red);
                 }
                 else
                 {
@@ -158,7 +159,7 @@ namespace ELO.Modules
                     db.Remove(legacy);
                     db.Update(guild);
                     db.SaveChanges();
-                    await SimpleEmbedAsync("Token redeemed.", Color.Green);
+                    await Context.SimpleEmbedAsync("Token redeemed.", Color.Green);
                 }
             }
         }
@@ -174,16 +175,16 @@ namespace ELO.Modules
                 {
                     if (guild.LegacyPremiumExpiry.Value > DateTime.UtcNow)
                     {
-                        await SimpleEmbedAsync($"Expires on: {guild.LegacyPremiumExpiry.Value.ToString("dd MMM yyyy")} {guild.LegacyPremiumExpiry.Value.ToShortTimeString()}\nRemaining: {(guild.LegacyPremiumExpiry.Value - DateTime.UtcNow).GetReadableLength()}", Color.Blue);
+                        await Context.SimpleEmbedAsync($"Expires on: {guild.LegacyPremiumExpiry.Value.ToString("dd MMM yyyy")} {guild.LegacyPremiumExpiry.Value.ToShortTimeString()}\nRemaining: {(guild.LegacyPremiumExpiry.Value - DateTime.UtcNow).GetReadableLength()}", Color.Blue);
                     }
                     else
                     {
-                        await SimpleEmbedAsync("Legacy premium has already expired.", Color.Red);
+                        await Context.SimpleEmbedAsync("Legacy premium has already expired.", Color.Red);
                     }
                 }
                 else
                 {
-                    await SimpleEmbedAsync("This server does not have a legacy premium subscription.", Color.Red);
+                    await Context.SimpleEmbedAsync("This server does not have a legacy premium subscription.", Color.Red);
                 }
             }
         }
@@ -192,7 +193,7 @@ namespace ELO.Modules
         [Summary("Displays the maximum amount of registrations for the server")]
         public virtual async Task GetRegisterLimit()
         {
-            await SimpleEmbedAsync($"Current registration limit is a maximum of: {Premium.GetRegistrationLimit(Context.Guild.Id)}", Color.Blue);
+            await Context.SimpleEmbedAsync($"Current registration limit is a maximum of: {Premium.GetRegistrationLimit(Context.Guild.Id)}", Color.Blue);
         }
 
         [Command("CompetitionInfo", RunMode = RunMode.Async)]
@@ -251,7 +252,7 @@ namespace ELO.Modules
                 $"**Default Loss Amount:** -{comp.DefaultLossModifier}\n" +
                 $"**Default Points On Register:** {comp.DefaultRegisterScore}\n" +
                 $"For rank info use the `ranks` command");
-                await ReplyAsync(embed);
+                await ReplyAsync(null, false, embed.Build());
             }
         }
 
@@ -265,7 +266,7 @@ namespace ELO.Modules
                 competition.DefaultRegisterScore = amount;
                 db.Update(competition);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"When users register they will start with {amount} points", Color.Green);
+                await Context.SimpleEmbedAsync($"When users register they will start with {amount} points", Color.Green);
             }
         }
 
@@ -289,17 +290,17 @@ namespace ELO.Modules
                             competition.RegisteredRankId = null;
                             db.Update(competition);
                             db.SaveChanges();
-                            await SimpleEmbedAsync("Register role had previously been set but can no longer be found in the server. It has been reset.", Color.DarkBlue);
+                            await Context.SimpleEmbedAsync("Register role had previously been set but can no longer be found in the server. It has been reset.", Color.DarkBlue);
                         }
                         else
                         {
-                            await SimpleEmbedAsync($"Current register role is: {gRole.Mention}", Color.Blue);
+                            await Context.SimpleEmbedAsync($"Current register role is: {gRole.Mention}", Color.Blue);
                         }
                     }
                     else
                     {
                         //var serverPrefix = Prefix.GetPrefix(Context.Guild.Id) ?? Prefix.DefaultPrefix;
-                        await SimpleEmbedAsync($"There is no register role set. You can set one with `SetRegisterRole @role` or `SetRegisterRole rolename`", Color.Blue);
+                        await Context.SimpleEmbedAsync($"There is no register role set. You can set one with `SetRegisterRole @role` or `SetRegisterRole rolename`", Color.Blue);
                     }
 
                     return;
@@ -308,7 +309,7 @@ namespace ELO.Modules
                 competition.RegisteredRankId = role.Id;
                 db.Update(competition);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Register role set to {role.Mention}", Color.Green);
+                await Context.SimpleEmbedAsync($"Register role set to {role.Mention}", Color.Green);
             }
         }
 
@@ -334,7 +335,7 @@ namespace ELO.Modules
 
                 db.Update(competition);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Register Message set.\nExample:\n{exampleRegisterMessage}", Color.Green);
+                await Context.SimpleEmbedAsync($"Register Message set.\nExample:\n{exampleRegisterMessage}", Color.Green);
             }
         }
 
@@ -362,11 +363,11 @@ namespace ELO.Modules
                 {
                     response.AddField("Unformatted Message", competition.RegisterMessageTemplate);
                     response.AddField("Example Message", competition.FormatRegisterMessage(testProfile));
-                    await ReplyAsync(response);
+                    await ReplyAsync(null, false, response.Build());
                     return;
                 }
 
-                await SimpleEmbedAsync($"This server does not have a register message set.", Color.DarkBlue);
+                await Context.SimpleEmbedAsync($"This server does not have a register message set.", Color.DarkBlue);
             }
         }
 
@@ -386,7 +387,7 @@ namespace ELO.Modules
                 "`RegisterMessageFormats Thank you for registering {name}` `Thank you for registering Player`\n" +
                 "NOTE: Format is limited to 1024 characters long";
 
-            await SimpleEmbedAsync(response, Color.Blue);
+            await Context.SimpleEmbedAsync(response, Color.Blue);
         }
 
         [Command("SetNicknameFormat", RunMode = RunMode.Sync)]
@@ -407,7 +408,7 @@ namespace ELO.Modules
 
                 db.Update(competition);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Nickname Format set.\nExample: `{exampleNick}`", Color.Green);
+                await Context.SimpleEmbedAsync($"Nickname Format set.\nExample: `{exampleNick}`", Color.Green);
             }
         }
 
@@ -428,7 +429,7 @@ namespace ELO.Modules
                 "`SetNicknameFormat [{wins}] {name}` `[5] Player`\n" +
                 "NOTE: Nicknames are limited to 32 characters long on discord";
 
-            await SimpleEmbedAsync(response, Color.Blue);
+            await Context.SimpleEmbedAsync(response, Color.Blue);
         }
 
         [Command("AddRank", RunMode = RunMode.Sync)]
@@ -456,7 +457,7 @@ namespace ELO.Modules
                 }
 
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Rank {(oldRank != null ? "updated" : "added")}, if you wish to change the win/loss point values, use the `RankWinModifier` and `RankLossModifier` commands.", Color.Green);
+                await Context.SimpleEmbedAsync($"Rank {(oldRank != null ? "updated" : "added")}, if you wish to change the win/loss point values, use the `RankWinModifier` and `RankLossModifier` commands.", Color.Green);
             }
         }
 
@@ -488,7 +489,7 @@ namespace ELO.Modules
                     db.Ranks.Add(newRank);
                 }
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Rank {(oldRank != null ? "updated" : "added")}.\n**Required Points:** {points}\n**Win Modifier:** +{win}\n**Loss Modifier:** -{lose}", Color.Green);
+                await Context.SimpleEmbedAsync($"Rank {(oldRank != null ? "updated" : "added")}.\n**Required Points:** {points}\n**Win Modifier:** +{win}\n**Loss Modifier:** -{lose}", Color.Green);
             }
         }
 
@@ -519,7 +520,7 @@ namespace ELO.Modules
                 var removed = ranks.AsQueryable().Where(x => !guildRoleIds.Contains(x.RoleId)).ToArray();
                 db.Ranks.RemoveRange(removed);
                 db.SaveChanges();
-                await SimpleEmbedAsync("Ranks Removed.", Color.Green);
+                await Context.SimpleEmbedAsync("Ranks Removed.", Color.Green);
             }
         }
 
@@ -533,13 +534,13 @@ namespace ELO.Modules
                 var rank = db.Ranks.Find(roleId);
                 if (rank == null)
                 {
-                    await SimpleEmbedAsync("Invalid Rank.", Color.Red);
+                    await Context.SimpleEmbedAsync("Invalid Rank.", Color.Red);
                     return;
                 }
 
                 db.Ranks.Remove(rank);
                 db.SaveChanges();
-                await SimpleEmbedAsync("Rank Removed.", Color.Green);
+                await Context.SimpleEmbedAsync("Rank Removed.", Color.Green);
             }
         }
 
@@ -561,13 +562,13 @@ namespace ELO.Modules
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);
                 if (allowNegative == null)
                 {
-                    await SimpleEmbedAsync($"Current Allow Negative Score Setting: {competition.AllowNegativeScore}", Color.Blue);
+                    await Context.SimpleEmbedAsync($"Current Allow Negative Score Setting: {competition.AllowNegativeScore}", Color.Blue);
                     return;
                 }
                 competition.AllowNegativeScore = allowNegative.Value;
                 db.Update(competition);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Allow Negative Score set to {allowNegative.Value}", Color.Green);
+                await Context.SimpleEmbedAsync($"Allow Negative Score set to {allowNegative.Value}", Color.Green);
             }
         }
 
@@ -581,13 +582,13 @@ namespace ELO.Modules
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);
                 if (allowMulti == null)
                 {
-                    await SimpleEmbedAsync($"Current Allow Multi-Queuing Setting: {competition.AllowMultiQueueing}", Color.Blue);
+                    await Context.SimpleEmbedAsync($"Current Allow Multi-Queuing Setting: {competition.AllowMultiQueueing}", Color.Blue);
                     return;
                 }
                 competition.AllowMultiQueueing = allowMulti.Value;
                 db.Update(competition);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Allow Multi-Queuing set to {allowMulti.Value}", Color.Green);
+                await Context.SimpleEmbedAsync($"Allow Multi-Queuing set to {allowMulti.Value}", Color.Green);
             }
         }
 
@@ -600,13 +601,13 @@ namespace ELO.Modules
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);
                 if (reRegister == null)
                 {
-                    await SimpleEmbedAsync($"Current Allow re-register Setting: {competition.AllowReRegister}", Color.Blue);
+                    await Context.SimpleEmbedAsync($"Current Allow re-register Setting: {competition.AllowReRegister}", Color.Blue);
                     return;
                 }
                 competition.AllowReRegister = reRegister.Value;
                 db.Update(competition);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Allow re-register set to {reRegister.Value}", Color.Green);
+                await Context.SimpleEmbedAsync($"Allow re-register set to {reRegister.Value}", Color.Green);
             }
         }
 
@@ -620,13 +621,13 @@ namespace ELO.Modules
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);
                 if (selfRename == null)
                 {
-                    await SimpleEmbedAsync($"Current Allow Self Rename Setting: {competition.AllowSelfRename}", Color.Blue);
+                    await Context.SimpleEmbedAsync($"Current Allow Self Rename Setting: {competition.AllowSelfRename}", Color.Blue);
                     return;
                 }
                 competition.AllowSelfRename = selfRename.Value;
                 db.Update(competition);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Allow Self Rename set to {selfRename.Value}", Color.Green);
+                await Context.SimpleEmbedAsync($"Allow Self Rename set to {selfRename.Value}", Color.Green);
             }
         }
 
@@ -640,13 +641,13 @@ namespace ELO.Modules
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);
                 if (displayErrors == null)
                 {
-                    await SimpleEmbedAsync($"Current DisplayErrors Setting: {competition.DisplayErrors}", Color.Blue);
+                    await Context.SimpleEmbedAsync($"Current DisplayErrors Setting: {competition.DisplayErrors}", Color.Blue);
                     return;
                 }
                 competition.DisplayErrors = displayErrors.Value;
                 db.Update(competition);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Display Errors set to {displayErrors.Value}", Color.Green);
+                await Context.SimpleEmbedAsync($"Display Errors set to {displayErrors.Value}", Color.Green);
             }
         }
 
@@ -660,13 +661,13 @@ namespace ELO.Modules
 
                 if (!amountToAdd.HasValue)
                 {
-                    await SimpleEmbedAsync($"Current DefaultWinModifier Setting: {competition.DefaultWinModifier}", Color.Blue);
+                    await Context.SimpleEmbedAsync($"Current DefaultWinModifier Setting: {competition.DefaultWinModifier}", Color.Blue);
                     return;
                 }
                 competition.DefaultWinModifier = amountToAdd.Value;
                 db.Update(competition);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Default Win Modifier set to {competition.DefaultWinModifier}", Color.Green);
+                await Context.SimpleEmbedAsync($"Default Win Modifier set to {competition.DefaultWinModifier}", Color.Green);
             }
         }
 
@@ -677,7 +678,7 @@ namespace ELO.Modules
             string confirmKey = "erkjbg4rt";
             if (confirm == null || !confirm.Equals(confirmKey, StringComparison.OrdinalIgnoreCase))
             {
-                await SimpleEmbedAsync($"Confirm key is: `{confirmKey}`\nThis command will remove registrations from users who are no longer in the server.");
+                await Context.SimpleEmbedAsync($"Confirm key is: `{confirmKey}`\nThis command will remove registrations from users who are no longer in the server.");
                 return;
             }
 
@@ -689,7 +690,7 @@ namespace ELO.Modules
                 db.SaveChanges();
                 Extensions.Extensions.RegCache.Clear();
 
-                await SimpleEmbedAsync($"Removed {missing.Length} registrations.", Color.Green);
+                await Context.SimpleEmbedAsync($"Removed {missing.Length} registrations.", Color.Green);
             }
         }
 
@@ -703,13 +704,13 @@ namespace ELO.Modules
 
                 if (!amountToSubtract.HasValue)
                 {
-                    await SimpleEmbedAsync($"Current DefaultLossModifier Setting: {competition.DefaultLossModifier}", Color.Blue);
+                    await Context.SimpleEmbedAsync($"Current DefaultLossModifier Setting: {competition.DefaultLossModifier}", Color.Blue);
                     return;
                 }
                 competition.DefaultLossModifier = amountToSubtract.Value;
                 db.Update(competition);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Default Loss Modifier set to {competition.DefaultLossModifier}", Color.Green);
+                await Context.SimpleEmbedAsync($"Default Loss Modifier set to {competition.DefaultLossModifier}", Color.Green);
             }
         }
 
@@ -722,7 +723,7 @@ namespace ELO.Modules
                 var rank = db.Ranks.Find(role.Id);
                 if (rank == null)
                 {
-                    await SimpleEmbedAsync("Provided role is not a rank.", Color.Red);
+                    await Context.SimpleEmbedAsync("Provided role is not a rank.", Color.Red);
                     return;
                 }
 
@@ -732,11 +733,11 @@ namespace ELO.Modules
                 if (!amountToSubtract.HasValue)
                 {
                     var competition = db.GetOrCreateCompetition(Context.Guild.Id);
-                    await SimpleEmbedAsync($"This rank will now use the server's default loss value (-{competition.DefaultLossModifier}) when subtracting points.", Color.Blue);
+                    await Context.SimpleEmbedAsync($"This rank will now use the server's default loss value (-{competition.DefaultLossModifier}) when subtracting points.", Color.Blue);
                 }
                 else
                 {
-                    await SimpleEmbedAsync($"When a player with this rank loses they will lose {amountToSubtract} points", Color.Green);
+                    await Context.SimpleEmbedAsync($"When a player with this rank loses they will lose {amountToSubtract} points", Color.Green);
                 }
             }
         }
@@ -750,7 +751,7 @@ namespace ELO.Modules
                 var rank = db.Ranks.Find(role.Id);
                 if (rank == null)
                 {
-                    await SimpleEmbedAsync("Provided role is not a rank.", Color.Red);
+                    await Context.SimpleEmbedAsync("Provided role is not a rank.", Color.Red);
                     return;
                 }
 
@@ -760,11 +761,11 @@ namespace ELO.Modules
                 if (!amountToAdd.HasValue)
                 {
                     var competition = db.GetOrCreateCompetition(Context.Guild.Id);
-                    await SimpleEmbedAsync($"This rank will now use the server's default win value (+{competition.DefaultWinModifier}) whenSimpleEmbedAsync adding points.", Color.Blue);
+                    await Context.SimpleEmbedAsync($"This rank will now use the server's default win value (+{competition.DefaultWinModifier}) whenSimpleEmbedAsync adding points.", Color.Blue);
                 }
                 else
                 {
-                    await SimpleEmbedAsync($"When a player with this rank wins they will gain {amountToAdd} points", Color.Green);
+                    await Context.SimpleEmbedAsync($"When a player with this rank wins they will gain {amountToAdd} points", Color.Green);
                 }
             }
         }
@@ -778,13 +779,13 @@ namespace ELO.Modules
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);
                 if (updateNicknames == null)
                 {
-                    await SimpleEmbedAsync($"Current Update Nicknames Setting: {competition.UpdateNames}", Color.Blue);
+                    await Context.SimpleEmbedAsync($"Current Update Nicknames Setting: {competition.UpdateNames}", Color.Blue);
                     return;
                 }
                 competition.UpdateNames = updateNicknames.Value;
                 db.Update(competition);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Update Nicknames set to {competition.UpdateNames}", Color.Green);
+                await Context.SimpleEmbedAsync($"Update Nicknames set to {competition.UpdateNames}", Color.Green);
             }
         }
 
@@ -797,13 +798,13 @@ namespace ELO.Modules
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);
                 if (allowVoting == null)
                 {
-                    await SimpleEmbedAsync($"Current Allow Voting Setting: {competition.AllowVoting}", Color.Blue);
+                    await Context.SimpleEmbedAsync($"Current Allow Voting Setting: {competition.AllowVoting}", Color.Blue);
                     return;
                 }
                 competition.AllowVoting = allowVoting.Value;
                 db.Update(competition);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Allow voting set to {competition.AllowVoting}", Color.Green);
+                await Context.SimpleEmbedAsync($"Allow voting set to {competition.AllowVoting}", Color.Green);
             }
         }
 
@@ -815,7 +816,7 @@ namespace ELO.Modules
             {
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);
 
-                var response = await SimpleEmbedAsync(message);
+                var response = await Context.SimpleEmbedAsync(message);
                 competition.ReactiveMessage = response.Id;
                 db.Update(competition);
                 db.SaveChanges();
@@ -833,14 +834,14 @@ namespace ELO.Modules
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);
                 if (delay == null)
                 {
-                    await SimpleEmbedAsync($"Current Requeue Delay Setting: {(competition.RequeueDelay.HasValue ? competition.RequeueDelay.Value.GetReadableLength() : "None")}", Color.Blue);
+                    await Context.SimpleEmbedAsync($"Current Requeue Delay Setting: {(competition.RequeueDelay.HasValue ? competition.RequeueDelay.Value.GetReadableLength() : "None")}", Color.Blue);
                     return;
                 }
 
                 competition.RequeueDelay = delay;
                 db.Update(competition);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Requeue Delay Set to {competition.RequeueDelay.Value.GetReadableLength()}", Color.Green);
+                await Context.SimpleEmbedAsync($"Requeue Delay Set to {competition.RequeueDelay.Value.GetReadableLength()}", Color.Green);
             }
         }
 
@@ -855,7 +856,7 @@ namespace ELO.Modules
                 competition.RequeueDelay = null;
                 db.Update(competition);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Requeue Delay Removed.", Color.Green);
+                await Context.SimpleEmbedAsync($"Requeue Delay Removed.", Color.Green);
             }
         }
 
@@ -865,13 +866,13 @@ namespace ELO.Modules
         {
             if (timeout.HasValue && timeout < TimeSpan.FromMinutes(10))
             {
-                await SimpleEmbedAsync("Minimum timeout length is 10 minutes.");
+                await Context.SimpleEmbedAsync("Minimum timeout length is 10 minutes.");
                 return;
             }
 
             if (!Premium.IsPremium(Context.Guild.Id))
             {
-                await SimpleEmbedAsync($"This feature is for premium ELO servers only. {Premium.PremiumConfig.ServerInvite}");
+                await Context.SimpleEmbedAsync($"This feature is for premium ELO servers only. {Premium.PremiumConfig.ServerInvite}");
                 return;
             }
 
@@ -880,14 +881,14 @@ namespace ELO.Modules
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);
                 if (timeout == null)
                 {
-                    await SimpleEmbedAsync($"Current Queue Timeout Setting: {(competition.QueueTimeout.HasValue ? competition.QueueTimeout.Value.GetReadableLength() : "None")}", Color.Blue);
+                    await Context.SimpleEmbedAsync($"Current Queue Timeout Setting: {(competition.QueueTimeout.HasValue ? competition.QueueTimeout.Value.GetReadableLength() : "None")}", Color.Blue);
                     return;
                 }
 
                 competition.QueueTimeout = timeout;
                 db.Update(competition);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Queue Timeout Set to {competition.QueueTimeout.Value.GetReadableLength()}", Color.Green);
+                await Context.SimpleEmbedAsync($"Queue Timeout Set to {competition.QueueTimeout.Value.GetReadableLength()}", Color.Green);
             }
         }
 
@@ -901,7 +902,7 @@ namespace ELO.Modules
                 competition.QueueTimeout = null;
                 db.Update(competition);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Queue Timeout Removed.", Color.Green);
+                await Context.SimpleEmbedAsync($"Queue Timeout Removed.", Color.Green);
             }
         }
     }

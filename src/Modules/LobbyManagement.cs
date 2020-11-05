@@ -4,19 +4,23 @@ using Discord.WebSocket;
 using ELO.Entities;
 using ELO.Models;
 using ELO.Services;
-using RavenBOT.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ELO.Extensions;
+using ELO.Services.Reactive;
 
 namespace ELO.Modules
 {
-    [RavenRequireContext(ContextType.Guild)]
-    public partial class LobbyManagement : ReactiveBase
+    [RequireContext(ContextType.Guild)]
+    public partial class LobbyManagement : ModuleBase<ShardedCommandContext>
     {
-        public LobbyManagement(Random random, GameService gameService, LobbyService lobbyService, PremiumService premiumService)
+        private readonly ReactiveService _reactive;
+
+        public LobbyManagement(Random random, GameService gameService, LobbyService lobbyService, PremiumService premiumService, ReactiveService reactive)
         {
+            _reactive = reactive;
             Random = random;
             GameService = gameService;
             LobbyService = lobbyService;
@@ -43,7 +47,7 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
 
@@ -57,11 +61,11 @@ namespace ELO.Modules
                     db.GameResults.Update(latestGame);
 
                     //Announce game cancelled.
-                    await SimpleEmbedAsync($"Queue Cleared. Game #{latestGame.GameId} was cancelled as a result.", Color.Green);
+                    await Context.SimpleEmbedAsync($"Queue Cleared. Game #{latestGame.GameId} was cancelled as a result.", Color.Green);
                 }
                 else
                 {
-                    await SimpleEmbedAsync($"Queue Cleared.", Color.Green);
+                    await Context.SimpleEmbedAsync($"Queue Cleared.", Color.Green);
                 }
 
                 db.SaveChanges();
@@ -78,7 +82,7 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
                 var userIds = users.Select(x => x.Id).ToList();
@@ -88,7 +92,7 @@ namespace ELO.Modules
                 var latestGame = db.GameResults.AsQueryable().Where(x => x.LobbyId == Context.Channel.Id).OrderByDescending(x => x.GameId).FirstOrDefault();
                 if (latestGame != null && latestGame.GameState == GameState.Picking)
                 {
-                    await SimpleEmbedAndDeleteAsync("Current game is picking teams, wait until this is completed.", Color.Red);
+                    await Context.SimpleEmbedAndDeleteAsync("Current game is picking teams, wait until this is completed.", Color.Red);
                     return;
                 }
 
@@ -98,13 +102,13 @@ namespace ELO.Modules
                     if (queueCount >= lobby.PlayersPerTeam * 2)
                     {
                         //Queue will be reset after teams are completely picked.
-                        await SimpleEmbedAsync("Queue is full, wait for teams to be chosen before joining.", Color.DarkBlue);
+                        await Context.SimpleEmbedAsync("Queue is full, wait for teams to be chosen before joining.", Color.DarkBlue);
                         break;
                     }
 
                     if (queue.Any(x => x.UserId == player.UserId))
                     {
-                        await SimpleEmbedAsync($"{MentionUtils.MentionUser(player.UserId)} is already queued.", Color.DarkBlue);
+                        await Context.SimpleEmbedAsync($"{MentionUtils.MentionUser(player.UserId)} is already queued.", Color.DarkBlue);
                         continue;
                     }
 
@@ -118,7 +122,7 @@ namespace ELO.Modules
                     queueCount++;
                 }
                 db.SaveChanges();
-                await SimpleEmbedAsync($"{string.Join("", added.Select(MentionUtils.MentionUser))} - added to queue.", Color.Green);
+                await Context.SimpleEmbedAsync($"{string.Join("", added.Select(MentionUtils.MentionUser))} - added to queue.", Color.Green);
 
                 if (queueCount >= lobby.PlayersPerTeam * 2)
                 {
@@ -155,27 +159,27 @@ namespace ELO.Modules
                 var lobby = db.GetLobby(Context.Channel);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 var game = db.GameResults.FirstOrDefault(x => x.GameId == gameNumber && x.LobbyId == lobby.ChannelId);
                 if (game == null)
                 {
-                    await SimpleEmbedAsync("Invalid game number.", Color.Red);
+                    await Context.SimpleEmbedAsync("Invalid game number.", Color.Red);
                     return;
                 }
 
                 if (game.GameState != GameState.Undecided && game.GameState != GameState.Picking)
                 {
-                    await SimpleEmbedAsync("This command can only be used with undecided games.", Color.Red);
+                    await Context.SimpleEmbedAsync("This command can only be used with undecided games.", Color.Red);
                     return;
                 }
 
                 var replaceUser = db.GetUser(replacedWith);
                 if (replaceUser == null)
                 {
-                    await SimpleEmbedAsync($"{replacedWith.Mention} is not registered.");
+                    await Context.SimpleEmbedAsync($"{replacedWith.Mention} is not registered.");
                     return;
                 }
 
@@ -187,7 +191,7 @@ namespace ELO.Modules
                 // Check if the user being added is already in the game
                 if (team1.Any(x => x.UserId == replacedWith.Id) || team2.Any(x => x.UserId == replacedWith.Id) || t1c?.UserId == replacedWith.Id || t2c?.UserId == replacedWith.Id)
                 {
-                    await SimpleEmbedAsync($"{replacedWith.Mention} is already in this game.");
+                    await Context.SimpleEmbedAsync($"{replacedWith.Mention} is already in this game.");
                     return;
                 }
 
@@ -200,7 +204,7 @@ namespace ELO.Modules
                     // User is not present in either team and is not a team captain, check if the game is currently picking and replace the member in the queue.
                     if (game.GameState != GameState.Picking)
                     {
-                        await SimpleEmbedAsync($"{user.Mention} is not present in the game.");
+                        await Context.SimpleEmbedAsync($"{user.Mention} is not present in the game.");
                         return;
                     }
 
@@ -209,7 +213,7 @@ namespace ELO.Modules
                     if (current == null && t1c?.UserId != user.Id && t2c?.UserId != user.Id)
                     {
                         // Player is not present in queue team1 or team2 or captain
-                        await SimpleEmbedAsync($"{user.Mention} is not present in the game.");
+                        await Context.SimpleEmbedAsync($"{user.Mention} is not present in the game.");
                         return;
                     }
 
@@ -217,7 +221,7 @@ namespace ELO.Modules
                     var replacer = queuedUsers.SingleOrDefault(x => x.UserId == replacedWith.Id);
                     if (replacer != null)
                     {
-                        await SimpleEmbedAsync($"{replacedWith.Mention} is in the remaining player pool already.");
+                        await Context.SimpleEmbedAsync($"{replacedWith.Mention} is in the remaining player pool already.");
                         return;
                     }
 
@@ -255,7 +259,7 @@ namespace ELO.Modules
                     });
                     db.SaveChanges();
 
-                    await SimpleEmbedAsync($"Player {user.Mention} in team **{player.TeamNumber}** was replaced with {replacedWith.Mention}");
+                    await Context.SimpleEmbedAsync($"Player {user.Mention} in team **{player.TeamNumber}** was replaced with {replacedWith.Mention}");
                 }
                 else
                 {
@@ -273,7 +277,7 @@ namespace ELO.Modules
                             if (current == null && t1c?.UserId != user.Id && t2c?.UserId != user.Id)
                             {
                                 // Player is not present in queue team1 or team2 or captain
-                                await SimpleEmbedAsync($"{user.Mention} is not present in the game.");
+                                await Context.SimpleEmbedAsync($"{user.Mention} is not present in the game.");
                                 return;
                             }
 
@@ -281,7 +285,7 @@ namespace ELO.Modules
                             var replacer = queuedUsers.SingleOrDefault(x => x.UserId == replacedWith.Id);
                             if (replacer != null)
                             {
-                                await SimpleEmbedAsync($"{replacedWith.Mention} is in the remaining player pool already.");
+                                await Context.SimpleEmbedAsync($"{replacedWith.Mention} is in the remaining player pool already.");
                                 return;
                             }
 
@@ -299,7 +303,7 @@ namespace ELO.Modules
                         }
 
                         db.SaveChanges();
-                        await SimpleEmbedAsync($"{user.Mention} as a team captain was replaced with {replacedWith.Mention}");
+                        await Context.SimpleEmbedAsync($"{user.Mention} as a team captain was replaced with {replacedWith.Mention}");
                         captainReplaced = true;
                     }
                     else if (t2c != null && t2c.UserId == user.Id)
@@ -315,7 +319,7 @@ namespace ELO.Modules
                             if (current == null && t1c?.UserId != user.Id && t2c?.UserId != user.Id)
                             {
                                 // Player is not present in queue team1 or team2 or captain
-                                await SimpleEmbedAsync($"{user.Mention} is not present in the game.");
+                                await Context.SimpleEmbedAsync($"{user.Mention} is not present in the game.");
                                 return;
                             }
 
@@ -323,7 +327,7 @@ namespace ELO.Modules
                             var replacer = queuedUsers.SingleOrDefault(x => x.UserId == replacedWith.Id);
                             if (replacer != null)
                             {
-                                await SimpleEmbedAsync($"{replacedWith.Mention} is in the remaining player pool already.");
+                                await Context.SimpleEmbedAsync($"{replacedWith.Mention} is in the remaining player pool already.");
                                 return;
                             }
 
@@ -341,7 +345,7 @@ namespace ELO.Modules
                         }
 
                         db.SaveChanges();
-                        await SimpleEmbedAsync($"{user.Mention} as a team captain was replaced with {replacedWith.Mention}");
+                        await Context.SimpleEmbedAsync($"{user.Mention} as a team captain was replaced with {replacedWith.Mention}");
                         captainReplaced = true;
                     }
                 }
@@ -349,7 +353,7 @@ namespace ELO.Modules
                 // Used to avoid sending two messages for a captain replacement.
                 if (queueUserReplaced && !captainReplaced)
                 {
-                    await SimpleEmbedAsync($"Player {user.Mention} was replaced with {replacedWith.Mention} in remaining player pool.");
+                    await Context.SimpleEmbedAsync($"Player {user.Mention} was replaced with {replacedWith.Mention} in remaining player pool.");
                 }
             }
         }
@@ -374,14 +378,14 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 var latestGame = db.GameResults.AsQueryable().Where(x => x.LobbyId == Context.Channel.Id).OrderByDescending(x => x.GameId).FirstOrDefault();
                 if (latestGame != null && latestGame.GameState == GameState.Picking)
                 {
-                    await SimpleEmbedAsync("You cannot remove a player from a game that is still being picked, try cancelling the game instead.", Color.DarkBlue);
+                    await Context.SimpleEmbedAsync("You cannot remove a player from a game that is still being picked, try cancelling the game instead.", Color.DarkBlue);
                     return;
                 }
 
@@ -389,12 +393,12 @@ namespace ELO.Modules
                 if (queuedUser != null)
                 {
                     db.QueuedPlayers.Remove(queuedUser);
-                    await SimpleEmbedAsync("Player was removed from queue.", Color.DarkBlue);
+                    await Context.SimpleEmbedAsync("Player was removed from queue.", Color.DarkBlue);
                     db.SaveChanges();
                 }
                 else
                 {
-                    await SimpleEmbedAsync("Player is not in queue and cannot be removed.", Color.DarkBlue);
+                    await Context.SimpleEmbedAsync("Player is not in queue and cannot be removed.", Color.DarkBlue);
                     return;
                 }
             }
@@ -408,7 +412,7 @@ namespace ELO.Modules
             var ids = users.Select(x => x.Id).ToHashSet();
             if (ids.Count != users.Length)
             {
-                await SimpleEmbedAsync("You cannot specify the same user multiple times.");
+                await Context.SimpleEmbedAsync("You cannot specify the same user multiple times.");
                 return;
             }
 
@@ -417,20 +421,20 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 var latestGame = db.GameResults.AsQueryable().Where(x => x.LobbyId == Context.Channel.Id).OrderByDescending(x => x.GameId).FirstOrDefault();
                 if (latestGame == null)
                 {
-                    await SimpleEmbedAsync("There is no game to pick for.", Color.DarkBlue);
+                    await Context.SimpleEmbedAsync("There is no game to pick for.", Color.DarkBlue);
                     return;
                 }
 
                 if (latestGame.GameState != GameState.Picking)
                 {
-                    await SimpleEmbedAsync("Lobby is currently not picking teams.", Color.DarkBlue);
+                    await Context.SimpleEmbedAsync("Lobby is currently not picking teams.", Color.DarkBlue);
                     return;
                 }
 
@@ -463,22 +467,22 @@ namespace ELO.Modules
                 if (users.Any(user => queue.All(x => x.UserId != user.Id)))
                 {
                     if (users.Length == 2)
-                        await SimpleEmbedAndDeleteAsync("A selected player is not queued for this game.", Color.Red);
+                        await Context.SimpleEmbedAndDeleteAsync("A selected player is not queued for this game.", Color.Red);
                     else
-                        await SimpleEmbedAndDeleteAsync("Player is not queued for this game.", Color.Red);
+                        await Context.SimpleEmbedAndDeleteAsync("Player is not queued for this game.", Color.Red);
                     return;
                 }
                 else if (users.Any(u => team1.Any(x => x.UserId == u.Id) || team2.Any(x => x.UserId == u.Id)))
                 {
                     if (users.Length == 2)
-                        await SimpleEmbedAndDeleteAsync("A selected player is already picked for a team.", Color.Red);
+                        await Context.SimpleEmbedAndDeleteAsync("A selected player is already picked for a team.", Color.Red);
                     else
-                        await SimpleEmbedAndDeleteAsync("Player is already picked for a team.", Color.Red);
+                        await Context.SimpleEmbedAndDeleteAsync("Player is already picked for a team.", Color.Red);
                     return;
                 }
                 else if (users.Any(u => u.Id == cap1.UserId || u.Id == cap2.UserId))
                 {
-                    await SimpleEmbedAndDeleteAsync("You cannot select a captain for picking.", Color.Red);
+                    await Context.SimpleEmbedAndDeleteAsync("You cannot select a captain for picking.", Color.Red);
                     return;
                 }
 
@@ -497,7 +501,7 @@ namespace ELO.Modules
                 }
                 else
                 {
-                    await SimpleEmbedAsync("There was an error picking your game.", Color.DarkRed);
+                    await Context.SimpleEmbedAsync("There was an error picking your game.", Color.DarkRed);
                     return;
                 }
 
@@ -573,7 +577,7 @@ namespace ELO.Modules
 
                     if (lobby.DmUsersOnGameReady)
                     {
-                        await MessageUsersAsync(queue.Select(x => x.UserId).ToArray(), x => MentionUtils.MentionUser(x), res.Item2.Build());
+                        await Context.MessageUsersAsync(queue.Select(x => x.UserId).ToArray(), x => MentionUtils.MentionUser(x), res.Item2.Build());
                     }
                 }
                 else

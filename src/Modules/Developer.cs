@@ -4,13 +4,12 @@ using Discord.WebSocket;
 using ELO.Preconditions;
 using ELO.Services;
 using Microsoft.EntityFrameworkCore;
-using MoreLinq;
-using RavenBOT.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ELO.Extensions;
 using ELO.Models;
 using Patreon.NET;
 
@@ -18,7 +17,7 @@ namespace ELO.Modules
 {
     [DevWhitelist]
     [Group("devcmd")]
-    public class Developer : ReactiveBase
+    public class Developer : ModuleBase<ShardedCommandContext>
     {
         public Developer(Random random, PremiumService prem, CommandService cmd)
         {
@@ -57,10 +56,9 @@ namespace ELO.Modules
                 return;
             }
 
-            using (var db = new Database())
+            await using (var db = new Database())
             {
                 var comp = db.Competitions.FirstOrDefault(x => x.GuildId == match.Id);
-                var memberCount = match.MemberCount;
                 var owner = match.OwnerId;
 
                 var inv = await GetInviteAsync(match.Id);
@@ -68,8 +66,7 @@ namespace ELO.Modules
                 var embed = new EmbedBuilder();
 
                 embed.AddField("Info",
-                    $"Member Count: {memberCount}\n" +
-                    $"Owner: {Discord.MentionUtils.MentionUser(owner)} {match.Owner?.Username}#{match.Owner?.Discriminator} {match.OwnerId}\n" +
+                    $"Owner: {Discord.MentionUtils.MentionUser(owner)} {match.OwnerId}\n" +
                     $"Invite: {inv?.Url ?? "N/A"}");
 
                 if (comp != null)
@@ -273,7 +270,7 @@ namespace ELO.Modules
                 }
             }
 
-            var gUsersWithPremiumRoles = guild.Users.AsQueryable().Where(u => u.Roles.Any(r => roles.Any(y => y.RoleId == r.Id))).ToArray();
+            var gUsersWithPremiumRoles = guild.Users.Where(u => u.Roles.Any(r => roles.Any(y => y.RoleId == r.Id))).ToArray();
 
             // Iterate through all users in the server which have a premium role
             foreach (var user in gUsersWithPremiumRoles)
@@ -467,6 +464,8 @@ namespace ELO.Modules
                 {
                     var mPreconditionString = string.Join("\n\n", module.Preconditions.Select(x =>
                     {
+                        return x.GetType().Name;
+                        /*
                         if (x is PreconditionBase preBase)
                         {
                             return $"__{preBase.Name()}__: {preBase.PreviewText()}";
@@ -475,6 +474,7 @@ namespace ELO.Modules
                         {
                             return x.GetType().Name;
                         }
+                        */
                     }).Distinct().ToArray());
                     builder.AppendLine("Preconditions:\n\n" + mPreconditionString);
                 }
@@ -484,14 +484,16 @@ namespace ELO.Modules
                 {
                     var preconditionString = string.Join("<hr>", command.Preconditions.Select(x =>
                     {
-                        if (x is PreconditionBase preBase)
+                        return x.GetType().Name;
+                        
+                        /*if (x is PreconditionBase preBase)
                         {
                             return $"__{preBase.Name()}__ {preBase.PreviewText()}";
                         }
                         else
                         {
                             return x.GetType().Name;
-                        }
+                        }*/
                     }).Distinct().ToArray());
 
                     builder.AppendLine($"|{command.Name}|{command.Summary}|" + string.Join(" ", command.Parameters.Select(parameter =>
@@ -617,7 +619,7 @@ namespace ELO.Modules
             await using (var db = new Database())
             {
                 var roles = db.PremiumRoles.ToArray();
-                await SimpleEmbedAsync("Roles:\n" + string.Join("\n", roles.Select(x => MentionUtils.MentionRole(x.RoleId) + " - " + x.Limit)));
+                await Context.SimpleEmbedAsync("Roles:\n" + string.Join("\n", roles.Select(x => MentionUtils.MentionRole(x.RoleId) + " - " + x.Limit)));
             }
         }
 
@@ -628,7 +630,7 @@ namespace ELO.Modules
             {
                 var configs = db.Competitions.AsNoTracking().AsQueryable().Where(x => x.LegacyPremiumExpiry != null).ToArray().OrderByDescending(x => x.LegacyPremiumExpiry).Take(20).ToArray();
 
-                await SimpleEmbedAsync(string.Join("\n", configs.Select(x => $"{x.GuildId} - Expires on: {x.LegacyPremiumExpiry.Value.ToString("dd MMM yyyy")} Remaining: {(x.LegacyPremiumExpiry.Value - DateTime.UtcNow).GetReadableLength()}")));
+                await Context.SimpleEmbedAsync(string.Join("\n", configs.Select(x => $"{x.GuildId} - Expires on: {x.LegacyPremiumExpiry.Value.ToString("dd MMM yyyy")} Remaining: {(x.LegacyPremiumExpiry.Value - DateTime.UtcNow).GetReadableLength()}")));
             }
         }
 
@@ -678,32 +680,6 @@ namespace ELO.Modules
         {
             ELO.Handlers.ELOEventHandler.ClearPrefixCache();
             await ReplyAsync("Done.");
-        }
-
-        [Command("CannotBeRun", RunMode = RunMode.Async)]
-        [Summary("This command should never be able to run")]
-        [CannotRun]
-        public async Task CBR()
-        {
-            await ReplyAsync("Whoops.");
-        }
-
-        public class CannotRun : PreconditionBase
-        {
-            public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
-            {
-                return Task.FromResult(PreconditionResult.FromError("This command cannot be run at all."));
-            }
-
-            public override string Name()
-            {
-                return "Cannot Run";
-            }
-
-            public override string PreviewText()
-            {
-                return "This command should not be able to run under any circumstances";
-            }
         }
     }
 }

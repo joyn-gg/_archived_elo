@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using RavenBOT.Common;
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

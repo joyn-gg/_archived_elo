@@ -3,10 +3,12 @@ using Discord.Commands;
 using Discord.WebSocket;
 using ELO.Services;
 using Microsoft.EntityFrameworkCore;
-using RavenBOT.Common;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ELO.Extensions;
+using ELO.Preconditions;
+using ELO.Services.Reactive;
 
 namespace ELO.Modules
 {
@@ -22,18 +24,18 @@ namespace ELO.Modules
                 var lobby = db.GetLobby(Context.Channel);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 var maps = db.Maps.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id).AsNoTracking().ToArray();
                 if (maps.Length != 0)
                 {
-                    await SimpleEmbedAsync($"**Maps:** {string.Join(", ", maps.Select(x => x.MapName))}");
+                    await Context.SimpleEmbedAsync($"**Maps:** {string.Join(", ", maps.Select(x => x.MapName))}");
                 }
                 else
                 {
-                    await SimpleEmbedAsync("N/A");
+                    await Context.SimpleEmbedAsync("N/A");
                 }
             }
         }
@@ -48,7 +50,7 @@ namespace ELO.Modules
                 var lobby = db.GetLobby(Context.Channel);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
                     return;
                 }
 
@@ -88,7 +90,7 @@ namespace ELO.Modules
 
                 embed.AddField("Info", $"**Games Played:** {maxGame?.GameId}\n" +
                     "For Players in Queue use the `Queue` or `Q` Command.");
-                await ReplyAsync(embed);
+                await ReplyAsync("", false, embed.Build());
             }
         }
 
@@ -102,7 +104,7 @@ namespace ELO.Modules
                 var lobby = db.GetLobby(Context.Channel);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
                     return;
                 }
 
@@ -153,7 +155,7 @@ namespace ELO.Modules
                             }
                         }
 
-                        await ReplyAsync(gameEmbed);
+                        await ReplyAsync("", false, gameEmbed.Build());
                         return;
                     }
                 }
@@ -164,7 +166,7 @@ namespace ELO.Modules
                     if (lobby.HideQueue)
                     {
                         await Context.Message.DeleteAsync();
-                        await SimpleEmbedAsync($"**[{lobbyQueue.Count}/{lobby.PlayersPerTeam * 2}]**", Color.Blue);
+                        await Context.SimpleEmbedAsync($"**[{lobbyQueue.Count}/{lobby.PlayersPerTeam * 2}]**", Color.Blue);
                         return;
                     }
 
@@ -175,11 +177,11 @@ namespace ELO.Modules
                     embed.Title = $"{Context.Channel.Name} [{lobbyQueue.Count}/{lobby.PlayersPerTeam * 2}]";
                     embed.Description = $"Game: #{(game?.GameId ?? 0) + 1}\n" +
                         string.Join("\n", lobbyQueue.Select(x => MentionUtils.MentionUser(x.UserId)));
-                    await ReplyAsync(embed);
+                    await ReplyAsync("", false, embed.Build());
                 }
                 else
                 {
-                    await SimpleEmbedAsync("The queue is empty.", Color.Blue);
+                    await Context.SimpleEmbedAsync("The queue is empty.", Color.Blue);
                 }
             }
         }
@@ -196,7 +198,7 @@ namespace ELO.Modules
 
             if (!PremiumService.IsPremium(Context.Guild.Id))
             {
-                await SimpleEmbedAsync($"This is a premium only command. " +
+                await Context.SimpleEmbedAsync($"This is a premium only command. " +
                     $"In order to get premium must become an ELO premium subscriber at {PremiumService.PremiumConfig.AltLink} join the server " +
                     $"{PremiumService.PremiumConfig.ServerInvite} to recieve your role and then run the `claimpremium` command in your server.");
                 return;
@@ -207,7 +209,7 @@ namespace ELO.Modules
                 var lobby = db.GetLobby(channel);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAndDeleteAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAndDeleteAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
 
@@ -234,7 +236,7 @@ namespace ELO.Modules
                     pages.Add(page);
                 }
 
-                await PagedReplyAsync(new ReactivePager
+                await _reactive.SendPagedMessageAsync(Context, Context.Channel, new ReactivePager
                 {
                     Pages = pages
                 }.ToCallBack().WithDefaultPagerCallbacks().WithJump());

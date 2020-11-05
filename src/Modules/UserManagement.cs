@@ -5,19 +5,22 @@ using ELO.Extensions;
 using ELO.Models;
 using ELO.Preconditions;
 using ELO.Services;
-using RavenBOT.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ELO.Services.Reactive;
 
 namespace ELO.Modules
 {
     [RequirePermission(PermissionLevel.Moderator)]
-    public class UserManagement : ReactiveBase
+    public class UserManagement : ModuleBase<ShardedCommandContext>
     {
-        public UserManagement(PremiumService premium, UserService userService)
+        private readonly ReactiveService _reactive;
+
+        public UserManagement(PremiumService premium, UserService userService, ReactiveService reactive)
         {
+            _reactive = reactive;
             Premium = premium;
             UserService = userService;
         }
@@ -37,7 +40,7 @@ namespace ELO.Modules
                 var bans = db.Bans.AsQueryable().Where(x => x.GuildId == Context.Guild.Id && x.UserId == player.Id).ToList();
                 if (bans.Count == 0)
                 {
-                    await SimpleEmbedAndDeleteAsync($"{player.Mention} has no bans on record.\n" +
+                    await Context.SimpleEmbedAndDeleteAsync($"{player.Mention} has no bans on record.\n" +
                                                     $"Use the `Bans` command to see all **Active** bans or the `AllBans` command to lookup all player bans in history.", Color.DarkRed);
                     return;
                 }
@@ -80,7 +83,7 @@ namespace ELO.Modules
                     }
                     pages.Add(page);
                 }
-                await PagedReplyAsync(new ReactivePager
+                await _reactive.SendPagedMessageAsync(Context, Context.Channel, new ReactivePager
                 {
                     Pages = pages,
                     FooterOverride = new EmbedFooterBuilder().WithText($"{bans.Count} ban(s) | {bans.Count(x => !x.IsExpired)} current ban(s) | All times are displayed in UTC")
@@ -98,7 +101,7 @@ namespace ELO.Modules
                 var bans = db.Bans.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToList();
                 if (bans.Count == 0)
                 {
-                    await SimpleEmbedAsync("There aren't any banned players.", Color.Blue);
+                    await Context.SimpleEmbedAsync("There aren't any banned players.", Color.Blue);
                     return;
                 }
 
@@ -106,7 +109,7 @@ namespace ELO.Modules
 
                 if (banPages.Length == 0)
                 {
-                    await SimpleEmbedAsync("There are no players currently banned. Use the `Allbans` command to lookup all player bans.");
+                    await Context.SimpleEmbedAsync("There are no players currently banned. Use the `Allbans` command to lookup all player bans.");
                     return;
                 }
 
@@ -148,7 +151,7 @@ namespace ELO.Modules
                 {
                     FooterOverride = new EmbedFooterBuilder().WithText($"{bans.Count(x => !x.IsExpired)} current ban(s) | All times are displayed in UTC")
                 };
-                await PagedReplyAsync(pager2.ToCallBack().WithDefaultPagerCallbacks());
+                await _reactive.SendPagedMessageAsync(Context, Context.Channel, pager2.ToCallBack().WithDefaultPagerCallbacks());
             }
         }
 
@@ -163,7 +166,7 @@ namespace ELO.Modules
 
                 if (bans.Count == 0)
                 {
-                    await SimpleEmbedAndDeleteAsync("There aren't any banned players", Color.Blue);
+                    await Context.SimpleEmbedAndDeleteAsync("There aren't any banned players", Color.Blue);
                     return;
                 }
 
@@ -207,10 +210,10 @@ namespace ELO.Modules
                 }
                 if (!pages.Any())
                 {
-                    await SimpleEmbedAndDeleteAsync($"{Context.Guild.Name} has no bans yet.");
+                    await Context.SimpleEmbedAndDeleteAsync($"{Context.Guild.Name} has no bans yet.");
                     return;
                 }
-                await PagedReplyAsync(new ReactivePager
+                await _reactive.SendPagedMessageAsync(Context, Context.Channel, new ReactivePager
                 {
                     Pages = pages,
                     FooterOverride = new EmbedFooterBuilder().WithText($"{bans.Count} ban(s) | {bans.Count(x => !x.IsExpired)} current ban(s) | All times are displayed in UTC")
@@ -227,13 +230,13 @@ namespace ELO.Modules
                 var bans = db.Bans.AsQueryable().Where(x => x.GuildId == Context.Guild.Id && x.UserId == user.Id).ToList();
                 if (bans.Count == 0)
                 {
-                    await SimpleEmbedAsync("Player has never been banned.", Color.DarkBlue);
+                    await Context.SimpleEmbedAsync("Player has never been banned.", Color.DarkBlue);
                     return;
                 }
 
                 if (bans.All(x => x.IsExpired))
                 {
-                    await SimpleEmbedAsync("Player is not banned.", Color.DarkBlue);
+                    await Context.SimpleEmbedAsync("Player is not banned.", Color.DarkBlue);
                     return;
                 }
 
@@ -244,7 +247,7 @@ namespace ELO.Modules
 
                 db.UpdateRange(bans);
                 db.SaveChanges();
-                await SimpleEmbedAsync("Player has been unbanned.", Color.Green);
+                await Context.SimpleEmbedAsync("Player has been unbanned.", Color.Green);
             }
         }
 
@@ -266,7 +269,7 @@ namespace ELO.Modules
                 var player = db.Players.Find(Context.Guild.Id, user.Id);
                 if (player == null)
                 {
-                    await SimpleEmbedAndDeleteAsync("User is not registered.", Color.Red);
+                    await Context.SimpleEmbedAndDeleteAsync("User is not registered.", Color.Red);
                     return;
                 }
 
@@ -283,7 +286,7 @@ namespace ELO.Modules
 
                 db.Bans.Add(ban);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"{user.Mention} banned from joining games until: {ban.ExpiryTime.ToString("dd MMM yyyy")} {ban.ExpiryTime.ToShortTimeString()} in {ban.RemainingTime.GetReadableLength()}", Color.DarkRed);
+                await Context.SimpleEmbedAsync($"{user.Mention} banned from joining games until: {ban.ExpiryTime.ToString("dd MMM yyyy")} {ban.ExpiryTime.ToShortTimeString()} in {ban.RemainingTime.GetReadableLength()}", Color.DarkRed);
             }
         }
     }

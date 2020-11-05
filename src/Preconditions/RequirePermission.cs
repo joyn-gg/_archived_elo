@@ -3,14 +3,13 @@ using Discord.WebSocket;
 using ELO.Extensions;
 using ELO.Services;
 using Microsoft.Extensions.DependencyInjection;
-using RavenBOT.Common;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace ELO.Preconditions
 {
-    public class RequirePermission : PreconditionBase
+    public class RequirePermission : PreconditionAttribute
     {
         private readonly PermissionLevel Level;
 
@@ -133,6 +132,7 @@ namespace ELO.Preconditions
             return PreconditionResult.FromError($"You do not have permission to run this command. Level: {Level}");
         }
 
+        /*
         public override string Name()
         {
             return "Custom Permission";
@@ -142,5 +142,6 @@ namespace ELO.Preconditions
         {
             return $"Requires the user the specified permission level of: {Level}, NOTE: This may be overridden by the server";
         }
+        */
     }
 }

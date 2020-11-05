@@ -6,16 +6,24 @@ using ELO.Extensions;
 using ELO.Models;
 using ELO.Preconditions;
 using ELO.Services;
-using RavenBOT.Common;
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ELO.Services.Reactive;
 
 namespace ELO.Modules
 {
-    [RavenRequireContext(ContextType.Guild)]
-    public class PartyCommands : ReactiveBase
+    [RequireContext(ContextType.Guild)]
+    public class PartyCommands : ModuleBase<ShardedCommandContext>
     {
+        private readonly ReactiveService _reactive;
+
+        public PartyCommands(ReactiveService reactive)
+        {
+            _reactive = reactive;
+        }
+
         [Command("Duo", RunMode = RunMode.Sync)]
         [Summary("Join the queue with another user in the current lobby.")]
         [RequirePermission(PermissionLevel.Registered)]
@@ -25,19 +33,19 @@ namespace ELO.Modules
             {
                 if (!(Context.User as SocketGuildUser).IsRegistered())
                 {
-                    await SimpleEmbedAsync("You are not registered.");
+                    await Context.SimpleEmbedAsync("You are not registered.");
                     return;
                 }
                 if (!user.IsRegistered())
                 {
-                    await SimpleEmbedAsync("User is not registered.");
+                    await Context.SimpleEmbedAsync("User is not registered.");
                     return;
                 }
 
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("This channel is not a lobby.");
+                    await Context.SimpleEmbedAsync("This channel is not a lobby.");
                     return;
                 }
 
@@ -45,17 +53,17 @@ namespace ELO.Modules
                 var userMember = db.PartyMembers.SingleOrDefault(x => x.ChannelId == Context.Channel.Id && x.UserId == user.Id);
                 if (partyHost != null)
                 {
-                    await SimpleEmbedAsync($"You are already in a party with someone. Use the `disband` command to leave it.");
+                    await Context.SimpleEmbedAsync($"You are already in a party with someone. Use the `disband` command to leave it.");
                     return;
                 }
 
                 if (userMember != null)
                 {
-                    await SimpleEmbedAsync($"{user.Mention} is already in a party with someone, they must leave it by using the `disband` command in order to join a new one.");
+                    await Context.SimpleEmbedAsync($"{user.Mention} is already in a party with someone, they must leave it by using the `disband` command in order to join a new one.");
                     return;
                 }
 
-                await PagedReplyAsync(new ReactivePager
+                await _reactive.SendPagedMessageAsync(Context, Context.Channel, new ReactivePager
                 {
                     Description = $"{user.Mention} React to this message to accept the party request"
                 }.ToCallBack()
@@ -69,13 +77,13 @@ namespace ELO.Modules
                             var userMember2 = db.PartyMembers.SingleOrDefault(x => x.ChannelId == Context.Channel.Id && x.UserId == user.Id);
                             if (partyHost2 != null)
                             {
-                                await SimpleEmbedAsync($"Host is already in a party with someone. Use the `disband` command to leave it.");
+                                await Context.SimpleEmbedAsync($"Host is already in a party with someone. Use the `disband` command to leave it.");
                                 return true;
                             }
 
                             if (userMember2 != null)
                             {
-                                await SimpleEmbedAsync($"{user.Mention} is already in a party with someone, they must leave it by using the `disband` command in order to join a new one.");
+                                await Context.SimpleEmbedAsync($"{user.Mention} is already in a party with someone, they must leave it by using the `disband` command in order to join a new one.");
                                 return true;
                             }
 
@@ -96,7 +104,7 @@ namespace ELO.Modules
                             };
                             db.PartyMembers.Add(host);
                             db.PartyMembers.Add(member);
-                            await SimpleEmbedAsync($"Duo created.");
+                            await Context.SimpleEmbedAsync($"Duo created.");
                             db.SaveChanges();
                         }
 
@@ -117,19 +125,19 @@ namespace ELO.Modules
             {
                 if (!host.IsRegistered())
                 {
-                    await SimpleEmbedAsync("Host is not registered.");
+                    await Context.SimpleEmbedAsync("Host is not registered.");
                     return;
                 }
                 if (!user.IsRegistered())
                 {
-                    await SimpleEmbedAsync("User is not registered.");
+                    await Context.SimpleEmbedAsync("User is not registered.");
                     return;
                 }
 
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("This channel is not a lobby.");
+                    await Context.SimpleEmbedAsync("This channel is not a lobby.");
                     return;
                 }
 
@@ -137,13 +145,13 @@ namespace ELO.Modules
                 var userMember = db.PartyMembers.SingleOrDefault(x => x.ChannelId == Context.Channel.Id && x.UserId == user.Id);
                 if (partyHost != null)
                 {
-                    await SimpleEmbedAsync($"{host.Mention} is already in a party with someone. They can use the `disband` command to leave it.");
+                    await Context.SimpleEmbedAsync($"{host.Mention} is already in a party with someone. They can use the `disband` command to leave it.");
                     return;
                 }
 
                 if (userMember != null)
                 {
-                    await SimpleEmbedAsync($"{user.Mention} is already in a party with someone, they must leave it by using the `disband` command in order to join a new one.");
+                    await Context.SimpleEmbedAsync($"{user.Mention} is already in a party with someone, they must leave it by using the `disband` command in order to join a new one.");
                     return;
                 }
 
@@ -164,7 +172,7 @@ namespace ELO.Modules
                 };
                 db.PartyMembers.Add(hostPlayer);
                 db.PartyMembers.Add(member);
-                await SimpleEmbedAsync($"Duo created.");
+                await Context.SimpleEmbedAsync($"Duo created.");
                 db.SaveChanges();
             }
         }
@@ -178,14 +186,14 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("This channel is not a lobby.");
+                    await Context.SimpleEmbedAsync("This channel is not a lobby.");
                     return;
                 }
 
                 var member = db.PartyMembers.FirstOrDefault(x => x.ChannelId == Context.Channel.Id && x.UserId == Context.User.Id);
                 if (member == null)
                 {
-                    await SimpleEmbedAsync($"You are not in a party.");
+                    await Context.SimpleEmbedAsync($"You are not in a party.");
                     return;
                 }
 
@@ -194,7 +202,7 @@ namespace ELO.Modules
                 db.PartyMembers.RemoveRange(hostMatches);
 
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Duo has disbanded.");
+                await Context.SimpleEmbedAsync($"Duo has disbanded.");
             }
         }
 
@@ -208,20 +216,20 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("This channel is not a lobby.");
+                    await Context.SimpleEmbedAsync("This channel is not a lobby.");
                     return;
                 }
 
                 var member = db.PartyMembers.SingleOrDefault(x => x.ChannelId == Context.Channel.Id && x.UserId == Context.User.Id);
                 if (member == null)
                 {
-                    await SimpleEmbedAsync($"You are not in a party.");
+                    await Context.SimpleEmbedAsync($"You are not in a party.");
                     return;
                 }
 
                 var hostMatches = db.PartyMembers.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id && x.PartyHost == member.PartyHost);
 
-                await SimpleEmbedAsync($"Party Members: {string.Join(" ", hostMatches.Select(x => MentionUtils.MentionUser(x.UserId)))}");
+                await Context.SimpleEmbedAsync($"Party Members: {string.Join(" ", hostMatches.Select(x => MentionUtils.MentionUser(x.UserId)))}");
             }
         }
 
@@ -235,14 +243,14 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("This channel is not a lobby.");
+                    await Context.SimpleEmbedAsync("This channel is not a lobby.");
                     return;
                 }
 
                 var parties = db.PartyMembers.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id).ToArray().GroupBy(x => x.PartyHost).ToArray();
                 if (parties.Any())
                 {
-                    //await SimpleEmbedAsync(string.Join("\n", parties.Select(x => $"Host: {MentionUtils.MentionUser(x.Key)} Members: {string.Join(" ", x.Select(m => MentionUtils.MentionUser(m.UserId)))}")));
+                    //await Context.SimpleEmbedAsync(string.Join("\n", parties.Select(x => $"Host: {MentionUtils.MentionUser(x.Key)} Members: {string.Join(" ", x.Select(m => MentionUtils.MentionUser(m.UserId)))}")));
                     var pages = parties.SplitList(10);
                     var pageList = new List<ReactivePage>();
                     foreach (var page in pages)
@@ -252,10 +260,10 @@ namespace ELO.Modules
                             Description = string.Join("\n", page.Select(x => $"Host: {MentionUtils.MentionUser(x.Key)} Members: {string.Join(" ", x.Select(m => MentionUtils.MentionUser(m.UserId)))}")).FixLength(1024)
                         });
                     }
-                    await PagedReplyAsync(new ReactivePager(pageList).ToCallBack().WithDefaultPagerCallbacks());
+                    await _reactive.SendPagedMessageAsync(Context, Context.Channel, new ReactivePager(pageList).ToCallBack().WithDefaultPagerCallbacks());
                 }
                 else
-                    await SimpleEmbedAsync("There are no parties.");
+                    await Context.SimpleEmbedAsync("There are no parties.");
             }
         }
 
@@ -269,13 +277,13 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("This channel is not a lobby.");
+                    await Context.SimpleEmbedAsync("This channel is not a lobby.");
                     return;
                 }
 
                 var partyMembers = db.PartyMembers.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id).ToArray();
                 db.PartyMembers.RemoveRange(partyMembers);
-                await SimpleEmbedAsync("All duos have been disbanded.");
+                await Context.SimpleEmbedAsync("All duos have been disbanded.");
                 db.SaveChanges();
             }
         }

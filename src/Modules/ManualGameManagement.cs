@@ -4,18 +4,18 @@ using Discord.WebSocket;
 using ELO.Entities;
 using ELO.Models;
 using ELO.Services;
-using RavenBOT.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ELO.Extensions;
 
 namespace ELO.Modules
 {
     [Preconditions.RequirePermission(PermissionLevel.Moderator)]
-    [RavenRequireContext(ContextType.Guild)]
-    public class ManualGameManagement : ReactiveBase
+    [RequireContext(ContextType.Guild)]
+    public class ManualGameManagement : ModuleBase<ShardedCommandContext>
     {
         public UserService UserService { get; }
 
@@ -49,7 +49,7 @@ namespace ELO.Modules
                 var game = db.ManualGameResults.Find(Context.Guild.Id, gameId);
                 if (game == null)
                 {
-                    await SimpleEmbedAsync("Invalid game id.", Color.Red);
+                    await Context.SimpleEmbedAsync("Invalid game id.", Color.Red);
                     return;
                 }
                 var responseEmbed = new EmbedBuilder();
@@ -89,7 +89,7 @@ namespace ELO.Modules
 
                 db.ManualGameResults.Remove(game);
                 db.SaveChanges();
-                await SimpleEmbedAsync("Manual game undone.");
+                await Context.SimpleEmbedAsync("Manual game undone.");
             }
         }
 
@@ -211,7 +211,7 @@ namespace ELO.Modules
                         }
 
                         embed.Description = sb.ToString();
-                        await ReplyAsync(embed);
+                        await ReplyAsync("", false, embed.Build());
                         db.SaveChanges();
                         transaction.Commit();
                     }

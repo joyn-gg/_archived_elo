@@ -1,31 +1,27 @@
 ﻿using Discord.Commands;
 using ELO.Services;
 using Passive.Discord.Setup;
-using RavenBOT.Common;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace ELO.Preconditions
 {
-    public class DevWhitelist : PreconditionBase
+    public class DevWhitelist : PreconditionAttribute
     {
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
             Config config = (Config)services.GetService(typeof(Config));
-            if (config != null)
+            var envDefault = config?.GetOptional("DevId", null);
+            if (envDefault != null && ulong.TryParse(envDefault, out var defaultId))
             {
-                var envDefault = config.GetOptional("DevId", null);
-                if (envDefault != null && ulong.TryParse(envDefault, out var defaultId))
+                if (context.User.Id == defaultId)
                 {
-                    if (context.User.Id == defaultId)
-                    {
-                        return PreconditionResult.FromSuccess();
-                    }
+                    return PreconditionResult.FromSuccess();
                 }
             }
 
-            using (var db = new Database())
+            await using (var db = new Database())
             {
                 if (db.WhitelistedDevelopers.FirstOrDefault(x => x.UserId == context.User.Id) != null)
                 {
@@ -36,7 +32,7 @@ namespace ELO.Preconditions
             return PreconditionResult.FromError($"You do not have permission to use this command.");
         }
 
-        public override string Name()
+        /*public override string Name()
         {
             return "Developer Only";
         }
@@ -44,6 +40,6 @@ namespace ELO.Preconditions
         public override string PreviewText()
         {
             return "This may only be executed by a whitelisted developer.";
-        }
+        }*/
     }
 }

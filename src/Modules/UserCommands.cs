@@ -5,14 +5,14 @@ using ELO.Extensions;
 using ELO.Models;
 using ELO.Preconditions;
 using ELO.Services;
-using RavenBOT.Common;
+
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace ELO.Modules
 {
-    [RavenRequireContext(ContextType.Guild)]
-    public class UserCommands : ReactiveBase
+    [RequireContext(ContextType.Guild)]
+    public class UserCommands : ModuleBase<ShardedCommandContext>
     {
         public UserCommands(PremiumService premium, UserService userService, TopggVoteService voteService)
         {
@@ -33,14 +33,14 @@ namespace ELO.Modules
         {
             if (users.Length > 5)
             {
-                await SimpleEmbedAsync($"You may only force register 5 members at a time.");
+                await Context.SimpleEmbedAsync($"You may only force register 5 members at a time.");
                 return;
             }
             foreach (var user in users)
             {
                 if (!await RegisterAsync(user))
                 {
-                    await SimpleEmbedAsync($"Exited on forceregister for user {user.Mention}, unable to register.");
+                    await Context.SimpleEmbedAsync($"Exited on forceregister for user {user.Mention}, unable to register.");
                     break;
                 }
             }
@@ -74,11 +74,11 @@ namespace ELO.Modules
                     {
                         if (regUser.Id != Context.User.Id)
                         {
-                            await SimpleEmbedAndDeleteAsync($"{regUser.Mention} is already registered.", Color.Red);
+                            await Context.SimpleEmbedAndDeleteAsync($"{regUser.Mention} is already registered.", Color.Red);
                         }
                         else
                         {
-                            await SimpleEmbedAndDeleteAsync("You are not allowed to re-register.", Color.Red);
+                            await Context.SimpleEmbedAndDeleteAsync("You are not allowed to re-register.", Color.Red);
                         }
                         return true;
                     }
@@ -156,16 +156,16 @@ namespace ELO.Modules
 
                 if (regUser.Id == Context.User.Id)
                 {
-                    await SimpleEmbedAsync(comp.FormatRegisterMessage(user), Color.Blue);
+                    await Context.SimpleEmbedAsync(comp.FormatRegisterMessage(user), Color.Blue);
                 }
                 else
                 {
-                    await SimpleEmbedAsync($"{regUser.Mention} was registered as `{Format.Sanitize(name)}` by {Context.User.Mention}", Color.Blue);
+                    await Context.SimpleEmbedAsync($"{regUser.Mention} was registered as `{Format.Sanitize(name)}` by {Context.User.Mention}", Color.Blue);
                 }
 
                 if (responses.Count > 0)
                 {
-                    await SimpleEmbedAsync(string.Join("\n", responses), Color.Red);
+                    await Context.SimpleEmbedAsync(string.Join("\n", responses), Color.Red);
                 }
             }
 
@@ -178,11 +178,11 @@ namespace ELO.Modules
         {
             if (user.Id == Context.User.Id)
             {
-                await SimpleEmbedAsync("Try renaming yourself without the @mention ex. `Rename NewName`", Color.DarkBlue);
+                await Context.SimpleEmbedAsync("Try renaming yourself without the @mention ex. `Rename NewName`", Color.DarkBlue);
             }
             else
             {
-                await SimpleEmbedAsync("To rename another user, use the `RenameUser` command instead.", Color.DarkBlue);
+                await Context.SimpleEmbedAsync("To rename another user, use the `RenameUser` command instead.", Color.DarkBlue);
             }
         }
 
@@ -192,7 +192,7 @@ namespace ELO.Modules
         {
             if (name == null)
             {
-                await SimpleEmbedAndDeleteAsync("You must specify a new name in order to be renamed.", Color.Red);
+                await Context.SimpleEmbedAndDeleteAsync("You must specify a new name in order to be renamed.", Color.Red);
                 return;
             }
 
@@ -200,14 +200,14 @@ namespace ELO.Modules
             {
                 if (!(Context.User as SocketGuildUser).IsRegistered(out var user))
                 {
-                    await SimpleEmbedAsync("You are not registered yet.", Color.DarkBlue);
+                    await Context.SimpleEmbedAsync("You are not registered yet.", Color.DarkBlue);
                     return;
                 }
 
                 var comp = db.GetOrCreateCompetition(Context.Guild.Id);
                 if (!comp.AllowSelfRename)
                 {
-                    await SimpleEmbedAndDeleteAsync("You are not allowed to rename yourself.", Color.Red);
+                    await Context.SimpleEmbedAndDeleteAsync("You are not allowed to rename yourself.", Color.Red);
                     return;
                 }
 
@@ -226,18 +226,18 @@ namespace ELO.Modules
                         }
                         else
                         {
-                            await SimpleEmbedAsync("The bot does not have the `ManageNicknames` permission and therefore cannot update your nickname.", Color.Red);
+                            await Context.SimpleEmbedAsync("The bot does not have the `ManageNicknames` permission and therefore cannot update your nickname.", Color.Red);
                         }
                     }
                     else
                     {
-                        await SimpleEmbedAsync("You have a higher permission level than the bot and therefore it cannot update your nickname.", Color.Red);
+                        await Context.SimpleEmbedAsync("You have a higher permission level than the bot and therefore it cannot update your nickname.", Color.Red);
                     }
                 }
 
                 db.Players.Update(user);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Your profile has been renamed from {Format.Sanitize(originalDisplayName)} to {user.GetDisplayNameSafe()}", Color.Green);
+                await Context.SimpleEmbedAsync($"Your profile has been renamed from {Format.Sanitize(originalDisplayName)} to {user.GetDisplayNameSafe()}", Color.Green);
             }
         }
 
@@ -249,7 +249,7 @@ namespace ELO.Modules
         {
             if (!user.IsRegistered(out var player))
             {
-                await SimpleEmbedAndDeleteAsync("User isn't registered.", Color.Red);
+                await Context.SimpleEmbedAndDeleteAsync("User isn't registered.", Color.Red);
                 return;
             }
 
@@ -263,11 +263,11 @@ namespace ELO.Modules
                 var responses = await UserService.UpdateUserAsync(competition, player, db.Ranks.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray(), user);
                 if (responses.Any())
                 {
-                    await SimpleEmbedAsync("User's profile has been renamed\n" + string.Join("\n", responses), Color.Red);
+                    await Context.SimpleEmbedAsync("User's profile has been renamed\n" + string.Join("\n", responses), Color.Red);
                 }
                 else
                 {
-                    await SimpleEmbedAsync("User's profile has been renamed successfully.", Color.Green);
+                    await Context.SimpleEmbedAsync("User's profile has been renamed successfully.", Color.Green);
                 }
             }
         }

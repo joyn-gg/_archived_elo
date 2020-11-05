@@ -4,16 +4,17 @@ using Discord.WebSocket;
 using ELO.Entities;
 using ELO.Models;
 using ELO.Services;
-using RavenBOT.Common;
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ELO.Extensions;
 
 namespace ELO.Modules
 {
-    [RavenRequireContext(ContextType.Guild)]
+    [RequireContext(ContextType.Guild)]
     [Preconditions.RequirePermission(PermissionLevel.ELOAdmin)]
-    public class LobbySetup : ReactiveBase
+    public class LobbySetup : ModuleBase<ShardedCommandContext>
     {
         public PremiumService Premium { get; }
 
@@ -34,7 +35,7 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby != null)
                 {
-                    await SimpleEmbedAndDeleteAsync("This channel is already a lobby. Remove the lobby before trying top create a new one here.", Color.Red);
+                    await Context.SimpleEmbedAndDeleteAsync("This channel is already a lobby. Remove the lobby before trying top create a new one here.", Color.Red);
                     return;
                 }
                 var allLobbies = db.Lobbies.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
@@ -42,7 +43,7 @@ namespace ELO.Modules
                 {
                     if (!Premium.IsPremium(Context.Guild.Id))
                     {
-                        await SimpleEmbedAsync($"This server already has {Premium.PremiumConfig.LobbyLimit} lobbies created. " +
+                        await Context.SimpleEmbedAsync($"This server already has {Premium.PremiumConfig.LobbyLimit} lobbies created. " +
                             $"In order to create more you must become an ELO premium subscriber at {Premium.PremiumConfig.AltLink} join the server " +
                             $"{Premium.PremiumConfig.ServerInvite} to receive your role and then run the `claimpremium` command in your server.");
                         return;
@@ -58,7 +59,7 @@ namespace ELO.Modules
                 };
                 db.Lobbies.Add(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync("New Lobby has been created\n" +
+                await Context.SimpleEmbedAsync("New Lobby has been created\n" +
                     $"Players per team: {playersPerTeam}\n" +
                     $"Pick Mode: {pickMode}\n" +
                     $"NOTE: You can play multiple games per lobby. After a game has been created simply join the queue again and another game can be played.", Color.Green);
@@ -75,14 +76,14 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 lobby.PlayersPerTeam = playersPerTeam;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"There can now be up to {playersPerTeam} in each team.", Color.Green);
+                await Context.SimpleEmbedAsync($"There can now be up to {playersPerTeam} in each team.", Color.Green);
             }
         }
 
@@ -96,14 +97,14 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 lobby.TeamPickMode = pickMode;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Pick mode set.", Color.Green);
+                await Context.SimpleEmbedAsync($"Pick mode set.", Color.Green);
             }
         }
 
@@ -116,14 +117,14 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 lobby.ReactOnJoinLeave = react;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"React on join/leave set.", Color.Green);
+                await Context.SimpleEmbedAsync($"React on join/leave set.", Color.Green);
             }
         }*/
 
@@ -133,7 +134,7 @@ namespace ELO.Modules
         //[Alias("Pick Modes")] ignore this as it can potentially conflict with the lobby Pick command.
         public virtual async Task DisplayPickModesAsync()
         {
-            await SimpleEmbedAsync(string.Join("\n", RavenBOT.Common.Extensions.EnumNames<PickMode>()), Color.Blue);
+            await Context.SimpleEmbedAsync(string.Join("\n", Extensions.Extensions.EnumNames<PickMode>()), Color.Blue);
         }
 
         [Command("SetPickOrder", RunMode = RunMode.Sync)]
@@ -146,14 +147,14 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 lobby.CaptainPickOrder = orderMode;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Captain pick order set.", Color.Green);
+                await Context.SimpleEmbedAsync($"Captain pick order set.", Color.Green);
             }
         }
 
@@ -165,7 +166,7 @@ namespace ELO.Modules
                     "`PickTwo` - 1-2-2-1-1... Pick order. Captain 1 gets first pick, then Captain 2 picks 2 players,\n" +
                     "then Captain 1 picks 2 players and then alternate picking 1 player until teams are filled\n" +
                     "This is often used to reduce any advantage given for picking the first player.";
-            await SimpleEmbedAsync(res, Color.Blue);
+            await Context.SimpleEmbedAsync(res, Color.Blue);
         }
 
         [Command("SetReadyChannel", RunMode = RunMode.Sync)]
@@ -175,13 +176,13 @@ namespace ELO.Modules
         {
             if (destinationChannel == null)
             {
-                await SimpleEmbedAsync("You need to specify a channel for the announcements to be sent to.", Color.DarkBlue);
+                await Context.SimpleEmbedAsync("You need to specify a channel for the announcements to be sent to.", Color.DarkBlue);
                 return;
             }
 
             if (destinationChannel.Id == Context.Channel.Id)
             {
-                await SimpleEmbedAsync("You cannot send announcements to the current channel, instead run it in a lobby channel and mention the ready announcement channel.", Color.Red);
+                await Context.SimpleEmbedAsync("You cannot send announcements to the current channel, instead run it in a lobby channel and mention the ready announcement channel.", Color.Red);
                 return;
             }
 
@@ -190,13 +191,13 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("This command must be run from within a lobby channel.", Color.Red);
+                    await Context.SimpleEmbedAsync("This command must be run from within a lobby channel.", Color.Red);
                     return;
                 }
                 lobby.GameReadyAnnouncementChannel = destinationChannel.Id;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Game ready announcements for the current lobby will be sent to {destinationChannel.Mention}", Color.Green);
+                await Context.SimpleEmbedAsync($"Game ready announcements for the current lobby will be sent to {destinationChannel.Mention}", Color.Green);
             }
         }
 
@@ -207,13 +208,13 @@ namespace ELO.Modules
         {
             if (destinationChannel == null)
             {
-                await SimpleEmbedAsync("You need to specify a channel for the announcements to be sent to.", Color.DarkBlue);
+                await Context.SimpleEmbedAsync("You need to specify a channel for the announcements to be sent to.", Color.DarkBlue);
                 return;
             }
 
             if (destinationChannel.Id == Context.Channel.Id)
             {
-                await SimpleEmbedAsync("You cannot send announcements to the current channel, instead run it in a lobby channel and mention the result announcement channel.", Color.Red);
+                await Context.SimpleEmbedAsync("You cannot send announcements to the current channel, instead run it in a lobby channel and mention the result announcement channel.", Color.Red);
                 return;
             }
 
@@ -222,13 +223,13 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("This command must be run from within a lobby channel.", Color.Red);
+                    await Context.SimpleEmbedAsync("This command must be run from within a lobby channel.", Color.Red);
                     return;
                 }
                 lobby.GameResultAnnouncementChannel = destinationChannel.Id;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Game results for the current lobby will be sent to {destinationChannel.Mention}", Color.Green);
+                await Context.SimpleEmbedAsync($"Game results for the current lobby will be sent to {destinationChannel.Mention}", Color.Green);
             }
         }
 
@@ -241,14 +242,14 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
                 lobby.MinimumPoints = points;
 
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Minimum points required to join this lobby is now set to {points}.", Color.Green);
+                await Context.SimpleEmbedAsync($"Minimum points required to join this lobby is now set to {points}.", Color.Green);
             }
         }
 
@@ -261,14 +262,14 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
                 lobby.MinimumPoints = null;
 
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Minimum points is now disabled for this lobby.", Color.Green);
+                await Context.SimpleEmbedAsync($"Minimum points is now disabled for this lobby.", Color.Green);
             }
         }
 
@@ -279,7 +280,7 @@ namespace ELO.Modules
         {
             if (mode == MapSelector.MapMode.Vote)
             {
-                await SimpleEmbedAsync("That mode is not available currently.", Color.DarkBlue);
+                await Context.SimpleEmbedAsync("That mode is not available currently.", Color.DarkBlue);
                 return;
 
                 //Three options:
@@ -291,7 +292,7 @@ namespace ELO.Modules
             var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
             if (lobby == null)
             {
-                await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
+                await Context.SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
                 return;
             }
 
@@ -302,7 +303,7 @@ namespace ELO.Modules
 
             lobby.MapSelector.Mode = mode;
             Service.SaveLobby(lobby);
-            await SimpleEmbedAsync("Mode set.", Color.Green);
+            await Context.SimpleEmbedAsync("Mode set.", Color.Green);
         }
 
         [Command("MapMode", RunMode = RunMode.Async)]
@@ -312,7 +313,7 @@ namespace ELO.Modules
             var lobby = Service.GetLobby(Context.Guild.Id, Context.Channel.Id);
             if (lobby == null)
             {
-                await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
+                await Context.SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
                 return;
             }
 
@@ -321,7 +322,7 @@ namespace ELO.Modules
                 lobby.MapSelector = new MapSelector();
             }
 
-            await SimpleEmbedAsync($"Current Map Mode: {lobby.MapSelector?.Mode}", Color.Blue);
+            await Context.SimpleEmbedAsync($"Current Map Mode: {lobby.MapSelector?.Mode}", Color.Blue);
             return;
         }
 
@@ -329,7 +330,7 @@ namespace ELO.Modules
         [Summary("Shows all available map selection modes.")]
         public virtual async Task MapModes()
         {
-            await SimpleEmbedAsync(string.Join(", ", Extensions.EnumNames<MapSelector.MapMode>()), Color.Blue);
+            await Context.SimpleEmbedAsync(string.Join(", ", Extensions.EnumNames<MapSelector.MapMode>()), Color.Blue);
         }*/
 
         [Command("ClearMaps", RunMode = RunMode.Sync)]
@@ -341,14 +342,14 @@ namespace ELO.Modules
                 var lobby = db.GetLobby(Context.Channel);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 var maps = db.Maps.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id);
                 db.RemoveRange(maps);
                 db.SaveChanges();
-                await SimpleEmbedAsync("Maps cleared.", Color.Green);
+                await Context.SimpleEmbedAsync("Maps cleared.", Color.Green);
             }
         }
 
@@ -366,7 +367,7 @@ namespace ELO.Modules
                 var lobby = db.GetLobby(Context.Channel);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
                     return;
                 }
 
@@ -396,13 +397,13 @@ namespace ELO.Modules
 
                 if (mapViolations.Count > 0)
                 {
-                    await SimpleEmbedAsync($"Added Maps: {string.Join(", ", addedMaps)}\n" +
+                    await Context.SimpleEmbedAsync($"Added Maps: {string.Join(", ", addedMaps)}\n" +
                                             $"Failed to Add: {string.Join(", ", mapViolations)}\n" +
                                             $"Duplicate maps found and ignored.");
                 }
                 else
                 {
-                    await SimpleEmbedAsync("Map(s) added.", Color.Green);
+                    await Context.SimpleEmbedAsync("Map(s) added.", Color.Green);
                 }
             }
         }
@@ -416,14 +417,14 @@ namespace ELO.Modules
                 var lobby = db.GetLobby(Context.Channel);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 var maps = db.Maps.AsQueryable().Where(x => x.ChannelId == Context.Channel.Id).ToArray();
                 if (maps.Length == 0)
                 {
-                    await SimpleEmbedAsync("There are no maps to remove.", Color.DarkBlue);
+                    await Context.SimpleEmbedAsync("There are no maps to remove.", Color.DarkBlue);
                     return;
                 }
 
@@ -432,11 +433,11 @@ namespace ELO.Modules
                 {
                     db.Maps.Remove(match);
                     db.SaveChanges();
-                    await SimpleEmbedAsync("Map removed.", Color.Green);
+                    await Context.SimpleEmbedAsync("Map removed.", Color.Green);
                 }
                 else
                 {
-                    await SimpleEmbedAsync("There was no map matching that name found.", Color.DarkBlue);
+                    await Context.SimpleEmbedAsync("There was no map matching that name found.", Color.DarkBlue);
                 }
             }
         }
@@ -450,13 +451,13 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
                 lobby.DmUsersOnGameReady = !lobby.DmUsersOnGameReady;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"DM when games are ready: {lobby.DmUsersOnGameReady}", Color.Blue);
+                await Context.SimpleEmbedAsync($"DM when games are ready: {lobby.DmUsersOnGameReady}", Color.Blue);
             }
         }
 
@@ -469,13 +470,13 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
                 lobby.Description = description;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync("Lobby description set.", Color.Blue);
+                await Context.SimpleEmbedAsync("Lobby description set.", Color.Blue);
             }
         }
 
@@ -495,13 +496,13 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.Find(lobbyId);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 db.Lobbies.Remove(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Lobby and all games played in it have been removed.", Color.Green);
+                await Context.SimpleEmbedAsync($"Lobby and all games played in it have been removed.", Color.Green);
             }
         }
 
@@ -523,19 +524,19 @@ namespace ELO.Modules
                 var lobbies = db.Lobbies.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray().AsQueryable().Where(x => !Context.Guild.Channels.Any(c => c.Id == x.ChannelId)).ToArray();
                 if (lobbies.Length == 0)
                 {
-                    await SimpleEmbedAsync("There are no lobbies to remove.", Color.Red);
+                    await Context.SimpleEmbedAsync("There are no lobbies to remove.", Color.Red);
                     return;
                 }
 
                 db.Lobbies.RemoveRange(lobbies);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"{lobbies.Length} Lobbies removed.", Color.Green);
+                await Context.SimpleEmbedAsync($"{lobbies.Length} Lobbies removed.", Color.Green);
             }
         }
 
         [Command("HideQueue", RunMode = RunMode.Sync)]
         [Summary("Sets whether players in queue are shown.")]
-        [RavenRequireBotPermission(GuildPermission.ManageMessages)]
+        [RequireBotPermission(GuildPermission.ManageMessages)]
         public virtual async Task AllowNegativeAsync(bool? hideQueue = null)
         {
             using (var db = new Database())
@@ -543,24 +544,24 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
                 if (hideQueue == null)
                 {
-                    await SimpleEmbedAsync($"Current Hide Queue Setting: {lobby.HideQueue}", Color.Blue);
+                    await Context.SimpleEmbedAsync($"Current Hide Queue Setting: {lobby.HideQueue}", Color.Blue);
                     return;
                 }
                 lobby.HideQueue = hideQueue.Value;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Hide Queue: {hideQueue.Value}", Color.Green);
+                await Context.SimpleEmbedAsync($"Hide Queue: {hideQueue.Value}", Color.Green);
             }
         }
 
         [Command("MentionUsersInReadyAnnouncement", RunMode = RunMode.Sync)]
         [Summary("Sets whether players are pinged in the ready announcement.")]
-        [RavenRequireBotPermission(GuildPermission.ManageMessages)]
+        [RequireBotPermission(GuildPermission.ManageMessages)]
         public virtual async Task MentionUsersReadyAsync(bool? mentionUsers = null)
         {
             using (var db = new Database())
@@ -568,18 +569,18 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
                 if (mentionUsers == null)
                 {
-                    await SimpleEmbedAsync($"Current Mention Users Setting: {lobby.MentionUsersInReadyAnnouncement}", Color.Blue);
+                    await Context.SimpleEmbedAsync($"Current Mention Users Setting: {lobby.MentionUsersInReadyAnnouncement}", Color.Blue);
                     return;
                 }
                 lobby.MentionUsersInReadyAnnouncement = mentionUsers.Value;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Mention Users: {mentionUsers.Value}", Color.Green);
+                await Context.SimpleEmbedAsync($"Mention Users: {mentionUsers.Value}", Color.Green);
             }
         }
 
@@ -592,14 +593,14 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 lobby.LobbyMultiplier = multiplier;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Multiplier set.", Color.Green);
+                await Context.SimpleEmbedAsync($"Multiplier set.", Color.Green);
             }
         }
 
@@ -612,20 +613,20 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 if (value == null)
                 {
-                    await SimpleEmbedAsync($"Current Multiply Loss Value Setting: {lobby.MultiplyLossValue}");
+                    await Context.SimpleEmbedAsync($"Current Multiply Loss Value Setting: {lobby.MultiplyLossValue}");
                     return;
                 }
 
                 lobby.MultiplyLossValue = value.Value;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Multiplier will affect the loss amount: {lobby.MultiplyLossValue}", Color.Green);
+                await Context.SimpleEmbedAsync($"Multiplier will affect the loss amount: {lobby.MultiplyLossValue}", Color.Green);
             }
         }
 
@@ -638,14 +639,14 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 lobby.ReductionPercent = multiplier;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"High Limit multiplier set, when users exceed `{(lobby.HighLimit.HasValue ? lobby.HighLimit.Value.ToString() : "N/A (Configure using the SetHighLimit command)")}` points, " +
+                await Context.SimpleEmbedAsync($"High Limit multiplier set, when users exceed `{(lobby.HighLimit.HasValue ? lobby.HighLimit.Value.ToString() : "N/A (Configure using the SetHighLimit command)")}` points, " +
                     $"their points received will be multiplied by `{multiplier}`, it is recommended to set this to a value such as `0.5` in for lower ranked lobbies " +
                     $"so higher ranked players are not rewarded as much for winning in lower ranked lobbies.", Color.Green);
             }
@@ -660,14 +661,14 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 lobby.HighLimit = highLimit;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Max user points before point reduction set.", Color.Green);
+                await Context.SimpleEmbedAsync($"Max user points before point reduction set.", Color.Green);
             }
         }
 
@@ -675,7 +676,7 @@ namespace ELO.Modules
         [Summary("Displays a list of host selection modes available")]
         public virtual async Task ShowHostSelectionModes()
         {
-            await SimpleEmbedAsync(string.Join("\n", RavenBOT.Common.Extensions.EnumNames<HostSelection>()));
+            await Context.SimpleEmbedAsync(string.Join("\n", Extensions.Extensions.EnumNames<HostSelection>()));
         }
 
         [Command("SetHostMode", RunMode = RunMode.Sync)]
@@ -687,14 +688,14 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 lobby.HostSelectionMode = hostMode;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await SimpleEmbedAsync($"Host Selection Mode set to: {lobby.HostSelectionMode}", Color.Green);
+                await Context.SimpleEmbedAsync($"Host Selection Mode set to: {lobby.HostSelectionMode}", Color.Green);
             }
         }
     }

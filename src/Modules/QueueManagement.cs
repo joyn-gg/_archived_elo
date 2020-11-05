@@ -3,7 +3,6 @@ using Discord.Commands;
 using Discord.WebSocket;
 using ELO.Extensions;
 using ELO.Services;
-using RavenBOT.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELO.Modules
 {
-    public class QueueManagement : ReactiveBase
+    public class QueueManagement : ModuleBase<ShardedCommandContext>
     {
         public static Dictionary<ulong, Dictionary<ulong, DateTime>> QueueDelays = new Dictionary<ulong, Dictionary<ulong, DateTime>>();
 
@@ -41,14 +40,14 @@ namespace ELO.Modules
             {
                 if (!(Context.User as SocketGuildUser).IsRegistered(out var player))
                 {
-                    await SimpleEmbedAsync("You must register in order to join a lobby.");
+                    await Context.SimpleEmbedAsync("You must register in order to join a lobby.");
                     return;
                 }
 
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("This channel is not a lobby.");
+                    await Context.SimpleEmbedAsync("This channel is not a lobby.");
                     return;
                 }
 
@@ -63,10 +62,10 @@ namespace ELO.Modules
                     if (lobby.HideQueue)
                     {
                         await Context.Message.DeleteAsync();
-                        await SimpleEmbedAndDeleteAsync($"You are still banned from matchmaking for another: {lastBan.RemainingTime.GetReadableLength()}", Color.Red, TimeSpan.FromSeconds(5));
+                        await Context.SimpleEmbedAndDeleteAsync($"You are still banned from matchmaking for another: {lastBan.RemainingTime.GetReadableLength()}", Color.Red, TimeSpan.FromSeconds(5));
                         return;
                     }
-                    await SimpleEmbedAsync($"{Context.User.Mention} - You are still banned from matchmaking for another: {lastBan.RemainingTime.GetReadableLength()}", Color.Red);
+                    await Context.SimpleEmbedAsync($"{Context.User.Mention} - You are still banned from matchmaking for another: {lastBan.RemainingTime.GetReadableLength()}", Color.Red);
                     return;
                 }
 
@@ -78,12 +77,12 @@ namespace ELO.Modules
                     if (lobby.HideQueue)
                     {
                         await Context.Message.DeleteAsync();
-                        await SimpleEmbedAndDeleteAsync("Queue is full, wait for teams to be chosen before joining.", Color.Red, TimeSpan.FromSeconds(5));
+                        await Context.SimpleEmbedAndDeleteAsync("Queue is full, wait for teams to be chosen before joining.", Color.Red, TimeSpan.FromSeconds(5));
                         return;
                     }
 
                     //Queue will be reset after teams are completely picked.
-                    await SimpleEmbedAsync($"{Context.User.Mention} - Queue is full, wait for teams to be chosen before joining.", Color.DarkBlue);
+                    await Context.SimpleEmbedAsync($"{Context.User.Mention} - Queue is full, wait for teams to be chosen before joining.", Color.DarkBlue);
                     return;
                 }
 
@@ -98,10 +97,10 @@ namespace ELO.Modules
                         if (lobby.HideQueue)
                         {
                             await Context.Message.DeleteAsync();
-                            await SimpleEmbedAndDeleteAsync($"MultiQueuing is not enabled in this server.\nPlease leave: {string.Join("\n", guildChannels)}", Color.Red, TimeSpan.FromSeconds(5));
+                            await Context.SimpleEmbedAndDeleteAsync($"MultiQueuing is not enabled in this server.\nPlease leave: {string.Join("\n", guildChannels)}", Color.Red, TimeSpan.FromSeconds(5));
                             return;
                         }
-                        await SimpleEmbedAsync($"{Context.User.Mention} - MultiQueuing is not enabled in this server.\nPlease leave: {string.Join("\n", guildChannels)}", Color.Red);
+                        await Context.SimpleEmbedAsync($"{Context.User.Mention} - MultiQueuing is not enabled in this server.\nPlease leave: {string.Join("\n", guildChannels)}", Color.Red);
                         return;
                     }
                 }
@@ -113,10 +112,10 @@ namespace ELO.Modules
                         if (lobby.HideQueue)
                         {
                             await Context.Message.DeleteAsync();
-                            await SimpleEmbedAndDeleteAsync($"You need a minimum of {lobby.MinimumPoints} points to join this lobby.", Color.Red, TimeSpan.FromSeconds(5));
+                            await Context.SimpleEmbedAndDeleteAsync($"You need a minimum of {lobby.MinimumPoints} points to join this lobby.", Color.Red, TimeSpan.FromSeconds(5));
                             return;
                         }
-                        await SimpleEmbedAsync($"{Context.User.Mention} - You need a minimum of {lobby.MinimumPoints} points to join this lobby.", Color.Red);
+                        await Context.SimpleEmbedAsync($"{Context.User.Mention} - You need a minimum of {lobby.MinimumPoints} points to join this lobby.", Color.Red);
                         return;
                     }
                 }
@@ -126,10 +125,10 @@ namespace ELO.Modules
                     if (lobby.HideQueue)
                     {
                         await Context.Message.DeleteAsync();
-                        await SimpleEmbedAndDeleteAsync("Current game is picking teams, wait until this is completed.", Color.DarkBlue, TimeSpan.FromSeconds(5));
+                        await Context.SimpleEmbedAndDeleteAsync("Current game is picking teams, wait until this is completed.", Color.DarkBlue, TimeSpan.FromSeconds(5));
                         return;
                     }
-                    await SimpleEmbedAsync("Current game is picking teams, wait until this is completed.", Color.DarkBlue);
+                    await Context.SimpleEmbedAsync("Current game is picking teams, wait until this is completed.", Color.DarkBlue);
                     return;
                 }
 
@@ -139,11 +138,11 @@ namespace ELO.Modules
                     {
                         await Context.Message.DeleteAsync();
 
-                        // await SimpleEmbedAndDeleteAsync("You are already queued.", Color.DarkBlue, TimeSpan.FromSeconds(5));
+                        // await Context.SimpleEmbedAndDeleteAsync("You are already queued.", Color.DarkBlue, TimeSpan.FromSeconds(5));
                         return;
                     }
 
-                    // await SimpleEmbedAsync($"{Context.User.Mention} - You are already queued.", Color.DarkBlue);
+                    // await Context.SimpleEmbedAsync($"{Context.User.Mention} - You are already queued.", Color.DarkBlue);
                     return;
                 }
 
@@ -160,10 +159,10 @@ namespace ELO.Modules
                                 var remaining = currentUserLastJoin + comp.RequeueDelay.Value - DateTime.UtcNow;
                                 if (lobby.HideQueue)
                                 {
-                                    await SimpleEmbedAndDeleteAsync($"You cannot requeue for another {remaining.GetReadableLength()}", Color.Red);
+                                    await Context.SimpleEmbedAndDeleteAsync($"You cannot requeue for another {remaining.GetReadableLength()}", Color.Red);
                                     return;
                                 }
-                                await SimpleEmbedAsync($"{Context.User.Mention} - You cannot requeue for another {remaining.GetReadableLength()}", Color.Red);
+                                await Context.SimpleEmbedAsync($"{Context.User.Mention} - You cannot requeue for another {remaining.GetReadableLength()}", Color.Red);
                                 return;
                             }
                             else
@@ -199,7 +198,7 @@ namespace ELO.Modules
                 if (lobby.HideQueue)
                 {
                     await Context.Message.DeleteAsync();
-                    await SimpleEmbedAsync($"**[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]** A player joined the queue.", Color.Green);
+                    await Context.SimpleEmbedAsync($"**[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]** A player joined the queue.", Color.Green);
                 }
                 else
                 {
@@ -207,11 +206,11 @@ namespace ELO.Modules
                     {
                         if (Context.User.Id == Context.Guild.OwnerId)
                         {
-                            await SimpleEmbedAsync($"**[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]** {Context.User.Mention} [{player.Points}] joined the queue.", Color.Green);
+                            await Context.SimpleEmbedAsync($"**[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]** {Context.User.Mention} [{player.Points}] joined the queue.", Color.Green);
                         }
                         else
                         {
-                            await SimpleEmbedAsync($"**[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]** {(comp.NameFormat.Contains("score") ? $"{Context.User.Mention}" : $"{Context.User.Mention} [{player.Points}]")} joined the queue.", Color.Green);
+                            await Context.SimpleEmbedAsync($"**[{queue.Count + 1}/{lobby.PlayersPerTeam * 2}]** {(comp.NameFormat.Contains("score") ? $"{Context.User.Mention}" : $"{Context.User.Mention} [{player.Points}]")} joined the queue.", Color.Green);
                         }
                     }
                     else
@@ -239,14 +238,14 @@ namespace ELO.Modules
             {
                 if (!(Context.User as SocketGuildUser).IsRegistered(out var player))
                 {
-                    await SimpleEmbedAsync("You're not registered.");
+                    await Context.SimpleEmbedAsync("You're not registered.");
                     return;
                 }
 
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("This channel is not a lobby.");
+                    await Context.SimpleEmbedAsync("This channel is not a lobby.");
                     return;
                 }
 
@@ -259,9 +258,9 @@ namespace ELO.Modules
                     if (lobby.HideQueue)
                     {
                         await Context.Message.DeleteAsync();
-                        await SimpleEmbedAndDeleteAsync("You are not queued for the next game.", Color.DarkBlue, TimeSpan.FromSeconds(5));
+                        await Context.SimpleEmbedAndDeleteAsync("You are not queued for the next game.", Color.DarkBlue, TimeSpan.FromSeconds(5));
                     }
-                    await SimpleEmbedAsync("You are not queued for the next game.", Color.DarkBlue);
+                    await Context.SimpleEmbedAsync("You are not queued for the next game.", Color.DarkBlue);
                 }
                 else
                 {
@@ -270,7 +269,7 @@ namespace ELO.Modules
                     {
                         if (game.GameState == GameState.Picking)
                         {
-                            await SimpleEmbedAsync("Lobby is currently picking teams. You cannot leave a queue while this is happening.", Color.Red);
+                            await Context.SimpleEmbedAsync("Lobby is currently picking teams. You cannot leave a queue while this is happening.", Color.Red);
                             return;
                         }
                     }
@@ -281,14 +280,14 @@ namespace ELO.Modules
                     if (lobby.HideQueue)
                     {
                         await Context.Message.DeleteAsync();
-                        await SimpleEmbedAsync($"A player left the queue. **[{queue.Count - 1}/{lobby.PlayersPerTeam * 2}]**");
+                        await Context.SimpleEmbedAsync($"A player left the queue. **[{queue.Count - 1}/{lobby.PlayersPerTeam * 2}]**");
                         return;
                     }
                     else
                     {
                         if (Premium.IsPremiumSimple(Context.Guild.Id))
                         {
-                            await SimpleEmbedAsync($"**[{queue.Count - 1}/{lobby.PlayersPerTeam * 2}]** {Context.User.Mention} [{player.Points}] left the queue.", Color.DarkBlue);
+                            await Context.SimpleEmbedAsync($"**[{queue.Count - 1}/{lobby.PlayersPerTeam * 2}]** {Context.User.Mention} [{player.Points}] left the queue.", Color.DarkBlue);
                         }
                         else
                         {
@@ -316,7 +315,7 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("This channel is not a lobby.");
+                    await Context.SimpleEmbedAsync("This channel is not a lobby.");
                     return;
                 }
 
@@ -336,7 +335,7 @@ namespace ELO.Modules
                 }
                 else
                 {
-                    await SimpleEmbedAndDeleteAsync("There are no maps added in this lobby", Color.DarkOrange);
+                    await Context.SimpleEmbedAndDeleteAsync("There are no maps added in this lobby", Color.DarkOrange);
                 }
             }
         }

@@ -18,12 +18,12 @@ namespace ELO.Services
                 players = players.AsQueryable().Where(x => x != captain.UserId).ToArray();
                 if (players.Any())
                 {
-                    resStr += $"Players: {string.Join("\n", RavenBOT.Common.Extensions.GetUserMentionList(players))}";
+                    resStr += $"Players: {string.Join("\n", Extensions.Extensions.GetUserMentionList(players))}";
                 }
             }
             else
             {
-                resStr += string.Join("\n", RavenBOT.Common.Extensions.GetUserMentionList(players));
+                resStr += string.Join("\n", Extensions.Extensions.GetUserMentionList(players));
             }
 
             if (string.IsNullOrWhiteSpace(resStr))

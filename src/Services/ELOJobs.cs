@@ -1,10 +1,11 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using RavenBOT.Common;
+
 using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using ELO.Extensions;
 
 namespace ELO.Services
 {
