@@ -245,7 +245,7 @@ namespace ELO.Modules
                 var gUser = guild.GetUser(premiumUser.Key);
                 if (gUser != null)
                 {
-                    var userPremiumRoles = gUser.Roles.AsQueryable().Where(x => roles.Any(y => y.RoleId == x.Id)).ToArray();
+                    var userPremiumRoles = gUser.Roles.Where(x => roles.Any(y => y.RoleId == x.Id)).ToArray();
                     /*if (userPremiumRoles.Length > 0)
                     {
                         // User has premium but wrong roles.
@@ -276,7 +276,7 @@ namespace ELO.Modules
             foreach (var user in gUsersWithPremiumRoles)
             {
                 // Get roles from the user which are in the bot's premium role list
-                var uPremiumRoles = user.Roles.AsQueryable().Where(x => roles.Any(r => r.RoleId == x.Id)).ToArray();
+                var uPremiumRoles = user.Roles.Where(x => roles.Any(r => r.RoleId == x.Id)).ToArray();
 
                 // Find the list of roles which the user is entitled to.
                 var uEntitledRoles = premiumUsers.FirstOrDefault(x => x.Key == user.Id).Value;
@@ -298,7 +298,7 @@ namespace ELO.Modules
                     else
                     {
                         // Find users discord roles which are not contained in the entitled roles list.
-                        var notEntitled = uPremiumRoles.AsQueryable().Where(r => !uEntitledRoles.Contains(r.Id)).ToArray();
+                        var notEntitled = uPremiumRoles.Where(r => !uEntitledRoles.Contains(r.Id)).ToArray();
                         if (notEntitled.Length > 0)
                         {
                             // User has prem roles but not entitled to them.
@@ -392,7 +392,7 @@ namespace ELO.Modules
                 var gUser = guild.GetUser(premiumUser.Key);
                 if (gUser != null)
                 {
-                    var userPremiumRoles = gUser.Roles.AsQueryable().Where(x => roles.Any(y => y.RoleId == x.Id)).ToArray();
+                    var userPremiumRoles = gUser.Roles.Where(x => roles.Any(y => y.RoleId == x.Id)).ToArray();
                     if (userPremiumRoles.Length > 0)
                     {
                         // User has premium but wrong roles.
@@ -409,14 +409,14 @@ namespace ELO.Modules
                 }
             }
 
-            var gUsersWithPremiumRoles = guild.Users.AsQueryable().Where(u => u.Roles.Any(r => roles.Any(y => y.RoleId == r.Id))).ToArray();
+            var gUsersWithPremiumRoles = guild.Users.Where(u => u.Roles.Any(r => roles.Any(y => y.RoleId == r.Id))).ToArray();
             var builder = new StringBuilder();
 
             // Iterate through all users in the server which have a premium role
             foreach (var user in gUsersWithPremiumRoles)
             {
                 // Get roles from the user which are in the bot's premium role list
-                var uPremiumRoles = user.Roles.AsQueryable().Where(x => roles.Any(r => r.RoleId == x.Id)).ToArray();
+                var uPremiumRoles = user.Roles.Where(x => roles.Any(r => r.RoleId == x.Id)).ToArray();
 
                 // Find the list of roles which the user is entitled to.
                 var uEntitledRoles = premiumUsers.FirstOrDefault(x => x.Key == user.Id).Value;
@@ -430,7 +430,7 @@ namespace ELO.Modules
                     else
                     {
                         // Find users discord roles which are not contained in the entitled roles list.
-                        var notEntitled = uPremiumRoles.AsQueryable().Where(r => !uEntitledRoles.Contains(r.Id)).ToArray();
+                        var notEntitled = uPremiumRoles.Where(r => !uEntitledRoles.Contains(r.Id)).ToArray();
                         if (notEntitled.Length > 0)
                         {
                             // User has prem roles but not entitled to them.

@@ -28,7 +28,7 @@ namespace ELO.Services
                 if (user.Guild.CurrentUser.GuildPermissions.ManageRoles)
                 {
                     // Find Ranks that have less points than the current user.
-                    var rankMatches = ranks.AsQueryable().Where(x => x.Points <= player.Points);
+                    var rankMatches = ranks.Where(x => x.Points <= player.Points);
                     if (rankMatches.Any())
                     {
                         var maxRank = rankMatches.Max(x => x.Points);
@@ -121,7 +121,7 @@ namespace ELO.Services
                 {
                     try
                     {
-                        var finalRoles = currentRoles.AsQueryable().Where(x => !x.IsEveryone).Select(x => x.Id).ToList();
+                        var finalRoles = currentRoles.Where(x => !x.IsEveryone).Select(x => x.Id).ToList();
 
                         bool removedRanks = false;
                         if (toRemove.Any())

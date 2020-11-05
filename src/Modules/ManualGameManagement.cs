@@ -115,7 +115,7 @@ namespace ELO.Modules
                         foreach (var player in players)
                         {
                             //This represents the current user's rank
-                            var maxRank = ranks.AsQueryable().Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                            var maxRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
 
                             int updateVal;
                             RankChangeState state = RankChangeState.None;
@@ -126,7 +126,7 @@ namespace ELO.Modules
                                 updateVal = maxRank?.WinModifier ?? competition.DefaultWinModifier;
                                 player.Points += updateVal;
                                 player.Wins++;
-                                newRank = ranks.AsQueryable().Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                                newRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
                                 if (newRank != null)
                                 {
                                     if (maxRank == null)
@@ -156,7 +156,7 @@ namespace ELO.Modules
                                     if (player.Points < maxRank.Points)
                                     {
                                         state = RankChangeState.DeRank;
-                                        newRank = ranks.AsQueryable().Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                                        newRank = ranks.Where(x => x.Points <= player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
                                     }
                                 }
                             }
@@ -184,7 +184,7 @@ namespace ELO.Modules
                         //Update counter and save new competition config
 
                         //Create new game info
-                        var vals = ((IQueryable<ManualGameResult>)db.ManualGameResults).AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                        var vals = db.ManualGameResults.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
                         var count = vals.Length == 0 ? 0 : vals.Max(x => x.GameId);
                         var game = new ManualGameResult
                         {

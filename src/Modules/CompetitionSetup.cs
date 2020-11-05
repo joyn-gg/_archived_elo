@@ -517,7 +517,7 @@ namespace ELO.Modules
             {
                 var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
                 var guildRoleIds = Context.Guild.Roles.Select(x => x.Id).ToArray();
-                var removed = ranks.AsQueryable().Where(x => !guildRoleIds.Contains(x.RoleId)).ToArray();
+                var removed = ranks.Where(x => !guildRoleIds.Contains(x.RoleId)).ToArray();
                 db.Ranks.RemoveRange(removed);
                 db.SaveChanges();
                 await Context.SimpleEmbedAsync("Ranks Removed.", Color.Green);
@@ -685,7 +685,7 @@ namespace ELO.Modules
             using (var db = new Database())
             {
                 var players = db.Players.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
-                var missing = players.AsQueryable().Where(x => Context.Guild.GetUser(x.UserId) == null).ToArray();
+                var missing = players.Where(x => Context.Guild.GetUser(x.UserId) == null).ToArray();
                 db.Players.RemoveRange(missing);
                 db.SaveChanges();
                 Extensions.Extensions.RegCache.Clear();

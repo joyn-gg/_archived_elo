@@ -105,7 +105,7 @@ namespace ELO.Modules
                     return;
                 }
 
-                var banPages = bans.AsQueryable().Where(x => x.IsExpired == false).OrderBy(x => x.RemainingTime).SplitList(5).ToArray();
+                var banPages = bans.Where(x => x.IsExpired == false).OrderBy(x => x.RemainingTime).SplitList(5).ToArray();
 
                 if (banPages.Length == 0)
                 {

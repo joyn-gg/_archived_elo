@@ -36,7 +36,7 @@ namespace ELO.Services
                     var affectedPlayers = db.QueuedPlayers.AsQueryable().Where(x => compIds.Contains(x.GuildId)).ToArray();
                     foreach (var competition in competitions)
                     {
-                        var lobbyMembers = affectedPlayers.AsQueryable().Where(x => x.GuildId == competition.GuildId).GroupBy(x => x.ChannelId).ToArray();
+                        var lobbyMembers = affectedPlayers.Where(x => x.GuildId == competition.GuildId).GroupBy(x => x.ChannelId).ToArray();
                         foreach (var lobby in lobbyMembers)
                         {
                             var lastGame = db.GameResults.AsQueryable().Where(x => x.GuildId == competition.GuildId && x.LobbyId == lobby.Key).OrderByDescending(x => x.GameId).FirstOrDefault();

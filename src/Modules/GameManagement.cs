@@ -121,7 +121,7 @@ namespace ELO.Modules
                     continue;
                 }
 
-                var currentRank = ranks.AsQueryable().Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                var currentRank = ranks.Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
 
                 if (score.ModifyAmount < 0)
                 {

@@ -511,7 +511,7 @@ namespace ELO.Modules
                 var allQueued = db.GetTeamFull(latestGame, 1).Union(db.GetTeamFull(latestGame, 2)).ToHashSet();
                 latestGame.Picks++;
                 db.Update(latestGame);
-                var remaining = queue.AsQueryable().Where(x => !allQueued.Contains(x.UserId)).ToArray();
+                var remaining = queue.Where(x => !allQueued.Contains(x.UserId)).ToArray();
                 if (remaining.Length == 1)
                 {
                     var lastUser = remaining.First();

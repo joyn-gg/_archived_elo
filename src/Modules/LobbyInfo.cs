@@ -125,7 +125,7 @@ namespace ELO.Modules
                         var t1c = db.GetTeamCaptain(Context.Guild.Id, Context.Channel.Id, game.GameId, 1);
                         var t2c = db.GetTeamCaptain(Context.Guild.Id, Context.Channel.Id, game.GameId, 2);
                         var queue = db.GetQueue(game);
-                        var remainingIds = queue.AsQueryable().Where(x =>
+                        var remainingIds = queue.Where(x =>
                             team1.All(y => y.UserId != x.UserId) &&
                             team2.All(y => y.UserId != x.UserId) &&
                             t1c.UserId != x.UserId &&

@@ -152,7 +152,7 @@ namespace ELO.Modules
                         return new EmbedFieldBuilder()
                             .WithName($"#{x.GameId}: {x.GameState}")
                             .WithValue(string.Join("\n", scoreUpdates.Select(s => $"{MentionUtils.MentionUser(s.UserId)} - `{s.ModifyAmount}`") + $"\n **Submitted by: {MentionUtils.MentionUser(x.Submitter)}**"));
-                    }).AsQueryable().Where(x => x != null).ToList();
+                    }).Where(x => x != null).ToList();
 
                     if (content.Count == 0) continue;
 

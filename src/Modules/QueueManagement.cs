@@ -54,7 +54,7 @@ namespace ELO.Modules
                 var now = DateTime.UtcNow;
 
                 var lastBan = db.Bans.AsQueryable().Where(x => x.UserId == Context.User.Id && x.GuildId == Context.Guild.Id && x.ManuallyDisabled == false).ToArray()
-                    .AsQueryable().Where(x => x.TimeOfBan + x.Length > now)
+                    .Where(x => x.TimeOfBan + x.Length > now)
                     .OrderByDescending(x => x.ExpiryTime)
                     .FirstOrDefault();
                 if (lastBan != null)

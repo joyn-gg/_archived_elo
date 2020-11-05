@@ -79,7 +79,7 @@ namespace Patreon.NET
                         var linkedPatron = new LinkedPatron
                         {
                             UserData = dataPacket,
-                            Rewards = content.Included.AsQueryable().Where(x => x.Type.Equals("reward") && x.Id.Equals(dataPacket.Relationships.Reward.Data.Id)).ToList(),
+                            Rewards = content.Included.Where(x => x.Type.Equals("reward") && x.Id.Equals(dataPacket.Relationships.Reward.Data.Id)).ToList(),
                             UserIncluded = content.Included.FirstOrDefault(x => x.Type.Equals("user") && x.Id.Equals(dataPacket.Relationships.Patron.Data.Id))
                         };
 

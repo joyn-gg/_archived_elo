@@ -218,7 +218,7 @@ namespace ELO.Modules
                 }
 
                 var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToList();
-                var maxRank = ranks.AsQueryable().Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
+                var maxRank = ranks.Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
                 string rankStr = null;
                 if (maxRank != null)
                 {
