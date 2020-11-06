@@ -17,11 +17,59 @@ namespace ELO.Services
 
             //Setup a timer that fires every 5 minutes
             CompetitionUpdateTimer = new Timer(RunQueueChecks, null, 60000, 1000 * 60 * 5);
+            CacheMethodTimer = new Timer(RunCacheMethod, null, 60000, 1000 * 60 * 5);
         }
 
         public DiscordShardedClient Client { get; }
 
         public Timer CompetitionUpdateTimer { get; }
+        public Timer CacheMethodTimer { get; }
+
+        public void RunCacheMethod(object stateInfo = null)
+        {
+            var _ = Task.Run(async () =>
+            {
+                CacheMethodTimer.Change(Timeout.Infinite, Timeout.Infinite);
+
+                try
+                {
+                    foreach (var shard in Client.Shards)
+                    {
+                        if (shard.ConnectionState == ConnectionState.Connected)
+                        {
+                            foreach (var guild in shard.Guilds)
+                            {
+                                if (!guild.HasAllMembers)
+                                {
+
+                                    var delay = Task.Delay(5000);
+                                    var completeTask = await Task.WhenAny(delay, guild.DownloadUsersAsync());
+
+                                    if (completeTask == delay)
+                                    {
+                                        Console.WriteLine(
+                                            $"Guild: {guild.Name} [{guild.Id} Failed to return user list in time, releasing semaphore...");
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine($"Guild: {guild.Name} [{guild.Id}] Downloaded Users");
+                                        if (!guild.HasAllMembers)
+                                        {
+                                            Console.WriteLine(
+                                                $"Guild: {guild.Name} [{guild.Id}] Does not have all members, {guild.Users.Count}/{guild.MemberCount}");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                finally
+                {
+                    CacheMethodTimer.Change(1000 * 60 * 5, 1000 * 60 * 5);
+                }
+            });
+        }
 
         public void RunQueueChecks(object stateInfo = null)
         {
