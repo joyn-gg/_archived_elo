@@ -465,6 +465,15 @@ namespace ELO.Services
                 {
                     await context.Channel.SendMessageAsync($"The server has been upgraded to `{currentRole.Limit / remaining}` users, the premium subscription for `{currentRole.Limit}` registrations is currently being split over `{remaining}` servers");
                 }
+
+                lock (bpcLock)
+                {
+                    if (basicPremiumCache.TryGetValue(context.Guild.Id, out var bpcResult))
+                    {
+                        basicPremiumCache[context.Guild.Id] = (bpcResult.Item1, true);
+                    }
+                }
+
                 db.SaveChanges();
             }
         }
