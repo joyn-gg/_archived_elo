@@ -7,20 +7,22 @@ using ELO.Preconditions;
 using ELO.Services;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
-using RavenBOT.Common;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using ELO.Extensions;
+using ELO.Services.Reactive;
 
 namespace ELO.Modules
 {
-    [RavenRequireContext(ContextType.Guild)]
-    public partial class Info : ReactiveBase
+    [RequireContext(ContextType.Guild)]
+    public partial class Info : ModuleBase<ShardedCommandContext>
     {
+        private readonly ReactiveService _reactive;
         public HttpClient HttpClient { get; }
 
         public CommandService CommandService { get; }
@@ -33,8 +35,9 @@ namespace ELO.Modules
 
         public PremiumService Premium { get; }
 
-        public Info(HttpClient httpClient, CommandService commandService, HelpService helpService, GameService gameService, PermissionService permissionService, PremiumService premium)
+        public Info(HttpClient httpClient, CommandService commandService, HelpService helpService, ReactiveService reactive, GameService gameService, PermissionService permissionService, PremiumService premium)
         {
+            _reactive = reactive;
             HttpClient = httpClient;
             CommandService = commandService;
             HelpService = helpService;
@@ -47,7 +50,7 @@ namespace ELO.Modules
         [Summary("Returns the bot invite")]
         public virtual async Task InviteAsync()
         {
-            await SimpleEmbedAsync($"Invite: https://discordapp.com/oauth2/authorize?client_id={Context.Client.CurrentUser.Id}&scope=bot&permissions=8");
+            await ReplyAsync(null, false, $"Invite: https://discordapp.com/oauth2/authorize?client_id={Context.Client.CurrentUser.Id}&scope=bot&permissions=8".QuickEmbed());
         }
 
         [Command("Help")]
@@ -66,7 +69,7 @@ namespace ELO.Modules
                         ModId = comp.ModeratorRole
                     };
 
-                    var permissions = db.Permissions.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                    var permissions = db.Permissions.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
                     foreach (var commandGroup in CommandService.Commands.GroupBy(x => x.Name.ToLower()))
                     {
                         var match = permissions.FirstOrDefault(x => x.CommandName.Equals(commandGroup.Key, StringComparison.OrdinalIgnoreCase));
@@ -107,7 +110,7 @@ namespace ELO.Modules
                 "otherwise react with the arrows (◀ ▶) to change pages.\n");
                 if (res != null)
                 {
-                    await PagedReplyAsync(res.ToCallBack().WithDefaultPagerCallbacks().WithJump());
+                    await _reactive.SendPagedMessageAsync(Context, Context.Channel, res.ToCallBack().WithDefaultPagerCallbacks().WithJump());
                 }
             }
             catch (Exception e)
@@ -175,15 +178,15 @@ namespace ELO.Modules
             using (var db = new Database())
             {
                 var comp = db.GetOrCreateCompetition(Context.Guild.Id);
-                var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToList();
+                var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToList();
                 if (ranks.Count == 0)
                 {
-                    await SimpleEmbedAsync("There are currently no ranks set up.", Color.Blue);
+                    await Context.SimpleEmbedAsync("There are currently no ranks set up.", Color.Blue);
                     return;
                 }
 
                 var msg = ranks.OrderByDescending(x => x.Points).Select(x => $"{MentionUtils.MentionRole(x.RoleId)} - ({x.Points}) W: (+{x.WinModifier ?? comp.DefaultWinModifier}) L: (-{x.LossModifier ?? comp.DefaultLossModifier})").ToArray();
-                await SimpleEmbedAsync(string.Join("\n", msg), Color.Blue);
+                await Context.SimpleEmbedAsync(string.Join("\n", msg), Color.Blue);
             }
         }
 
@@ -205,16 +208,16 @@ namespace ELO.Modules
                 {
                     if (user.Id == Context.User.Id)
                     {
-                        await SimpleEmbedAsync("You are not registered.", Color.DarkBlue);
+                        await Context.SimpleEmbedAsync("You are not registered.", Color.DarkBlue);
                     }
                     else
                     {
-                        await SimpleEmbedAsync("That user is not registered.", Color.Red);
+                        await Context.SimpleEmbedAsync("That user is not registered.", Color.Red);
                     }
                     return;
                 }
 
-                var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToList();
+                var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToList();
                 var maxRank = ranks.Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
                 string rankStr = null;
                 if (maxRank != null)
@@ -241,7 +244,7 @@ namespace ELO.Modules
 
                 info += $"Registered At: {player.RegistrationDate.ToString("dd MMM yyyy")} {player.RegistrationDate.ToShortTimeString()}";
 
-                await SimpleEmbedAsync(info, Color.Blue);
+                await Context.SimpleEmbedAsync(info, Color.Blue);
             }
 
             //TODO: Add game history (last 5) to this response
@@ -275,7 +278,7 @@ namespace ELO.Modules
             {
                 if (!Premium.IsPremium(Context.Guild.Id))
                 {
-                    await SimpleEmbedAsync($"In order to access a complete leaderboard, consider joining ELO premium at {Premium.PremiumConfig.AltLink}, " +
+                    await Context.SimpleEmbedAsync($"In order to access a complete leaderboard, consider joining ELO premium at {Premium.PremiumConfig.AltLink}, " +
                         $"patrons must also be members of the ELO server at: {Premium.PremiumConfig.ServerInvite}\n" +
                         $"Free servers are limited to just the first page.");
                     page = 1;
@@ -285,7 +288,7 @@ namespace ELO.Modules
             using (var db = new Database())
             {
                 //Retrieve players in the current guild from database
-                var users = db.Players.AsNoTracking().Where(x => x.GuildId == Context.Guild.Id);
+                var users = db.Players.AsNoTracking().AsQueryable().Where(x => x.GuildId == Context.Guild.Id);
                 int count = users.Count();
                 int pageSize = 20;
                 int skipCount = (page - 1) * pageSize;
@@ -327,7 +330,7 @@ namespace ELO.Modules
                 }
                 if (players.Length == 0)
                 {
-                    await SimpleEmbedAsync("There are no players to display for this page of the leaderboard.", Color.Blue);
+                    await Context.SimpleEmbedAsync("There are no players to display for this page of the leaderboard.", Color.Blue);
                     return;
                 }
 
@@ -337,7 +340,7 @@ namespace ELO.Modules
                 embed.Description = GetPlayerLines(players, skipCount + 1, mode);
                 embed.WithFooter($"{count} users");
 
-                await ReplyAsync(embed.Build());
+                await ReplyAsync(null, false, embed.Build());
             }
         }
 

@@ -3,13 +3,12 @@ using Discord.Commands;
 using Discord.WebSocket;
 using ELO.Entities;
 using ELO.Models;
-using Microsoft.EntityFrameworkCore;
-using RavenBOT.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ELO.Extensions;
 
 namespace ELO.Services
 {
@@ -80,7 +79,7 @@ namespace ELO.Services
                 int maxId;
                 try
                 {
-                    maxId = db.GameResults.Where(x => x.LobbyId == lobby.ChannelId).Max(x => x.GameId);
+                    maxId = db.GameResults.AsQueryable().Where(x => x.LobbyId == lobby.ChannelId).Max(x => x.GameId);
                 }
                 catch (InvalidOperationException ex)
                 {
@@ -97,7 +96,7 @@ namespace ELO.Services
                     GameId = lobby.CurrentGameCount
                 };
 
-                var maps = db.Maps.Where(x => x.ChannelId == lobby.ChannelId).ToArray();
+                var maps = db.Maps.AsQueryable().Where(x => x.ChannelId == lobby.ChannelId).ToArray();
                 if (maps.Length != 0)
                 {
                     var map = maps.OrderByDescending(x => Random.Next()).First();
@@ -160,7 +159,7 @@ namespace ELO.Services
                         if (lobby.HostSelectionMode != HostSelection.None)
                         {
                             var qIds = queue.Select(x => x.UserId).ToList();
-                            var players = db.Players.Where(p => qIds.Contains(p.UserId)).ToArray();
+                            var players = db.Players.AsQueryable().Where(p => qIds.Contains(p.UserId)).ToArray();
                             if (lobby.HostSelectionMode == HostSelection.HighestRanked)
                             {
                                 var selected = players.OrderByDescending(x => x.Points).First();
@@ -182,7 +181,7 @@ namespace ELO.Services
                     case PickMode.Random:
                         game.GameState = GameState.Undecided;
                         var shuffled = queue.OrderBy(x => Random.Next()).ToList();
-                        var partyPlayers = db.PartyMembers.Where(x => x.ChannelId == context.Channel.Id).ToArray();
+                        var partyPlayers = db.PartyMembers.AsQueryable().Where(x => x.ChannelId == context.Channel.Id).ToArray();
                         var partyPlayerIds = partyPlayers.Select(x => x.UserId);
                         var parties = partyPlayers.GroupBy(x => x.PartyHost).ToArray();
 
@@ -377,7 +376,7 @@ namespace ELO.Services
                     if (lobby.HostSelectionMode != HostSelection.None)
                     {
                         var qIds = queue.Select(x => x.UserId).ToList();
-                        var players = db.Players.Where(p => qIds.Contains(p.UserId)).ToArray();
+                        var players = db.Players.AsQueryable().Where(p => qIds.Contains(p.UserId)).ToArray();
                         if (lobby.HostSelectionMode == HostSelection.HighestRanked)
                         {
                             var selected = players.OrderByDescending(x => x.Points).First();

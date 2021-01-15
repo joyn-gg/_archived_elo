@@ -18,12 +18,12 @@ namespace ELO.Services
                 players = players.Where(x => x != captain.UserId).ToArray();
                 if (players.Any())
                 {
-                    resStr += $"Players: {string.Join("\n", RavenBOT.Common.Extensions.GetUserMentionList(players))}";
+                    resStr += $"Players: {string.Join("\n", Extensions.Extensions.GetUserMentionList(players))}";
                 }
             }
             else
             {
-                resStr += string.Join("\n", RavenBOT.Common.Extensions.GetUserMentionList(players));
+                resStr += string.Join("\n", Extensions.Extensions.GetUserMentionList(players));
             }
 
             if (string.IsNullOrWhiteSpace(resStr))
@@ -50,7 +50,7 @@ namespace ELO.Services
 
             using (var db = new Database())
             {
-                var queue = db.GetQueuedPlayers(game.GuildId, game.LobbyId).Select(x => x.UserId);
+                var queue = db.GetQueuedPlayers(game.GuildId, game.LobbyId).Select(x => x.UserId).ToArray();
                 var team1p = db.GetTeamFull(game, 1);
                 var team2p = db.GetTeamFull(game, 2);
 
@@ -145,7 +145,7 @@ namespace ELO.Services
 
                 if (remainingPlayers)
                 {
-                    var remaining = queue.Where(x => team1p.All(y => y == x) && team2p.All(y => y == x));
+                    var remaining = queue.Where(x => team1p.All(y => y == x) && team2p.All(y => y == x)).ToArray();
                     if (remaining.Any())
                     {
                         embed.AddField("Remaining Players", string.Join(" ", remaining.Select(x => MentionUtils.MentionUser(x))));
@@ -299,7 +299,7 @@ namespace ELO.Services
 
             using (var db = new Database())
             {
-                var scoreUpdates = db.ManualGameScoreUpdates.Where(x => x.GuildId == game.GuildId && x.ManualGameId == game.GameId);
+                var scoreUpdates = db.ManualGameScoreUpdates.AsQueryable().Where(x => x.GuildId == game.GuildId && x.ManualGameId == game.GameId);
                 embed.Description = $"**GameId:** {game.GameId}\n" +
                                     $"**Creation Time:** {game.CreationTime.ToString("dd MMM yyyy")} {game.CreationTime.ToShortTimeString()}\n" +
                                     $"**Comment:** {game.Comment ?? "N/A"}\n" +

@@ -4,15 +4,15 @@ using Discord.WebSocket;
 using ELO.Models;
 using ELO.Preconditions;
 using ELO.Services;
-using RavenBOT.Common;
 using System.Linq;
 using System.Threading.Tasks;
+using ELO.Extensions;
 
 namespace ELO.Modules
 {
     [RequirePermission(PermissionLevel.ServerAdmin)]
-    [RavenRequireContext(ContextType.Guild)]
-    public class ManagementSetup : ReactiveBase
+    [RequireContext(ContextType.Guild)]
+    public class ManagementSetup : ModuleBase<ShardedCommandContext>
     {
         public CommandService CommandService { get; }
 
@@ -28,8 +28,8 @@ namespace ELO.Modules
         [Summary("Shows all possible permission levels.")]
         public virtual async Task ShowLevelsAsync()
         {
-            var options = RavenBOT.Common.Extensions.GetEnumNameValues<PermissionLevel>();
-            await SimpleEmbedAsync($"Custom Permissions Levels:\n{string.Join("\n", options.Select(x => x.Item1))}", Color.Blue);
+            var options = Extensions.Extensions.GetEnumNameValues<PermissionLevel>();
+            await Context.SimpleEmbedAsync($"Custom Permissions Levels:\n{string.Join("\n", options.Select(x => x.Item1))}", Color.Blue);
         }
 
         [Command("ShowPermissions", RunMode = RunMode.Async)]
@@ -38,8 +38,8 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                var permissions = db.Permissions.Where(x => x.GuildId == Context.Guild.Id);
-                await SimpleEmbedAsync($"Custom Permissions:\n{string.Join("\n", permissions.Select(x => $"{x.CommandName} - {x.Level}"))}", Color.Blue);
+                var permissions = db.Permissions.AsQueryable().Where(x => x.GuildId == Context.Guild.Id);
+                await Context.SimpleEmbedAsync($"Custom Permissions:\n{string.Join("\n", permissions.Select(x => $"{x.CommandName} - {x.Level}"))}", Color.Blue);
             }
         }
 
@@ -53,13 +53,13 @@ namespace ELO.Modules
 
                 if (match == null)
                 {
-                    await SimpleEmbedAsync("Unknown command name.", Color.Red);
+                    await Context.SimpleEmbedAsync("Unknown command name.", Color.Red);
                     return;
                 }
 
                 if (!match.Preconditions.Any(x => x is RequirePermission) && !match.Module.Preconditions.Any(x => x is RequirePermission))
                 {
-                    await SimpleEmbedAsync("This command cannot have it's permission overwritten.");
+                    await Context.SimpleEmbedAsync("This command cannot have it's permission overwritten.");
                     return;
                 }
 
@@ -83,7 +83,7 @@ namespace ELO.Modules
                 db.SaveChanges();
                 PermissionService.PermissionCache.Remove(Context.Guild.Id);
 
-                await SimpleEmbedAsync($"{match.Name} permission level set to: {level}", Color.Blue);
+                await Context.SimpleEmbedAsync($"{match.Name} permission level set to: {level}", Color.Blue);
             }
         }
 
@@ -97,20 +97,20 @@ namespace ELO.Modules
 
                 if (match == null)
                 {
-                    await SimpleEmbedAsync("Unknown command name.", Color.Red);
+                    await Context.SimpleEmbedAsync("Unknown command name.", Color.Red);
                     return;
                 }
 
                 var permission = db.Permissions.Find(Context.Guild.Id, match.Name.ToLower());
                 if (permission == null)
                 {
-                    await SimpleEmbedAsync("Permission override not found.");
+                    await Context.SimpleEmbedAsync("Permission override not found.");
                     return;
                 }
                 db.Permissions.Remove(permission);
                 db.SaveChanges();
                 PermissionService.PermissionCache.Remove(Context.Guild.Id);
-                await SimpleEmbedAsync($"{match.Name} permission set back to default.", Color.Blue);
+                await Context.SimpleEmbedAsync($"{match.Name} permission set back to default.", Color.Blue);
             }
         }
 
@@ -128,11 +128,11 @@ namespace ELO.Modules
                 PermissionService.PermissionCache.Remove(Context.Guild.Id);
                 if (modRole != null)
                 {
-                    await SimpleEmbedAsync("Moderator role set.", Color.Green);
+                    await Context.SimpleEmbedAsync("Moderator role set.", Color.Green);
                 }
                 else
                 {
-                    await SimpleEmbedAsync("Mod role is no longer set, only ELO Admins and users with a role that has `Administrator` permissions can run moderator commands now.", Color.DarkBlue);
+                    await Context.SimpleEmbedAsync("Mod role is no longer set, only ELO Admins and users with a role that has `Administrator` permissions can run moderator commands now.", Color.DarkBlue);
                 }
             }
         }
@@ -150,11 +150,11 @@ namespace ELO.Modules
                 PermissionService.PermissionCache.Remove(Context.Guild.Id);
                 if (adminRole != null)
                 {
-                    await SimpleEmbedAsync("Admin role set.", Color.Green);
+                    await Context.SimpleEmbedAsync("Admin role set.", Color.Green);
                 }
                 else
                 {
-                    await SimpleEmbedAsync("Admin role is no longer set, only users with a role that has `Administrator` permissions can act as an admin now.", Color.DarkBlue);
+                    await Context.SimpleEmbedAsync("Admin role is no longer set, only users with a role that has `Administrator` permissions can act as an admin now.", Color.DarkBlue);
                 }
             }
         }

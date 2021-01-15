@@ -5,17 +5,14 @@ using ELO.Entities;
 using ELO.Models;
 using ELO.Preconditions;
 using ELO.Services;
-using RavenBOT.Common;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using ELO.Extensions;
 
 namespace ELO.Modules
 {
-    [RavenRequireContext(ContextType.Guild)]
-    public class GameManagement : ReactiveBase
+    [RequireContext(ContextType.Guild)]
+    public class GameManagement : ModuleBase<ShardedCommandContext>
     {
         public GameService GameService { get; }
 
@@ -36,7 +33,7 @@ namespace ELO.Modules
         [RequirePermission(PermissionLevel.Registered)]
         public virtual async Task ShowResultsAsync()
         {
-            await SimpleEmbedAsync(string.Join("\n", RavenBOT.Common.Extensions.EnumNames<VoteState>()), Color.Blue);
+            await Context.SimpleEmbedAsync(string.Join("\n", Extensions.Extensions.EnumNames<VoteState>()), Color.Blue);
         }
 
         [Command("Vote", RunMode = RunMode.Sync)]
@@ -83,38 +80,38 @@ namespace ELO.Modules
                 var lobby = db.GetLobby(lobbyChannel);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 var game = db.GameResults.FirstOrDefault(x => x.GuildId == Context.Guild.Id && x.LobbyId == lobbyChannel.Id && x.GameId == gameNumber);
                 if (game == null)
                 {
-                    await SimpleEmbedAsync($"Game not found. Most recent game is {db.GetLatestGame(lobby)?.GameId}", Color.DarkBlue);
+                    await Context.SimpleEmbedAsync($"Game not found. Most recent game is {db.GetLatestGame(lobby)?.GameId}", Color.DarkBlue);
                     return;
                 }
 
                 if (game.GameState != GameState.Decided)
                 {
-                    await SimpleEmbedAsync("Game result is not decided and therefore cannot be undone.", Color.Red);
+                    await Context.SimpleEmbedAsync("Game result is not decided and therefore cannot be undone.", Color.Red);
                     return;
                 }
 
                 if (game.GameState == GameState.Draw)
                 {
-                    await SimpleEmbedAsync("Cannot undo a draw.", Color.Red);
+                    await Context.SimpleEmbedAsync("Cannot undo a draw.", Color.Red);
                     return;
                 }
 
                 await UndoScoreUpdatesAsync(game, competition, db);
-                await SimpleEmbedAsync($"Game #{gameNumber} in {MentionUtils.MentionChannel(lobbyChannel.Id)} Undone.");
+                await Context.SimpleEmbedAsync($"Game #{gameNumber} in {MentionUtils.MentionChannel(lobbyChannel.Id)} Undone.");
             }
         }
 
         public virtual async Task UndoScoreUpdatesAsync(GameResult game, Competition competition, Database db)
         {
             var scoreUpdates = db.GetScoreUpdates(game.GuildId, game.LobbyId, game.GameId).ToArray();
-            var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+            var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
             foreach (var score in scoreUpdates)
             {
                 var player = db.Players.Find(game.GuildId, score.UserId);
@@ -188,14 +185,14 @@ namespace ELO.Modules
                 if (lobby == null)
                 {
                     //Reply error not a lobby.
-                    await SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 var game = db.GameResults.FirstOrDefault(x => x.GuildId == Context.Guild.Id && x.LobbyId == lobby.ChannelId && x.GameId == gameNumber);
                 if (game == null)
                 {
-                    await SimpleEmbedAsync("Invalid Game number.", Color.Red);
+                    await Context.SimpleEmbedAsync("Invalid Game number.", Color.Red);
                     return;
                 }
                 var info = GameService.GetGameEmbed(game);

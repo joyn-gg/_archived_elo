@@ -1,7 +1,7 @@
-﻿using RavenBOT.Common;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using ELO.Extensions;
 
 namespace ELO.Models
 {

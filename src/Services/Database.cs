@@ -82,7 +82,7 @@ namespace ELO.Services
 
         public Lobby GetLobbyWithQueue(ISocketMessageChannel channel)
         {
-            return Lobbies.Where(x => x.ChannelId == channel.Id).Include(x => x.Queue).FirstOrDefault();
+            return Lobbies.AsQueryable().Where(x => x.ChannelId == channel.Id).Include(x => x.Queue).FirstOrDefault();
         }
 
         public Lobby GetLobby(ISocketMessageChannel channel)
@@ -102,7 +102,7 @@ namespace ELO.Services
 
         public GameResult GetLatestGame(Lobby lobby)
         {
-            return GameResults.Where(x => x.LobbyId == lobby.ChannelId).OrderByDescending(x => x.GameId).FirstOrDefault();
+            return GameResults.AsQueryable().Where(x => x.LobbyId == lobby.ChannelId).OrderByDescending(x => x.GameId).FirstOrDefault();
         }
 
         public bool IsCurrentlyPicking(Lobby lobby)
@@ -122,12 +122,12 @@ namespace ELO.Services
 
         public IEnumerable<TeamPlayer> GetTeamPlayers(ulong guildId, ulong channelId, int gameNumber, int teamId)
         {
-            return TeamPlayers.Where(x => x.GuildId == guildId && x.ChannelId == channelId && x.GameNumber == gameNumber && x.TeamNumber == teamId);
+            return TeamPlayers.AsQueryable().Where(x => x.GuildId == guildId && x.ChannelId == channelId && x.GameNumber == gameNumber && x.TeamNumber == teamId);
         }
 
         public IEnumerable<TeamPlayer> GetTeam1(GameResult game)
         {
-            return TeamPlayers.Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == 1);
+            return TeamPlayers.AsQueryable().Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == 1);
         }
 
         public HashSet<ulong> GetTeamFull(GameResult game, int teamNumber)
@@ -135,9 +135,9 @@ namespace ELO.Services
             ulong cap = default;
             if (game.GamePickMode == PickMode.Captains_HighestRanked || game.GamePickMode == PickMode.Captains_Random || game.GamePickMode == PickMode.Captains_RandomHighestRanked)
             {
-                cap = TeamCaptains.Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == teamNumber).Select(x => x.UserId).FirstOrDefault();
+                cap = TeamCaptains.AsQueryable().Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == teamNumber).Select(x => x.UserId).FirstOrDefault();
             }
-            var players = TeamPlayers.Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == teamNumber).Select(x => x.UserId).ToHashSet();
+            var players = TeamPlayers.AsQueryable().Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == teamNumber).Select(x => x.UserId).ToHashSet();
             if (cap != default)
             {
                 players.Add(cap);
@@ -147,27 +147,27 @@ namespace ELO.Services
 
         public IEnumerable<TeamPlayer> GetTeam2(GameResult game)
         {
-            return TeamPlayers.Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == 2);
+            return TeamPlayers.AsQueryable().Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId && x.GameNumber == game.GameId && x.TeamNumber == 2);
         }
 
         public IEnumerable<QueuedPlayer> GetQueuedPlayers(ulong guildId, ulong channelId)
         {
-            return QueuedPlayers.Where(x => x.GuildId == guildId && x.ChannelId == channelId);
+            return QueuedPlayers.AsQueryable().Where(x => x.GuildId == guildId && x.ChannelId == channelId);
         }
 
         public IEnumerable<QueuedPlayer> GetQueue(GameResult game)
         {
-            return QueuedPlayers.Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId);
+            return QueuedPlayers.AsQueryable().Where(x => x.GuildId == game.GuildId && x.ChannelId == game.LobbyId);
         }
 
         public IEnumerable<QueuedPlayer> GetQueue(Lobby lobby)
         {
-            return QueuedPlayers.Where(x => x.GuildId == lobby.GuildId && x.ChannelId == lobby.ChannelId);
+            return QueuedPlayers.AsQueryable().Where(x => x.GuildId == lobby.GuildId && x.ChannelId == lobby.ChannelId);
         }
 
         public IEnumerable<ScoreUpdate> GetScoreUpdates(ulong guildId, ulong channelId, int gameNumber)
         {
-            return ScoreUpdates.Where(x => x.GuildId == guildId && x.ChannelId == channelId && x.GameNumber == gameNumber);
+            return ScoreUpdates.AsQueryable().Where(x => x.GuildId == guildId && x.ChannelId == channelId && x.GameNumber == gameNumber);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -3,12 +3,13 @@ using Discord.Commands;
 using Discord.WebSocket;
 using ELO.Entities;
 using ELO.Models;
-using RavenBOT.Common;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ELO.Extensions;
 
 namespace ELO.Services
 {
@@ -29,9 +30,9 @@ namespace ELO.Services
             var winnerUpdates = new List<(Player, int, Rank, RankChangeState, Rank)>();
             var loserUpdates = new List<(Player, int, Rank, RankChangeState, Rank)>();
 
-            var winners = db.Players.Where(x => x.GuildId == competition.GuildId && winnerIds.Contains(x.UserId)).ToArray();
-            var losers = db.Players.Where(x => x.GuildId == competition.GuildId && loserIds.Contains(x.UserId)).ToArray();
-            var scoreUpdates = db.ScoreUpdates.Where(x => x.ChannelId == lobby.ChannelId && x.GameNumber == game.GameId).ToArray();
+            var winners = db.Players.AsQueryable().Where(x => x.GuildId == competition.GuildId && winnerIds.Contains(x.UserId)).ToArray();
+            var losers = db.Players.AsQueryable().Where(x => x.GuildId == competition.GuildId && loserIds.Contains(x.UserId)).ToArray();
+            var scoreUpdates = db.ScoreUpdates.AsQueryable().Where(x => x.ChannelId == lobby.ChannelId && x.GameNumber == game.GameId).ToArray();
             foreach (var player in winners)
             {
                 var maxRank = ranks.Where(x => x.Points < player.Points).OrderByDescending(x => x.Points).FirstOrDefault();
@@ -316,7 +317,7 @@ namespace ELO.Services
                 }
 
                 var competition = db.GetOrCreateCompetition(context.Guild.Id);
-                var ranks = db.Ranks.Where(x => x.GuildId == context.Guild.Id).ToArray();
+                var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == context.Guild.Id).ToArray();
 
                 List<(Player, int, Rank, RankChangeState, Rank)> winList;
                 List<(Player, int, Rank, RankChangeState, Rank)> loseList;
@@ -475,7 +476,7 @@ namespace ELO.Services
             }
 
             var competition = db.GetOrCreateCompetition(context.Guild.Id);
-            var ranks = db.Ranks.Where(x => x.GuildId == context.Guild.Id).ToArray();
+            var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == context.Guild.Id).ToArray();
 
             List<(Player, int, Rank, RankChangeState, Rank)> winList;
             List<(Player, int, Rank, RankChangeState, Rank)> loseList;
@@ -645,7 +646,7 @@ namespace ELO.Services
                     return;
                 }
 
-                var votes = db.Votes.Where(x => x.ChannelId == lobby.ChannelId && x.GameId == gameNumber).ToList();
+                var votes = db.Votes.AsQueryable().Where(x => x.ChannelId == lobby.ChannelId && x.GameId == gameNumber).ToList();
                 if (votes.Any(x => x.UserId == context.User.Id))
                 {
                     await context.Channel.SendMessageAsync("", false, "You already submitted your vote for this game.".QuickEmbed(Color.DarkBlue));

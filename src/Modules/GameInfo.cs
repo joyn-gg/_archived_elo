@@ -5,21 +5,24 @@ using ELO.Models;
 using ELO.Preconditions;
 using ELO.Services;
 using Microsoft.EntityFrameworkCore;
-using RavenBOT.Common;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ELO.Extensions;
+using ELO.Services.Reactive;
 
 namespace ELO.Modules
 {
     [RequireContext(ContextType.Guild)]
     [RequirePermission(PermissionLevel.Registered)]
-    public class GameInfo : ReactiveBase
+    public class GameInfo : ModuleBase<ShardedCommandContext>
     {
+        private readonly ReactiveService _reactive;
         public GameService GameService { get; }
 
-        public GameInfo(GameService gameService)
+        public GameInfo(GameService gameService, ReactiveService reactive)
         {
+            _reactive = reactive;
             GameService = gameService;
         }
 
@@ -39,14 +42,14 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.Find(lobbyChannel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Specified channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Specified channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 var game = db.GetLatestGame(lobby);
                 if (game == null)
                 {
-                    await SimpleEmbedAsync("Latest game is not available.", Color.Red);
+                    await Context.SimpleEmbedAsync("Latest game is not available.", Color.Red);
                     return;
                 }
 
@@ -57,13 +60,13 @@ namespace ELO.Modules
         public virtual async Task DisplayGameAsync(ManualGameResult game)
         {
             var embed = GameService.GetGameEmbed(game);
-            await ReplyAsync(embed);
+            await ReplyAsync(null, false, embed.Build());
         }
 
         public virtual async Task DisplayGameAsync(GameResult game)
         {
             var embed = GameService.GetGameEmbed(game);
-            await ReplyAsync(embed);
+            await ReplyAsync(null, false, embed.Build());
         }
 
         [Command("GameInfo", RunMode = RunMode.Async)]
@@ -89,14 +92,14 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.Find(lobbyChannel.Id);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Specified channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Specified channel is not a lobby.", Color.Red);
                     return;
                 }
 
                 var game = db.GameResults.FirstOrDefault(x => x.LobbyId == lobby.ChannelId && x.GameId == gameNumber);
                 if (game == null)
                 {
-                    await SimpleEmbedAsync("Invalid Game Id.", Color.Red);
+                    await Context.SimpleEmbedAsync("Invalid Game Id.", Color.Red);
                     return;
                 }
 
@@ -114,7 +117,7 @@ namespace ELO.Modules
                 var game = db.ManualGameResults.FirstOrDefault(x => x.GuildId == Context.Guild.Id && x.GameId == gameNumber);
                 if (game == null)
                 {
-                    await SimpleEmbedAsync("Specified game number is invalid.", Color.Red);
+                    await Context.SimpleEmbedAsync("Specified game number is invalid.", Color.Red);
                     return;
                 }
 
@@ -129,11 +132,11 @@ namespace ELO.Modules
         {
             using (var db = new Database())
             {
-                var games = db.ManualGameResults.AsNoTracking().Where(x => x.GuildId == Context.Guild.Id).OrderByDescending(x => x.GuildId).Take(100).ToList();
+                var games = db.ManualGameResults.AsNoTracking().AsQueryable().Where(x => x.GuildId == Context.Guild.Id).OrderByDescending(x => x.GuildId).Take(100).ToList();
 
                 if (games.Count == 0)
                 {
-                    await SimpleEmbedAsync("There aren't any manual games in history.", Color.Blue);
+                    await Context.SimpleEmbedAsync("There aren't any manual games in history.", Color.Blue);
                     return;
                 }
 
@@ -143,7 +146,7 @@ namespace ELO.Modules
                 {
                     var content = page.Select(x =>
                     {
-                        var scoreUpdates = db.ManualGameScoreUpdates.AsNoTracking().Where(y => y.GuildId == Context.Guild.Id && y.ManualGameId == x.GameId).ToArray();
+                        var scoreUpdates = db.ManualGameScoreUpdates.AsNoTracking().AsQueryable().Where(y => y.GuildId == Context.Guild.Id && y.ManualGameId == x.GameId).ToArray();
                         if (scoreUpdates.Length == 0) return null;
 
                         return new EmbedFieldBuilder()
@@ -159,7 +162,7 @@ namespace ELO.Modules
                     });
                 }
 
-                await PagedReplyAsync(new ReactivePager(pages)
+                await _reactive.SendPagedMessageAsync(Context, Context.Channel, new ReactivePager(pages)
                 {
                     Color = Color.Blue
                 }.ToCallBack().WithDefaultPagerCallbacks().WithJump());
@@ -181,14 +184,14 @@ namespace ELO.Modules
                 var lobby = db.GetLobby(lobbyChannel);
                 if (lobby == null)
                 {
-                    await SimpleEmbedAsync("Specified channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Specified channel is not a lobby.", Color.Red);
                     return;
                 }
 
-                var games = db.GameResults.AsNoTracking().Where(x => x.GuildId == Context.Guild.Id && x.LobbyId == lobbyChannel.Id).OrderByDescending(x => x.GameId).Take(100);
+                var games = db.GameResults.AsNoTracking().AsQueryable().Where(x => x.GuildId == Context.Guild.Id && x.LobbyId == lobbyChannel.Id).OrderByDescending(x => x.GameId).Take(100);
                 if (!games.Any())
                 {
-                    await SimpleEmbedAsync("There aren't any games in history for the specified lobby.", Color.Blue);
+                    await Context.SimpleEmbedAsync("There aren't any games in history for the specified lobby.", Color.Blue);
                     return;
                 }
 
@@ -210,7 +213,7 @@ namespace ELO.Modules
                     });
                 }
 
-                await PagedReplyAsync(new ReactivePager(pages)
+                await _reactive.SendPagedMessageAsync(Context, Context.Channel, new ReactivePager(pages)
                 {
                     Color = Color.Blue
                 }.ToCallBack().WithDefaultPagerCallbacks().WithJump());

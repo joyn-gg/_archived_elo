@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using RavenBOT.Common;
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -182,7 +182,7 @@ namespace ELO.Services
             }
         }
 
-        private async Task DownloadMembers()
+        private void DownloadMembers()
         {
             var _ = Task.Run(async () =>
             {
@@ -219,6 +219,10 @@ namespace ELO.Services
             }
         }
 
+        private int cacheRefreshCheck = 0;
+        private object cacheLock = new object();
+
+
         public bool IsPremium(ulong guildId)
         {
             if (!PremiumConfig.Enabled) return true;
@@ -236,8 +240,20 @@ namespace ELO.Services
                     return false;
                 }
 
+
                 var patreonGuild = Client.GetGuild(PremiumConfig.GuildId);
-                patreonGuild.DownloadUsersAsync();
+
+
+                lock (cacheLock)
+                {
+                    cacheRefreshCheck++;
+                    if (cacheRefreshCheck > 1000)
+                    {
+                        DownloadMembers();
+                        cacheRefreshCheck = 0;
+                    }
+                }
+
                 var patreonUser = patreonGuild?.GetUser(match.PremiumRedeemer.Value);
 
                 // If user not found, fall back to check for deleted premium sub.
@@ -288,7 +304,7 @@ namespace ELO.Services
                 if (match.LastSuccessfulKnownPayment.Month == now.Month && match.LastSuccessfulKnownPayment.Year == now.Year)
                 {
                     // Divide limit across all user claimed servers.
-                    var allRedeemed = db.Competitions.Where(x => x.PremiumRedeemer == match.UserId).ToArray();
+                    var allRedeemed = db.Competitions.AsQueryable().Where(x => x.PremiumRedeemer == match.UserId).ToArray();
                     int limit = match.EntitledRegistrationCount / allRedeemed.Length;
                     return match.EntitledRegistrationCount;
                 }
@@ -329,7 +345,7 @@ namespace ELO.Services
                     return GetDeletedPremiumLimit(match.PremiumRedeemer.Value);
                 }
 
-                var allRedeemed = db.Competitions.Where(x => x.PremiumRedeemer == match.PremiumRedeemer).ToArray();
+                var allRedeemed = db.Competitions.AsQueryable().Where(x => x.PremiumRedeemer == match.PremiumRedeemer).ToArray();
                 int limit = patreonRole.Limit / allRedeemed.Length;
 
                 return limit;
@@ -390,14 +406,14 @@ namespace ELO.Services
                             }
                             else
                             {
-                                var oldUserClaims = db.Competitions.Where(x => x.PremiumRedeemer == config.PremiumRedeemer.Value).ToArray();
+                                var oldUserClaims = db.Competitions.AsQueryable().Where(x => x.PremiumRedeemer == config.PremiumRedeemer.Value).ToArray();
                                 int oldLimit = oldClaimUserRole.Limit;
                                 if (oldUserClaims.Length > 0)
                                 {
                                     oldLimit = oldLimit / oldUserClaims.Length;
                                 }
 
-                                var newUserClaims = db.Competitions.Where(x => x.PremiumRedeemer == context.User.Id).ToArray();
+                                var newUserClaims = db.Competitions.AsQueryable().Where(x => x.PremiumRedeemer == context.User.Id).ToArray();
                                 int newLimit = oldClaimUserRole.Limit;
                                 if (newUserClaims.Length > 0)
                                 {
@@ -422,7 +438,7 @@ namespace ELO.Services
                     }
                 }
 
-                var claims = db.Competitions.Where(x => x.PremiumRedeemer == context.User.Id).ToArray();
+                var claims = db.Competitions.AsQueryable().Where(x => x.PremiumRedeemer == context.User.Id).ToArray();
 
                 // Use claims.length + 1 since current guild is not premium yet at this stage.
                 int remaining = claims.Length > 0 ? claims.Length + 1 : 1;

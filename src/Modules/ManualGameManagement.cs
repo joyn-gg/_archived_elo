@@ -4,18 +4,18 @@ using Discord.WebSocket;
 using ELO.Entities;
 using ELO.Models;
 using ELO.Services;
-using RavenBOT.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ELO.Extensions;
 
 namespace ELO.Modules
 {
     [Preconditions.RequirePermission(PermissionLevel.Moderator)]
-    [RavenRequireContext(ContextType.Guild)]
-    public class ManualGameManagement : ReactiveBase
+    [RequireContext(ContextType.Guild)]
+    public class ManualGameManagement : ModuleBase<ShardedCommandContext>
     {
         public UserService UserService { get; }
 
@@ -49,7 +49,7 @@ namespace ELO.Modules
                 var game = db.ManualGameResults.Find(Context.Guild.Id, gameId);
                 if (game == null)
                 {
-                    await SimpleEmbedAsync("Invalid game id.", Color.Red);
+                    await Context.SimpleEmbedAsync("Invalid game id.", Color.Red);
                     return;
                 }
                 var responseEmbed = new EmbedBuilder();
@@ -58,8 +58,8 @@ namespace ELO.Modules
                                                     $"Submitted at: {game.CreationTime}");
                 var updateChanges = new StringBuilder();
                 var competition = db.GetOrCreateCompetition(Context.Guild.Id);
-                var scoreUpdates = db.ManualGameScoreUpdates.Where(x => x.GuildId == Context.Guild.Id && x.ManualGameId == gameId).ToArray();
-                var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                var scoreUpdates = db.ManualGameScoreUpdates.AsQueryable().Where(x => x.GuildId == Context.Guild.Id && x.ManualGameId == gameId).ToArray();
+                var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
                 foreach (var scoreUpdate in scoreUpdates)
                 {
                     var player = db.Players.Find(Context.Guild.Id, scoreUpdate.UserId);
@@ -89,7 +89,7 @@ namespace ELO.Modules
 
                 db.ManualGameResults.Remove(game);
                 db.SaveChanges();
-                await SimpleEmbedAsync("Manual game undone.");
+                await Context.SimpleEmbedAsync("Manual game undone.");
             }
         }
 
@@ -103,13 +103,13 @@ namespace ELO.Modules
                     {
                         var competition = db.GetOrCreateCompetition(Context.Guild.Id);
                         var updates = new List<(Player, int, Rank, RankChangeState, Rank)>();
-                        var ranks = db.Ranks.Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                        var ranks = db.Ranks.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
                         var embed = new EmbedBuilder
                         {
                             Title = (win ? "Win" : "Lose") + $" Manual Game: #{competition.ManualGameCounter + 1}",
                             Color = win ? Color.Green : Color.Red,
                         };
-                        var players = db.Players.Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId)).ToArray();
+                        var players = db.Players.AsQueryable().Where(x => x.GuildId == Context.Guild.Id && userIds.Contains(x.UserId)).ToArray();
 
                         var sb = new StringBuilder();
                         foreach (var player in players)
@@ -184,7 +184,7 @@ namespace ELO.Modules
                         //Update counter and save new competition config
 
                         //Create new game info
-                        var vals = ((IQueryable<ManualGameResult>)db.ManualGameResults).Where(x => x.GuildId == Context.Guild.Id).ToArray();
+                        var vals = db.ManualGameResults.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
                         var count = vals.Length == 0 ? 0 : vals.Max(x => x.GameId);
                         var game = new ManualGameResult
                         {
@@ -198,7 +198,7 @@ namespace ELO.Modules
                         game.GameState = win ? ManualGameState.Win : ManualGameState.Lose;
                         db.ManualGameResults.Add(game);
                         db.SaveChanges();
-                        var maxId = db.ManualGameResults.Where(x => x.GuildId == Context.Guild.Id).Max(x => x.GameId);
+                        var maxId = db.ManualGameResults.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).Max(x => x.GameId);
                         foreach (var upd in updates)
                         {
                             db.ManualGameScoreUpdates.Add(new ManualGameScoreUpdate
@@ -211,7 +211,7 @@ namespace ELO.Modules
                         }
 
                         embed.Description = sb.ToString();
-                        await ReplyAsync(embed);
+                        await ReplyAsync("", false, embed.Build());
                         db.SaveChanges();
                         transaction.Commit();
                     }

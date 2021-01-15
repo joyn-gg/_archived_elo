@@ -7,10 +7,12 @@ using ELO.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Passive.Discord.Setup;
-using RavenBOT.Common;
+
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Discord;
+using ELO.Services.Reactive;
 
 namespace ELO
 {
@@ -151,9 +153,19 @@ namespace ELO
                 ShardId = shardIdValue,
                 LogLevel = logLevel,
                 ExclusiveBulkDelete = true,
-                AlwaysDownloadUsers = false,
-                MessageCacheSize = 10
+                AlwaysDownloadUsers = true,
+                MessageCacheSize = 10,
+                GatewayIntents = GatewayIntents.DirectMessages | 
+                                 GatewayIntents.GuildBans | 
+                                 GatewayIntents.GuildMembers | 
+                                 GatewayIntents.Guilds | 
+                                 GatewayIntents.GuildMessages |
+                                 GatewayIntents.DirectMessages |
+                                 GatewayIntents.GuildMessageReactions |
+                                 GatewayIntents.DirectMessageReactions
             };
+
+            
 
             var token = config.GetOrAddEntry("Token", () =>
             {
