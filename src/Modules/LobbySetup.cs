@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using System;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using ELO.Entities;
@@ -18,9 +19,12 @@ namespace ELO.Modules
     {
         public PremiumService Premium { get; }
 
-        public LobbySetup(PremiumService premium)
+        public DiscordShardedClient Client { get; }
+
+        public LobbySetup(PremiumService premium, DiscordShardedClient client)
         {
             Premium = premium;
+            Client = client;
         }
 
         [Command("CreateLobby", RunMode = RunMode.Sync)]
@@ -35,7 +39,8 @@ namespace ELO.Modules
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
                 if (lobby != null)
                 {
-                    await Context.SimpleEmbedAndDeleteAsync("This channel is already a lobby. Remove the lobby before trying top create a new one here.", Color.Red);
+                    await Context.SimpleEmbedAndDeleteAsync("This channel is already a lobby.\n" +
+                                                            "Remove the existing lobby with command `DeleteLobby` before trying to create a new one in this channel.", Color.Red);
                     return;
                 }
                 var allLobbies = db.Lobbies.AsQueryable().Where(x => x.GuildId == Context.Guild.Id).ToArray();
@@ -45,7 +50,7 @@ namespace ELO.Modules
                     {
                         await Context.SimpleEmbedAsync($"This server already has {Premium.PremiumConfig.LobbyLimit} lobbies created. " +
                             $"In order to create more you must become an ELO premium subscriber at {Premium.PremiumConfig.AltLink} join the server " +
-                            $"{Premium.PremiumConfig.ServerInvite} to receive your role and then run the `claimpremium` command in your server.");
+                            $"{Premium.PremiumConfig.ServerInvite} to receive your role and then run the `ClaimPremium` command in your server.");
                         return;
                     }
                 }
@@ -67,7 +72,7 @@ namespace ELO.Modules
         }
 
         [Command("SetPlayerCount", RunMode = RunMode.Sync)]
-        [Alias("Set Player Count", "Set PlayerCount")]
+        [Alias("Set Player Count", "Set PlayerCount", "PlayersPerTeam", "SetPlayersPerTeam", "TeamSize", "SetTeamSize")]
         [Summary("Sets the amount of players per team.")]
         public virtual async Task SetPlayerAsync(int playersPerTeam)
         {
@@ -88,7 +93,7 @@ namespace ELO.Modules
         }
 
         [Command("SetPickMode", RunMode = RunMode.Sync)]
-        [Alias("Set PickMode", "Set Pick Mode")]
+        [Alias("PickMode", "Set PickMode", "Set Pick Mode")]
         [Summary("Sets how players will be picked for teams in the current lobby.")]
         public virtual async Task SetPickModeAsync(PickMode pickMode)
         {
@@ -129,8 +134,8 @@ namespace ELO.Modules
         }*/
 
         [Command("PickModes", RunMode = RunMode.Async)]
+        [Alias("PickMode")]
         [Summary("Displays all pick modes to use with the SetPickMode command")]
-
         //[Alias("Pick Modes")] ignore this as it can potentially conflict with the lobby Pick command.
         public virtual async Task DisplayPickModesAsync()
         {
@@ -138,7 +143,7 @@ namespace ELO.Modules
         }
 
         [Command("SetPickOrder", RunMode = RunMode.Sync)]
-        [Alias("Set PickOrder", "Set Pick Order")]
+        [Alias("PickOrder", "Set PickOrder", "Set Pick Order")]
         [Summary("Sets how captains pick players.")]
         public virtual async Task SetPickOrderAsync(CaptainPickOrder orderMode)
         {
@@ -159,6 +164,7 @@ namespace ELO.Modules
         }
 
         [Command("PickOrders", RunMode = RunMode.Async)]
+        [Alias("PickOrder")]
         [Summary("Shows pickorder settings for the SetPickOrder command")]
         public virtual async Task DisplayPickOrdersAsync()
         {
@@ -174,26 +180,35 @@ namespace ELO.Modules
         [Summary("Set a channel to send game ready announcements for the current lobby to.")]
         public virtual async Task GameReadyAnnouncementChannel(SocketTextChannel destinationChannel = null)
         {
-            if (destinationChannel == null)
-            {
-                await Context.SimpleEmbedAsync("You need to specify a channel for the announcements to be sent to.", Color.DarkBlue);
-                return;
-            }
-
-            if (destinationChannel.Id == Context.Channel.Id)
-            {
-                await Context.SimpleEmbedAsync("You cannot send announcements to the current channel, instead run it in a lobby channel and mention the ready announcement channel.", Color.Red);
-                return;
-            }
-
-            using (var db = new Database())
+            await using (var db = new Database())
             {
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
+                
                 if (lobby == null)
                 {
-                    await Context.SimpleEmbedAsync("This command must be run from within a lobby channel.", Color.Red);
+                    await Context.SimpleEmbedAndDeleteAsync("This command must be run from within a lobby channel!\n\n" +
+                        "Go to your __lobby channel__ and mention the channel you want the game ready announcements sent to.\n\n" +
+                        "**Example:** For #lobby ready announcements to be sent to #games\n" +
+                        "Go to #lobby and type `SetReadyChannel #games`", Color.Red);
                     return;
                 }
+
+                if (destinationChannel == null)
+                {
+                    await Context.SimpleEmbedAsync($"**Current Game Announcement Channel:** {(lobby.GameReadyAnnouncementChannel == null ? "N/A" : MentionUtils.MentionChannel(lobby.GameReadyAnnouncementChannel.Value))}\n" +
+                                                   "Use `SetReadyChannel #channel` to change where announcements are sent to.", Color.DarkBlue);
+                    return;
+                }
+
+                if (destinationChannel.Id == Context.Channel.Id)
+                {
+                    await Context.SimpleEmbedAndDeleteAsync("**You cannot send ready announcements to the current channel!**\n\n" + 
+                        "Use this command in your __lobby channel__ and mention the channel you want the game ready announcements sent to.\n\n" +
+                        "**Example:** If you want #lobby ready announcements sent to #games\n" +
+                        "Go to #lobby and type `SetReadyChannel #games`", Color.Red);
+                    return;
+                }
+
                 lobby.GameReadyAnnouncementChannel = destinationChannel.Id;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
@@ -206,36 +221,46 @@ namespace ELO.Modules
         [Summary("Set a channel to send game result announcements for the current lobby to.")]
         public virtual async Task GameResultAnnouncementChannel(SocketTextChannel destinationChannel = null)
         {
-            if (destinationChannel == null)
-            {
-                await Context.SimpleEmbedAsync("You need to specify a channel for the announcements to be sent to.", Color.DarkBlue);
-                return;
-            }
-
-            if (destinationChannel.Id == Context.Channel.Id)
-            {
-                await Context.SimpleEmbedAsync("You cannot send announcements to the current channel, instead run it in a lobby channel and mention the result announcement channel.", Color.Red);
-                return;
-            }
-
-            using (var db = new Database())
+            await using (var db = new Database())
             {
                 var lobby = db.Lobbies.FirstOrDefault(x => x.ChannelId == Context.Channel.Id);
+
                 if (lobby == null)
                 {
-                    await Context.SimpleEmbedAsync("This command must be run from within a lobby channel.", Color.Red);
+                    await Context.SimpleEmbedAndDeleteAsync("**This command must be run from within a lobby channel!\n\n**" +
+                        "Go to your __lobby channel__ and mention the channel you want the game result announcements sent to.\n\n" +
+                        "**Example:** For #lobby result announcements to be sent to #results\n" +
+                        "Go to #lobby and write `SetResultChannel #results`", Color.Red);
                     return;
                 }
+
+                if (destinationChannel == null)
+                {
+                    await Context.SimpleEmbedAsync($"**Current Result Announcement Channel:** {(lobby.GameResultAnnouncementChannel == null ? "N/A" : MentionUtils.MentionChannel(lobby.GameResultAnnouncementChannel.Value))}\n" + 
+                                                   "Use `SetResultChannel #channel` to change where announcements are sent to.", Color.DarkBlue);
+                    return;
+                }
+
+                if (destinationChannel.Id == Context.Channel.Id)
+                {
+                    await Context.SimpleEmbedAndDeleteAsync("**You cannot send result announcements to the current channel!**" +
+                        "Use this command in your __lobby channel__ and mention the channel you want the game ready announcements sent to.\n\n" +
+                        "**Example:** If you want #lobby results announcements sent to #results\n" +
+                        "Go to #lobby and write `SetResultChannel #results`", Color.Red);
+                    return;
+                }
+
                 lobby.GameResultAnnouncementChannel = destinationChannel.Id;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await Context.SimpleEmbedAsync($"Game results for the current lobby will be sent to {destinationChannel.Mention}", Color.Green);
+                await Context.SimpleEmbedAsync($"Game result announcements for the current lobby will be sent to {destinationChannel.Mention}", Color.Green);
             }
         }
 
         [Command("SetMinimumPoints", RunMode = RunMode.Sync)]
+        [Alias("MinimumPointsToQueue", "SetMinimumPointsToQueue")]
         [Summary("Set the minimum amount of points required to queue for the current lobby.")]
-        public virtual async Task SetMinimumPointsAsync(int points)
+        public virtual async Task SetMinimumPointsAsync(int? points = null)
         {
             using (var db = new Database())
             {
@@ -245,11 +270,19 @@ namespace ELO.Modules
                     await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
                     return;
                 }
+
+                if (points == null)
+                {
+                    await Context.SimpleEmbedAsync(
+                        $"**Current:** {(lobby.MinimumPoints == null ? "N/A" : $"{lobby.MinimumPoints.Value}")}\n" +
+                        $"Use `SetMinimumPoints <points>` or `ResetMinimumPoints` to change this setting.", Color.Blue);
+                    return;
+                }
                 lobby.MinimumPoints = points;
 
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await Context.SimpleEmbedAsync($"Minimum points required to join this lobby is now set to {points}.", Color.Green);
+                await Context.SimpleEmbedAsync($"Minimum points required to join this lobby is now set to `{points}`.", Color.Green);
             }
         }
 
@@ -401,9 +434,13 @@ namespace ELO.Modules
                                             $"Failed to Add: {string.Join(", ", mapViolations)}\n" +
                                             $"Duplicate maps found and ignored.");
                 }
+                else if (addedMaps.Count == 1)
+                {
+                    await Context.SimpleEmbedAsync($"Map added.\n{string.Join("", addedMaps)}", Color.Green);
+                }
                 else
                 {
-                    await Context.SimpleEmbedAsync("Map(s) added.", Color.Green);
+                    await Context.SimpleEmbedAsync($"Maps added.\n{string.Join(", ", addedMaps)}", Color.Green);
                 }
             }
         }
@@ -476,47 +513,67 @@ namespace ELO.Modules
                 lobby.Description = description;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await Context.SimpleEmbedAsync("Lobby description set.", Color.Blue);
+                await Context.SimpleEmbedAsync("Lobby description set.", Color.Green);
             }
         }
 
-        [Command("DeleteLobby", RunMode = RunMode.Sync)]
-        [Summary("Deletes the current lobby and all games played in it.")]
-        public virtual async Task DeleteLobbyAsync()
+        // Users might end up removing the current lobby instead of the one they are trying to specify. Most users seem to manually delete the channel instead of removing it like this anyways, and asking for PurgeLobbies command later.
+        // And since you need to use CreateLobby in the channel you want to make a lobby I don't see the need for this for the public bot.
+
+        /*[Command("DeleteLobby", RunMode = RunMode.Sync)]
+        [Alias("RemoveLobby")]
+        [Summary("Deletes the given lobby and all games played in it.")]
+        public virtual async Task DeleteLobbyAsync(SocketTextChannel channel, string confirmCode = null)
         {
-            await DeleteLobbyAsync(Context.Channel.Id);
+            await DeleteLobbyAsync(channel.Id, confirmCode);
         }
 
         [Command("DeleteLobby", RunMode = RunMode.Sync)]
-        [Summary("Deletes the given lobby and all games played in it.")]
-        public virtual async Task DeleteLobbyAsync(ulong lobbyId)
+        [Alias("RemoveLobby")]
+        [Summary("Deletes the current lobby and all games played in it.")]
+        public virtual async Task DeleteLobbyAsync(string confirmCode = null)
         {
-            using (var db = new Database())
+            await DeleteLobbyAsync(Context.Channel.Id, confirmCode);
+        }*/
+
+        [Command("DeleteLobby", RunMode = RunMode.Sync)]
+        [Alias("RemoveLobby")]
+        [Summary("Deletes the current lobby and all games played in it.")]
+        public virtual async Task DeleteLobbyAsync(/*[Summary("(optional)@Channel, channelId")]ulong lobbyId,*/string confirmCode = null)
+        {
+            string confirmKey = "urh2riz";
+
+            await using (var db = new Database())
             {
-                var lobby = db.Lobbies.Find(lobbyId);
+                var lobby = db.Lobbies.Find(Context.Channel.Id);
                 if (lobby == null)
                 {
-                    await Context.SimpleEmbedAsync("Channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAndDeleteAsync("Current channel is not a lobby.\n\n" +
+                                                            "Please use this command in the lobby you are trying to remove.\n" +
+                                                            "Alternatively you can use `PurgeLobbies` to remove unused lobbies that no longer have a channel.", Color.Red);
+                    return;
+                }
+
+                if (confirmCode == null || !confirmCode.Equals(confirmKey, StringComparison.OrdinalIgnoreCase))
+                {
+                    await Context.SimpleEmbedAndDeleteAsync($"**Are you sure you want to delete the lobby #{Client.GetChannel(lobby.ChannelId)}?**\n\n" +
+                        $"This will **completely** remove the lobby, the games played and all leaderboards associated with it from the database.\n" +
+                        $"**This can __NOT__ be undone**\n" +
+                        $"\nPlease __re-run this command__ with confirmation code `{confirmKey}`\n" +
+                        $"`DeleteLobby {confirmKey}`", Color.DarkOrange);
                     return;
                 }
 
                 db.Lobbies.Remove(lobby);
                 db.SaveChanges();
-                await Context.SimpleEmbedAsync($"Lobby and all games played in it have been removed.", Color.Green);
+                await Context.SimpleEmbedAsync($"Lobby and all games played in it has been deleted.", Color.Green);
             }
         }
 
-        [Command("DeleteLobby", RunMode = RunMode.Sync)]
-        [Summary("Deletes the given lobby and all games played in it.")]
-        public virtual async Task DeleteLobbyAsync(SocketTextChannel channel)
-        {
-            await DeleteLobbyAsync(channel.Id);
-        }
-
         [Command("PurgeLobbies", RunMode = RunMode.Sync)]
-        [Alias("PurgeLobbys")]
+        [Alias("PurgeLobbys", "RemoveUnusedLobbies", "DeleteUnusedLobbies")]
         [Summary("Deletes all lobbies that no longer have a channel associated with it.")]
-        public virtual async Task PurgeLobbiesAsynnc()
+        public virtual async Task PurgeLobbiesAsync()
         {
             using (var db = new Database())
             {
@@ -530,7 +587,7 @@ namespace ELO.Modules
 
                 db.Lobbies.RemoveRange(lobbies);
                 db.SaveChanges();
-                await Context.SimpleEmbedAsync($"{lobbies.Length} Lobbies removed.", Color.Green);
+                await Context.SimpleEmbedAsync($"{lobbies.Length} unused {(lobbies.Length > 1 ? "lobbies" : "lobby")} removed.", Color.Green);
             }
         }
 
@@ -549,17 +606,19 @@ namespace ELO.Modules
                 }
                 if (hideQueue == null)
                 {
-                    await Context.SimpleEmbedAsync($"Current Hide Queue Setting: {lobby.HideQueue}", Color.Blue);
+                    await Context.SimpleEmbedAsync($"**Current Hide Queue Setting:** {lobby.HideQueue}\n" +
+                                           $"Use `HideQueue True` or `HideQueue False` to change this setting.", Color.Blue);
                     return;
                 }
                 lobby.HideQueue = hideQueue.Value;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await Context.SimpleEmbedAsync($"Hide Queue: {hideQueue.Value}", Color.Green);
+                await Context.SimpleEmbedAsync($"**Hide Queue:** {hideQueue.Value}", Color.Green);
             }
         }
 
-        [Command("MentionUsersInReadyAnnouncement", RunMode = RunMode.Sync)]
+        [Command("MentionUsersGameReady", RunMode = RunMode.Sync)]
+        [Alias("MentionUsersInReadyAnnouncement", "MentionUsersInGameAnnouncement", "MentionUsersInGameAnnouncement")]
         [Summary("Sets whether players are pinged in the ready announcement.")]
         [RequireBotPermission(GuildPermission.ManageMessages)]
         public virtual async Task MentionUsersReadyAsync(bool? mentionUsers = null)
@@ -574,19 +633,21 @@ namespace ELO.Modules
                 }
                 if (mentionUsers == null)
                 {
-                    await Context.SimpleEmbedAsync($"Current Mention Users Setting: {lobby.MentionUsersInReadyAnnouncement}", Color.Blue);
+                    await Context.SimpleEmbedAsync($"**Current Mention Users Setting:** {lobby.MentionUsersInReadyAnnouncement}\n" +
+                                           $"Use `MentionUsersGameReady True` or `MentionUsersGameReady False` to change this setting.", Color.Blue);
                     return;
                 }
                 lobby.MentionUsersInReadyAnnouncement = mentionUsers.Value;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await Context.SimpleEmbedAsync($"Mention Users: {mentionUsers.Value}", Color.Green);
+                await Context.SimpleEmbedAsync($"**Mention Users In Game Ready Announcements**: {mentionUsers.Value}", Color.Green);
             }
         }
 
         [Command("SetMultiplier", RunMode = RunMode.Sync)]
-        [Summary("Sets the lobby score multiplier.")]
-        public virtual async Task SetLobbyMultiplier(double multiplier)
+        [Alias("SetLobbyMultiplier", "LobbyMultiplier")]
+        [Summary("Sets or displays the lobby score multiplier.")]
+        public virtual async Task SetLobbyMultiplier(double? multiplier = null)
         {
             using (var db = new Database())
             {
@@ -597,15 +658,22 @@ namespace ELO.Modules
                     return;
                 }
 
-                lobby.LobbyMultiplier = multiplier;
+                /*if (multiplier == null)
+                {
+                    await Context.SimpleEmbedAsync($"**Current Lobby Multiplier:** {lobby.MentionUsersInReadyAnnouncement}\n" +
+                                                   $"Use `SetMultiplier X` to change this setting.", Color.Blue);
+                    return;
+                }*/
+
+        lobby.LobbyMultiplier = multiplier ?? 1;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await Context.SimpleEmbedAsync($"Multiplier set.", Color.Green);
+                await Context.SimpleEmbedAsync($"Lobby Multiplier has been {(multiplier != null ? "set" : "reset")} to `{multiplier ?? 1}` {(multiplier == null ? "(default)" : "")}", Color.Green);
             }
         }
 
         [Command("LobbyMultiplierLoss", RunMode = RunMode.Sync)]
-        [Summary("Sets whether the lobby multiplier affects the amount of points removed from users.")]
+        [Summary("Sets whether the lobby multiplier also affects the amount of points removed from users.")]
         public virtual async Task SetLossToggleMultiplier(bool? value = null)
         {
             using (var db = new Database())
@@ -619,7 +687,8 @@ namespace ELO.Modules
 
                 if (value == null)
                 {
-                    await Context.SimpleEmbedAsync($"Current Multiply Loss Value Setting: {lobby.MultiplyLossValue}");
+                    await Context.SimpleEmbedAsync($"**Current Multiply Loss Value Setting:** {lobby.MultiplyLossValue}\n" +
+                                                   $"Use `LobbyMultiplierLoss True` or `LobbyMultiplierLoss False` to change this setting.", Color.Blue);
                     return;
                 }
 
@@ -647,7 +716,8 @@ namespace ELO.Modules
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
                 await Context.SimpleEmbedAsync($"High Limit multiplier set, when users exceed `{(lobby.HighLimit.HasValue ? lobby.HighLimit.Value.ToString() : "N/A (Configure using the SetHighLimit command)")}` points, " +
-                    $"their points received will be multiplied by `{multiplier}`, it is recommended to set this to a value such as `0.5` in for lower ranked lobbies " +
+                    $"their points received will be multiplied by `{multiplier}`.\n" +
+                    $"It is recommended to set this to a value such as `0.5` for lower ranked lobbies" +
                     $"so higher ranked players are not rewarded as much for winning in lower ranked lobbies.", Color.Green);
             }
         }
@@ -668,7 +738,8 @@ namespace ELO.Modules
                 lobby.HighLimit = highLimit;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
-                await Context.SimpleEmbedAsync($"Max user points before point reduction set.", Color.Green);
+                //await Context.SimpleEmbedAsync($"Max user points before point reduction set.", Color.Green);
+                await Context.SimpleEmbedAsync($"Max user points before point reduction has been {(highLimit != null ? $"set to `{highLimit}`" : "`Disabled` (default)")}", Color.Green);
             }
         }
 
@@ -680,6 +751,7 @@ namespace ELO.Modules
         }
 
         [Command("SetHostMode", RunMode = RunMode.Sync)]
+        [Alias("HostMode")]
         [Summary("Sets if and how the host is selected.")]
         public virtual async Task SetHostModeAsync(HostSelection hostMode)
         {
