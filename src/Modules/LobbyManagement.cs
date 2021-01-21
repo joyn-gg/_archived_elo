@@ -73,6 +73,7 @@ namespace ELO.Modules
         }
 
         [Command("ForceJoin", RunMode = RunMode.Sync)]
+        [Alias("FJ")]
         [Summary("Forcefully adds a user to queue, bypasses minimum points")]
         [Preconditions.RequirePermission(PermissionLevel.Moderator)]
         public virtual async Task ForceJoinAsync(params SocketGuildUser[] users)
@@ -135,6 +136,16 @@ namespace ELO.Modules
         }
 
         [Command("Sub")]
+        [Alias("Replace")]
+        [Summary("Replace a user in the specified game with another.")]
+        [Preconditions.RequirePermission(PermissionLevel.Moderator)]
+        public virtual async Task SubUserAsync(int gameNumber, SocketGuildUser user, SocketGuildUser replacedWith)
+        {
+            await SubUserAsync((SocketTextChannel)Context.Channel, gameNumber, user, replacedWith);
+        }
+
+        [Command("Sub")]
+        [Alias("Replace")]
         [Summary("Replace a user in the specified game with another.")]
         [Preconditions.RequirePermission(PermissionLevel.Moderator)]
         public virtual async Task SubUserAsync(SocketGuildUser user, SocketGuildUser replacedWith)
@@ -144,22 +155,23 @@ namespace ELO.Modules
                 var game = db.GameResults.AsQueryable().Where(x => x.LobbyId == Context.Channel.Id).OrderByDescending(x => x.GameId).FirstOrDefault();
                 if (game != null)
                 {
-                    await SubUserAsync(game.GameId, user, replacedWith);
+                    await SubUserAsync((SocketTextChannel)Context.Channel, game.GameId, user, replacedWith);
                 }
             }
         }
 
         [Command("Sub")]
-        [Summary("Replace a user in the specified game with another.")]
+        [Alias("Replace")]
+        [Summary("Replace a user in the specified lobby and game with another.")]
         [Preconditions.RequirePermission(PermissionLevel.Moderator)]
-        public virtual async Task SubUserAsync(int gameNumber, SocketGuildUser user, SocketGuildUser replacedWith)
+        public virtual async Task SubUserAsync(SocketTextChannel lobbyChannel, int gameNumber, SocketGuildUser user, SocketGuildUser replacedWith)
         {
             using (var db = new Database())
             {
-                var lobby = db.GetLobby(Context.Channel);
+                var lobby = db.GetLobby(lobbyChannel);
                 if (lobby == null)
                 {
-                    await Context.SimpleEmbedAsync("Current channel is not a lobby.", Color.Red);
+                    await Context.SimpleEmbedAsync("Current channel is not a lobby.", Color.Red); 
                     return;
                 }
 
