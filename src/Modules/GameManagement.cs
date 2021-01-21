@@ -63,6 +63,7 @@ namespace ELO.Modules
             await UndoGameAsync(gameNumber, lobbyChannel);
         }
 
+        // This doesn't remove game result votes etc
         [Command("UndoGame", RunMode = RunMode.Sync)]
         [Alias("Undo Game")]
         [Summary("Undoes the specified game in the current (or specified) lobby")]
@@ -91,20 +92,32 @@ namespace ELO.Modules
                     return;
                 }
 
-                if (game.GameState != GameState.Decided)
+                if (game.GameState == GameState.Draw)
                 {
-                    await Context.SimpleEmbedAsync("Game result is not decided and therefore cannot be undone.", Color.Red);
+                    game.GameState = GameState.Undecided;
+                    db.Update(game);
+                    db.SaveChanges();
+                    await Context.SimpleEmbedAsync($"Game {gameNumber} was set to Draw, but is now set as Undecided.\nNo score changes were made.", Color.Green);
                     return;
                 }
 
-                if (game.GameState == GameState.Draw)
+                if (game.GameState == GameState.Canceled)
                 {
-                    await Context.SimpleEmbedAsync("Cannot undo a draw.", Color.Red);
+                    game.GameState = GameState.Undecided;
+                    db.Update(game);
+                    db.SaveChanges();
+                    await Context.SimpleEmbedAsync($"Game {gameNumber} was Canceled, but is now set as Undecided.", Color.Green);
+                    return;
+                }
+
+                if (game.GameState != GameState.Decided)
+                {
+                    await Context.SimpleEmbedAsync($"Game {gameNumber} is not decided and therefore cannot be undone.", Color.Red);
                     return;
                 }
 
                 await UndoScoreUpdatesAsync(game, competition, db);
-                await Context.SimpleEmbedAsync($"Game #{gameNumber} in {MentionUtils.MentionChannel(lobbyChannel.Id)} Undone.");
+                await Context.SimpleEmbedAsync($"Game {gameNumber} in {MentionUtils.MentionChannel(lobbyChannel.Id)} Undone.");
             }
         }
 
