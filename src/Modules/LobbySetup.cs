@@ -520,7 +520,8 @@ namespace ELO.Modules
         // Users might end up removing the current lobby instead of the one they are trying to specify. Most users seem to manually delete the channel instead of removing it like this anyways, and asking for PurgeLobbies command later.
         // And since you need to use CreateLobby in the channel you want to make a lobby I don't see the need for this for the public bot.
 
-        /*[Command("DeleteLobby", RunMode = RunMode.Sync)]
+        /*
+        [Command("DeleteLobby", RunMode = RunMode.Sync)]
         [Alias("RemoveLobby")]
         [Summary("Deletes the given lobby and all games played in it.")]
         public virtual async Task DeleteLobbyAsync(SocketTextChannel channel, string confirmCode = null)
@@ -534,7 +535,8 @@ namespace ELO.Modules
         public virtual async Task DeleteLobbyAsync(string confirmCode = null)
         {
             await DeleteLobbyAsync(Context.Channel.Id, confirmCode);
-        }*/
+        }
+        */
 
         [Command("DeleteLobby", RunMode = RunMode.Sync)]
         [Alias("RemoveLobby")]
@@ -665,7 +667,7 @@ namespace ELO.Modules
                     return;
                 }*/
 
-        lobby.LobbyMultiplier = multiplier ?? 1;
+                lobby.LobbyMultiplier = multiplier ?? 1;
                 db.Lobbies.Update(lobby);
                 db.SaveChanges();
                 await Context.SimpleEmbedAsync($"Lobby Multiplier has been {(multiplier != null ? "set" : "reset")} to `{multiplier ?? 1}` {(multiplier == null ? "(default)" : "")}", Color.Green);
@@ -717,7 +719,7 @@ namespace ELO.Modules
                 db.SaveChanges();
                 await Context.SimpleEmbedAsync($"High Limit multiplier set, when users exceed `{(lobby.HighLimit.HasValue ? lobby.HighLimit.Value.ToString() : "N/A (Configure using the SetHighLimit command)")}` points, " +
                     $"their points received will be multiplied by `{multiplier}`.\n" +
-                    $"It is recommended to set this to a value such as `0.5` for lower ranked lobbies" +
+                    $"It is recommended to set this to a value such as `0.5` for lower ranked lobbies " +
                     $"so higher ranked players are not rewarded as much for winning in lower ranked lobbies.", Color.Green);
             }
         }
