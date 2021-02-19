@@ -434,13 +434,9 @@ namespace ELO.Modules
                                             $"Failed to Add: {string.Join(", ", mapViolations)}\n" +
                                             $"Duplicate maps found and ignored.");
                 }
-                else if (addedMaps.Count == 1)
-                {
-                    await Context.SimpleEmbedAsync($"Map added.\n{string.Join("", addedMaps)}", Color.Green);
-                }
                 else
                 {
-                    await Context.SimpleEmbedAsync($"Maps added.\n{string.Join(", ", addedMaps)}", Color.Green);
+                    await Context.SimpleEmbedAsync($"Map{(addedMaps.Count == 1 ? "" : "s")} added.\n{string.Join("", addedMaps)}", Color.Green);
                 }
             }
         }
