@@ -320,7 +320,9 @@ namespace ELO.Modules
                     case LeaderboardSortMode.kills:
                         players = users.OrderByDescending(x => x.Kills).Skip(skipCount).Take(pageSize).ToArray();
                         break;
-
+                    case LeaderboardSortMode.deaths:
+                        players = users.OrderByDescending(x => x.Deaths).Skip(skipCount).Take(pageSize).ToArray();
+                        break;
                     case LeaderboardSortMode.kdr:
                         players = users.OrderByDescending(x => (double)x.Kills / (x.Deaths == 0 ? 1 : x.Deaths)).Skip(skipCount).Take(pageSize).ToArray();
                         break;
@@ -377,6 +379,10 @@ namespace ELO.Modules
 
                     case LeaderboardSortMode.kills:
                         sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - `{player.Kills}`");
+                        break;
+
+                    case LeaderboardSortMode.deaths:
+                        sb.AppendLine($"{startValue}: {player.GetDisplayNameSafe()} - `{player.Deaths}`");
                         break;
 
                     case LeaderboardSortMode.kdr:

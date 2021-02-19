@@ -30,6 +30,10 @@ namespace ELO.Entities
 
         kills = 60,
 
-        kdr = 70
+        kdr = 70,
+
+        death = 80,
+
+        deaths = 80
     }
 }
