@@ -1,0 +1,57 @@
+name: ci/cd
+
+on:
+  push:
+    branches:
+    - staging
+    tags:
+      - '*'
+
+jobs:
+
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: build
+      env:
+        DOCKER_REGISTRY: quay.io
+        DOCKER_USERNAME: ${{ secrets.QUAY_ROBOT_USER }}
+        DOCKER_PASSWORD: ${{ secrets.QUAY_ROBOT_PASSWORD }}
+        PROJECT_NAME: elo_bot
+        PROJECT_OWNER: tournament_kings
+      run: |
+        shopt -s extglob
+
+        case "${GITHUB_REF}" in
+        */staging)
+          VERSION="staging-${GITHUB_SHA}"
+          echo "Using staging tagging rules: ${VERSION}"
+          ;;
+
+        */v+([0-9]).+([0-9]).+([0-9]))
+          VERSION="$(echo ${GITHUB_REF} | cut -d '/' -f 3)"
+          echo "Using release tagging rules: ${VERSION}"
+          ;;
+
+        *)
+          echo "Ignoring ref (${GITHUB_REF}) with no tagging rules"
+          exit 0
+          ;;
+        esac
+
+        echo "${DOCKER_PASSWORD}" | \
+          docker login "${DOCKER_REGISTRY}" --username "${DOCKER_USERNAME}" --password-stdin
+
+        DOCKER_IMAGE="${DOCKER_REGISTRY}/${PROJECT_OWNER}/${PROJECT_NAME}:${VERSION}"
+        echo "Docker image: ${DOCKER_IMAGE}"
+
+        echo "Building container..."
+        docker build                                                                                 \
+          --file dockerfiles/elobot.dockerfile                                                       \
+          --build-arg WORKING_DIRECTORY="/opt/${PROJECT_OWNER}/${PROJECT_NAME}"                      \
+          --tag "${DOCKER_IMAGE}"                                                                    \
+          .
+
+        echo "Pushing image..."
+        docker push "${DOCKER_IMAGE}"

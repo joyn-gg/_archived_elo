@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+#-- Requirements ---------------------------------------------------------------------------------------------------------------
+command -v jq     >/dev/null 2>&2 || { echo >&2 "jq is required but is not available, aborting...";     exit 1; }
+command -v docker >/dev/null 2>&2 || { echo >&2 "docker is required but is not available, aborting..."; exit 1; }
+
+#-- Imported Variables ---------------------------------------------------------------------------------------------------------
+project_name=$(cat < ./scripts/scripts_configuration.json | jq -r '.project_name')
+project_owner=$(cat < ./scripts/scripts_configuration.json | jq -r '.project_owner')
+
+target=$1
+if [ -z "${target}" ]; then ls config/secrets && read -rp "Which environment would you like to target? Type your full answer here and press enter: " target; fi
+
+network_name=$(cat < "./config/secrets/${target}/script_secrets.json"  | jq -r '.secrets.network_name')
+
+log_level=$(cat < "./config/secrets/${target}/script_secrets.json"  | jq -r '.secrets.log_level')
+
+discord_token=$(cat < "./config/secrets/${target}/script_secrets.json" | jq -r '.secrets.discord_token')
+topgg_token=$(cat < "./config/secrets/${target}/script_secrets.json" | jq -r '.secrets.topgg_token')
+
+bot_prefix=$(cat < "./config/secrets/${target}/script_secrets.json" | jq -r '.secrets.bot_prefix')
+
+shard_count=$(cat < "./config/secrets/${target}/script_secrets.json" | jq -r '.secrets.shard_count')
+
+premium_server_invite=$(cat < "./config/secrets/${target}/script_secrets.json"  | jq -r '.secrets.premium_server_invite')
+premium_alternate_link=$(cat < "./config/secrets/${target}/script_secrets.json"  | jq -r '.secrets.premium_alternate_link')
+premium_guild_id=$(cat < "./config/secrets/${target}/script_secrets.json"  | jq -r '.secrets.premium_guild_id')
+
+premium_deletion_webhook_channel_id=$(cat < "./config/secrets/${target}/script_secrets.json"  | jq -r '.secrets.premium_deletion_webhook_channel_id')
+premium_deletion_webhook_client_id=$(cat < "./config/secrets/${target}/script_secrets.json"  | jq -r '.secrets.premium_deletion_webhook_client_id')
+
+database_url=$(cat < "./config/secrets/${target}/script_secrets.json" | jq -r '.secrets.database_url')
+database_port=$(cat < "./config/secrets/${target}/script_secrets.json" | jq -r '.secrets.database_port')
+database_name=$(cat < "./config/secrets/${target}/script_secrets.json" | jq -r '.secrets.database_name')
+database_user=$(cat < "./config/secrets/${target}/script_secrets.json" | jq -r '.secrets.database_user')
+database_password=$(cat < "./config/secrets/${target}/script_secrets.json" | jq -r '.secrets.database_password')
+database_schema=$(cat < "./config/secrets/${target}/script_secrets.json" | jq -r '.secrets.database_schema')
+
+working_directory="/opt/${project_owner}/${project_name}"
+
+#-- Assume image exists --------------------------------------------------------------------------------------------------------
+image_tag="${project_owner}/${project_name}_elo_bot"
+
+#-- Create container for ephemeral use -----------------------------------------------------------------------------------------
+container_name="${project_owner}_${project_name}_ephemeral_elo_bot"
+sudo docker run                                                                                                          \
+  --name "${container_name}"                                                                                             \
+  --network "${network_name}"                                                                                            \
+  --env LogLevel="${log_level}"                                                                                          \
+  --env Token="${discord_token}"                                                                                         \
+  --env TopGgToken="${topgg_token}"                                                                                      \
+  --env Prefix="${bot_prefix}"                                                                                           \
+  --env DbServerIp="${database_url}"                                                                                     \
+  --env DbPort="${database_port}"                                                                                        \
+  --env DbName="${database_name}"                                                                                        \
+  --env DbUsername="${database_user}"                                                                                    \
+  --env DbPassword="${database_password}"                                                                                \
+  --env ShardCount="${shard_count}"                                                                                      \
+  --env PremiumServerInvite="${premium_server_invite}"                                                                   \
+  --env PremiumAltLink="${premium_alternate_link}"                                                                       \
+  --env PremiumGuildId="${premium_guild_id}"                                                                             \
+  --env PremiumDeletionWebhookChannelId="${premium_deletion_webhook_channel_id}"                                         \
+  --env PremiumDeletionWebhookClientId="${premium_deletion_webhook_client_id}"                                           \
+  --interactive --tty                                                                                                    \
+  --rm                                                                                                                   \
+  "${image_tag}"
