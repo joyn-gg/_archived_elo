@@ -60,6 +60,7 @@ sudo docker run                                                                 
   --env PremiumGuildId="${premium_guild_id}"                                                                             \
   --env PremiumDeletionWebhookChannelId="${premium_deletion_webhook_channel_id}"                                         \
   --env PremiumDeletionWebhookClientId="${premium_deletion_webhook_client_id}"                                           \
+  --env VERSION="local"                                                                                                  \
   --interactive --tty                                                                                                    \
   --rm                                                                                                                   \
   "${image_tag}"

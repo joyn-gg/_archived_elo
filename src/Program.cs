@@ -18,6 +18,8 @@ namespace ELO
 {
     public class Program
     {
+        public static string Version;
+
         /*
         public class Options
         {
@@ -51,6 +53,12 @@ namespace ELO
                     });
             }*/
             var config = Config.ParseArguments(args);
+
+            Version = config.GetOrAddEntry("VERSION", () =>
+            {
+                Console.WriteLine("Please enter program version: ");
+                return Console.ReadLine();
+            });
 
             //Initialize new default required configs
             /*

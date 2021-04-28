@@ -46,6 +46,16 @@ namespace ELO.Modules
             Premium = premium;
         }
 
+        [Command("Version")]
+        [Summary("Display bot version.")]
+        public async Task VersionAsync()
+        {
+            var embed = new EmbedBuilder();
+            embed.Color = Color.Blue;
+            embed.Description = $"Version: `{Program.Version}`";
+            await ReplyAsync(null, false, embed.Build());
+        }
+
         [Command("Invite")]
         [Summary("Returns the bot invite")]
         public virtual async Task InviteAsync()
