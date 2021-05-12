@@ -48,7 +48,7 @@ namespace ELO.Handlers
         {
             try
             {
-                Message.Invoke(MakeLogMessage(message, severity), severity);
+                Message?.Invoke(MakeLogMessage(message, severity), severity);
             }
             catch (Exception e)
             {
@@ -72,7 +72,7 @@ namespace ELO.Handlers
 
             try
             {
-                Message.Invoke(MakeLogMessage(message, severity), severity);
+                Message?.Invoke(MakeLogMessage(message, severity), severity);
             }
             catch (Exception e)
             {

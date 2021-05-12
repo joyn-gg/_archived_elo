@@ -28,12 +28,20 @@ namespace ELO.Handlers
             ShardChecker.AllShardsReady += AllShardsReadyAsync;
             Client.ShardConnected += ShardConnectedAsync;
             Client.ShardReady += ShardReadyAsync;
+            Client.Log += Client_Log;
 
             //Set commandschedule variables so they don't need to be injected
             CommandSchedule.Provider = provider;
             CommandSchedule.Service = provider.GetRequiredService<CommandService>();
-            Client.Log += async x => BaseLogger.Log(x.Message, x.Severity);
+            //Client.Log += async x => BaseLogger.Log(x.Message, x.Severity);
             BaseLogger.Message += async (x, y) => Logger.Log(x, y);
+        }
+
+        private Task Client_Log(LogMessage arg)
+        {
+            BaseLogger.Log($"[{arg.Source ?? "UNK"}]{arg.Message}{(arg.Exception != null ? "\n" + arg.Exception : "")}",
+                arg.Severity);
+            return Task.CompletedTask;
         }
 
         private SemaphoreSlim userdownloadSem = new SemaphoreSlim(1);
