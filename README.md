@@ -1,11 +1,5 @@
-<p align="center">
-   <img src="https://camo.githubusercontent.com/1db81c7f4c3669c4809db441440290498ccc2f59/68747470733a2f2f63646e2e646973636f72646170702e636f6d2f617661746172732f3433303834323232363330363834323633342f37383465316466623638303236306131396166633063316535653938393738382e706e673f73697a653d353132" width="200" />
-<h2 align="center">ELO</h2>
-<p align="center">
-   <a href="https://discord.me/passive"><img src="https://img.shields.io/badge/Invite-PassiveModding-7289DA.svg?longCache=true&style=flat-square&logo=discord"/></a>
-   <br/>
-</p>
-</p>
+## NOTICE
+This project has been discontinued due to library/API changes and will not be maintained for security or compatability purposes.
 
 ## ELO - A pug (pick up game) bot for discord. 
 Players join a lobby queue.
